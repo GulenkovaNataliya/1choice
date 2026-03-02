@@ -113,8 +113,7 @@ export default function HeroVideo() {
             }}
           >
             {/* Header */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 40 }}>
-              <span style={{ color: "#FFFFFF", fontSize: 18, fontWeight: 600 }}>1Choice</span>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginBottom: 40 }}>
               <button
                 type="button"
                 onClick={closeMenu}

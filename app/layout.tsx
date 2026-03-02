@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "1Choice Real Estate | Greece",
+  title: "First Choice Real Estate",
   description: "Private Greek properties. Selected carefully.",
 };
 

@@ -1,9 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+const DRAWER_LINKS = [
+  { label: "Properties", href: "/properties" },
+  { label: "1ChoiceDeals", href: "/1choicedeals" },
+  { label: "Golden Visa", href: "/golden-visa-greece" },
+  { label: "Investment & Ownership Guide", href: "/investment-ownership-guide" },
+  { label: "Private Collection", href: "/private" },
+  { label: "Legal", href: "/legal" },
+];
 
 export default function HeroVideo() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [visible, setVisible] = useState(false); // controls CSS transition
+
+  function openMenu() {
+    setMenuOpen(true);
+    // Defer to next frame so transition fires
+    requestAnimationFrame(() => setVisible(true));
+  }
+
+  function closeMenu() {
+    setVisible(false);
+    // Wait for transition to finish before unmounting
+    setTimeout(() => setMenuOpen(false), 260);
+  }
+
+  // ESC closes drawer
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") closeMenu(); }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
+
+  // Prevent body scroll while open
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [menuOpen]);
 
   return (
     <section className="relative h-screen w-full overflow-hidden">
@@ -22,7 +58,7 @@ export default function HeroVideo() {
           <a href="/contact" className="hover:opacity-70 transition">Contact</a>
           <button
             type="button"
-            onClick={() => setMenuOpen(true)}
+            onClick={openMenu}
             className="hover:opacity-70 transition"
           >
             Menu
@@ -32,35 +68,88 @@ export default function HeroVideo() {
 
       {/* Drawer */}
       {menuOpen && (
-        <div className="absolute inset-0 z-30">
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 300,
+            // Overlay fades in with the panel
+            background: visible ? "rgba(30,30,30,0.55)" : "rgba(30,30,30,0)",
+            transition: "background 0.26s ease-in-out",
+          }}
+        >
+          {/* Click overlay to close */}
           <button
             type="button"
-            onClick={() => setMenuOpen(false)}
-            className="absolute inset-0 bg-black/10"
+            onClick={closeMenu}
             aria-label="Close menu overlay"
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "none",
+              border: "none",
+              cursor: "default",
+              width: "100%",
+              height: "100%",
+            }}
           />
-          <div className="absolute top-0 right-0 h-full w-90 bg-white/95 backdrop-blur p-10 shadow-xl">
-            <div className="flex items-center justify-between">
-              <div className="text-black text-xl font-semibold">1Choice</div>
+
+          {/* Panel */}
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              right: 0,
+              height: "100%",
+              width: 300,
+              background: "transparent",
+              backdropFilter: "blur(2px)",
+              display: "flex",
+              flexDirection: "column",
+              padding: "40px 32px",
+              transform: visible ? "translateX(0)" : "translateX(100%)",
+              opacity: visible ? 1 : 0,
+              transition: "transform 0.26s ease-in-out, opacity 0.26s ease-in-out",
+            }}
+          >
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 40 }}>
+              <span style={{ color: "#FFFFFF", fontSize: 18, fontWeight: 600 }}>1Choice</span>
               <button
                 type="button"
-                onClick={() => setMenuOpen(false)}
-                className="text-black text-2xl"
+                onClick={closeMenu}
                 aria-label="Close menu"
+                style={{
+                  background: "none", border: "none", cursor: "pointer",
+                  color: "#FFFFFF", fontSize: 26, lineHeight: 1, padding: "0 2px",
+                  opacity: 0.85,
+                }}
               >
                 ×
               </button>
             </div>
 
-            <nav className="mt-10 flex flex-col gap-5 text-black text-lg">
-              <a href="/properties" onClick={() => setMenuOpen(false)} className="hover:opacity-70 transition">Properties</a>
-              <a href="/1choicedeals" onClick={() => setMenuOpen(false)} className="hover:opacity-70 transition">1ChoiceDeals</a>
-              <a href="/golden-visa-greece" onClick={() => setMenuOpen(false)} className="hover:opacity-70 transition">Golden Visa</a>
-              <a href="/investment-ownership-guide" onClick={() => setMenuOpen(false)} className="hover:opacity-70 transition">Investment & Ownership Guide</a>
-              <a href="/private" onClick={() => setMenuOpen(false)} className="hover:opacity-70 transition">Private Collection</a>
-              <a href="/about" onClick={() => setMenuOpen(false)} className="hover:opacity-70 transition">About 1Choice</a>
-              <a href="/contact" onClick={() => setMenuOpen(false)} className="hover:opacity-70 transition">Contact</a>
-              <a href="/legal" onClick={() => setMenuOpen(false)} className="hover:opacity-70 transition">Legal</a>
+            {/* Nav links */}
+            <nav style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              {DRAWER_LINKS.map(({ label, href }) => (
+                <a
+                  key={href}
+                  href={href}
+                  onClick={closeMenu}
+                  style={{
+                    color: "#FFFFFF",
+                    textDecoration: "none",
+                    fontSize: 17,
+                    fontWeight: 500,
+                    opacity: 0.92,
+                    transition: "opacity 0.15s",
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.opacity = "0.6"; }}
+                  onMouseLeave={e => { e.currentTarget.style.opacity = "0.92"; }}
+                >
+                  {label}
+                </a>
+              ))}
             </nav>
           </div>
         </div>

@@ -4,7 +4,7 @@ const BUTTONS = [
   { label: "Properties", href: "/properties", testId: "navProperties" },
   { label: "1ChoiceDeals", href: "/1choicedeals", testId: "navDeals" },
   { label: "Golden Visa", href: "/golden-visa-greece", testId: "navGoldenVisa" },
-  { label: "Private Collection", href: "/private", testId: "navPrivate" },
+  { label: "VIP", href: "/private", testId: "navVip" },
 ];
 
 export default function HomeNavButtons() {

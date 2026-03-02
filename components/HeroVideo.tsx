@@ -72,8 +72,17 @@ export default function HeroVideo() {
         muted
         loop
         playsInline
+        preload="none"
         poster="/video/hero-1choice.jpg"
-        className="absolute inset-0 h-full w-full object-cover"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          display: "block",
+          zIndex: 0,
+        }}
       >
         <source src="/video/hero-1choice.mp4" type="video/mp4" />
       </video>

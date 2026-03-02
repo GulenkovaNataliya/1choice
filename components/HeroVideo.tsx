@@ -6,14 +6,7 @@ type Props = {
 
 export default function HeroVideo({ className }: Props) {
   return (
-    <section
-      className={className}
-      style={{
-        position: "relative",
-        minHeight: "100vh",
-        overflow: "hidden",
-      }}
-    >
+    <section className="relative h-screen w-full overflow-hidden">
       {/* Background video */}
       <video
         autoPlay
@@ -33,16 +26,7 @@ export default function HeroVideo({ className }: Props) {
         <source src="/video/hero-1choice.mp4" type="video/mp4" />
       </video>
 
-      {/* Overlay (делает текст читабельным, без чёрного/белого экрана) */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.15) 45%, rgba(0,0,0,0.55) 100%)",
-        }}
-      />
+      <div className="absolute inset-0 bg-black/40"></div>
 
       {/* Content */}
       <div

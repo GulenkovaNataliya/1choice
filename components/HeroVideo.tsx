@@ -28,6 +28,8 @@ export default function HeroVideo({ className }: Props) {
 
       <div className="absolute inset-0 bg-black/40"></div>
 
+      <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-black to-transparent"></div>
+
       <div className="relative z-10 flex h-full items-center justify-center">
         <img
           src="/logo/logo-main.png"

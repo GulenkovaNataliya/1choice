@@ -3,6 +3,7 @@ import HorizontalFilter from "@/components/Home/HorizontalFilter";
 import HomeNavButtons from "@/components/Home/HomeNavButtons";
 import FeaturedProperties from "@/components/Home/FeaturedProperties";
 import WhyWorkWithUs from "@/components/Home/WhyWorkWithUs";
+import InvestmentGoldenVisaTeaser from "@/components/Home/InvestmentGoldenVisaTeaser";
 
 export default function Home() {
   return (
@@ -12,6 +13,7 @@ export default function Home() {
       <HomeNavButtons />
       <FeaturedProperties />
       <WhyWorkWithUs />
+      <InvestmentGoldenVisaTeaser />
     </>
   );
 }

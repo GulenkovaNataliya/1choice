@@ -39,7 +39,7 @@ export default function HeroVideo() {
             className="absolute inset-0 bg-black/10"
             aria-label="Close menu overlay"
           />
-          <div className="absolute top-0 right-0 h-full w-[360px] bg-white/95 backdrop-blur p-10 shadow-xl">
+          <div className="absolute top-0 right-0 h-full w-90 bg-white/95 backdrop-blur p-10 shadow-xl">
             <div className="flex items-center justify-between">
               <div className="text-black text-xl font-semibold">1Choice</div>
               <button

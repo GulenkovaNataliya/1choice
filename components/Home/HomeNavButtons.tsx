@@ -33,9 +33,9 @@ export default function HomeNavButtons() {
               alignItems: "center",
               justifyContent: "center",
               minHeight: 72,
-              backgroundColor: "#1E1E1E",
-              color: "#F4F4F4",
-              border: "1px solid #404040",
+              backgroundColor: "#3A2E4F",
+              color: "#D9D9D9",
+              border: "1px solid #3A2E4F",
               borderRadius: 16,
               fontSize: 16,
               fontWeight: 500,
@@ -49,7 +49,7 @@ export default function HomeNavButtons() {
               e.currentTarget.style.boxShadow = "0 2px 12px rgba(193,18,31,0.15)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "#404040";
+              e.currentTarget.style.borderColor = "#3A2E4F";
               e.currentTarget.style.boxShadow = "none";
             }}
           >

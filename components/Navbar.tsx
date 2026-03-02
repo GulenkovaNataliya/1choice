@@ -6,7 +6,7 @@ export default function Navbar() {
           <img
             src="/logo/logo-main.png"
             alt="1Choice"
-            className="w-[240px] h-auto"
+            className="w-[280px] h-auto"
           />
         </a>
       </div>

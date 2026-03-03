@@ -3,7 +3,8 @@
 import { Suspense, useState, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { ReadonlyURLSearchParams } from "next/navigation";
-import { mockProperties, type MockProperty } from "@/components/Property/mockProperties";
+import { fetchProperties, type PropertyRow } from "@/lib/properties/fetchProperties";
+import { publicImageUrl } from "@/lib/storage/publicImageUrl";
 import PropertyCard from "@/components/Property/PropertyCard";
 import HorizontalFilter, { type FilterState } from "@/components/Home/HorizontalFilter";
 
@@ -41,7 +42,6 @@ const CONDITION_LABEL: Record<string, string> = {
 const TRANSACTION_FROM_URL: Record<string, string> = {
   buy: "Buy", rent: "Rent", antiparochi: "Antiparochi",
 };
-
 
 const FEATURE_FROM_URL: Record<string, string> = {
   parking: "Parking", pool: "Pool", seaview: "Sea View",
@@ -179,24 +179,14 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: "newest",     label: "Newest" },
 ];
 
-function applySort(properties: MockProperty[], sort: SortKey): MockProperty[] {
-  if (sort === "curated") return properties;
-  const arr = [...properties]; // never mutate the filtered array
+function applySort(properties: PropertyRow[], sort: SortKey): PropertyRow[] {
+  if (sort === "curated") return properties; // server already orders by featured, created_at desc
+  const arr = [...properties];
   switch (sort) {
     case "price_asc":
-      return arr.sort((a, b) => {
-        if (a.price_eur === null && b.price_eur === null) return 0;
-        if (a.price_eur === null) return 1;  // null → end
-        if (b.price_eur === null) return -1;
-        return a.price_eur - b.price_eur;
-      });
+      return arr.sort((a, b) => a.price - b.price);
     case "price_desc":
-      return arr.sort((a, b) => {
-        if (a.price_eur === null && b.price_eur === null) return 0;
-        if (a.price_eur === null) return 1;  // null → end
-        if (b.price_eur === null) return -1;
-        return b.price_eur - a.price_eur;
-      });
+      return arr.sort((a, b) => b.price - a.price);
     case "newest":
       return arr.sort((a, b) => b.created_at.localeCompare(a.created_at));
     default:
@@ -204,53 +194,32 @@ function applySort(properties: MockProperty[], sort: SortKey): MockProperty[] {
   }
 }
 
-// ─── Filter logic (pure function) ────────────────────────────────────────────
+// ─── Filter logic (client-side, fields available in PropertyRow) ──────────────
+// location is handled server-side by fetchProperties.
+// transaction, type, gv, features, condition, year: pending DB schema extension.
 
 function applyFilters(
-  properties: MockProperty[],
+  properties: PropertyRow[],
   params: ReadonlyURLSearchParams,
-): MockProperty[] {
+): PropertyRow[] {
   return properties.filter(p => {
-    const transaction = params.get("transaction");
-    if (transaction && p.transaction !== transaction) return false;
-
-    const type = params.get("type");
-    if (type && !type.split(",").includes(p.type)) return false;
-
-    const location = params.get("location");
-    if (location && p.location !== location) return false;
-
     const priceMin = params.get("priceMin");
-    if (priceMin && p.price_eur !== null && p.price_eur < Number(priceMin) * 1000) return false;
+    if (priceMin && p.price < Number(priceMin) * 1000) return false;
 
     const priceMax = params.get("priceMax");
-    if (priceMax && p.price_eur !== null && p.price_eur > Number(priceMax) * 1000) return false;
+    if (priceMax && p.price > Number(priceMax) * 1000) return false;
 
     const bedrooms = params.get("bedrooms");
-    if (bedrooms && p.bedrooms < Number(bedrooms)) return false;
-
-    if (params.get("gv") === "1" && !p.is_golden_visa) return false;
-
-    const features = params.get("features");
-    if (features && !features.split(",").every(f => (p.features as string[]).includes(f))) return false;
+    if (bedrooms && (p.bedrooms === null || p.bedrooms < Number(bedrooms))) return false;
 
     const baths = params.get("baths");
-    if (baths && p.bathrooms < Number(baths)) return false;
+    if (baths && (p.bathrooms === null || p.bathrooms < Number(baths))) return false;
 
     const sizeMin = params.get("sizeMin");
-    if (sizeMin && p.size_sqm < Number(sizeMin)) return false;
+    if (sizeMin && (p.size === null || p.size < Number(sizeMin))) return false;
 
     const sizeMax = params.get("sizeMax");
-    if (sizeMax && p.size_sqm > Number(sizeMax)) return false;
-
-    const yearMin = params.get("yearMin");
-    if (yearMin && p.year_built < Number(yearMin)) return false;
-
-    const yearMax = params.get("yearMax");
-    if (yearMax && p.year_built > Number(yearMax)) return false;
-
-    const condition = params.get("condition");
-    if (condition && !condition.split(",").includes(p.condition)) return false;
+    if (sizeMax && (p.size === null || p.size > Number(sizeMax))) return false;
 
     return true;
   });
@@ -319,10 +288,27 @@ function PropertiesContent() {
 
   const sort = (params.get("sort") ?? "curated") as SortKey;
   const chips = buildChips(params);
-  const filtered = applySort(applyFilters(mockProperties, params), sort);
-
-  // Derive FilterState from current URL — passed to HorizontalFilter for pill sync
   const initialFilter = useMemo(() => parseParamsToFilter(params), [params]);
+  const selectedLocationSlug = params.get("location") ?? null;
+
+  // ── Supabase data ────────────────────────────────────────────────────────────
+  const [properties, setProperties] = useState<PropertyRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+
+    fetchProperties({ location: selectedLocationSlug }).then((rows) => {
+      if (!mounted) return;
+      setProperties(rows);
+      setLoading(false);
+    });
+
+    return () => { mounted = false; };
+  }, [selectedLocationSlug]);
+
+  const filtered = applySort(applyFilters(properties, params), sort);
 
   // ── Pagination ──────────────────────────────────────────────────────────────
   const PAGE_SIZE = 12;
@@ -336,6 +322,21 @@ function PropertiesContent() {
 
   const visible = filtered.slice(0, visibleCount);
   const hasMore = visibleCount < filtered.length;
+
+  // ── Adapter: PropertyRow → CardProperty ────────────────────────────────────
+  const uiItems = visible.map(p => ({
+    id: p.id,
+    slug: p.slug,
+    title: p.title,
+    area: titleCase(p.location),
+    price_eur: p.price,
+    is_golden_visa: false,
+    is_1choice_deal: p.featured ?? false,
+    cover_image: p.cover_image_path ? publicImageUrl(p.cover_image_path) : null,
+    bedrooms: p.bedrooms ?? undefined,
+    bathrooms: p.bathrooms ?? undefined,
+    size_sqm: p.size ?? undefined,
+  }));
 
   function removeFilter(keys: string[]) {
     const next = new URLSearchParams(params.toString());
@@ -388,7 +389,7 @@ function PropertiesContent() {
 
         <FilterChips chips={chips} onRemove={removeFilter} />
 
-        {filtered.length === 0 ? (
+        {!loading && filtered.length === 0 && (
           <div
             style={{
               display: "flex",
@@ -425,72 +426,74 @@ function PropertiesContent() {
               Reset Filters
             </button>
           </div>
-        ) : (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
-            <p style={{ fontSize: 14, color: "#888888", margin: 0 }}>
-              {`Showing ${visible.length} of ${filtered.length} result${filtered.length === 1 ? "" : "s"}`}
-            </p>
-            <select
-              value={sort}
-              onChange={e => setSort(e.target.value as SortKey)}
+        )}
+
+        {!loading && filtered.length > 0 && (
+          <>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
+              <p style={{ fontSize: 14, color: "#888888", margin: 0 }}>
+                {`Showing ${visible.length} of ${filtered.length} result${filtered.length === 1 ? "" : "s"}`}
+              </p>
+              <select
+                value={sort}
+                onChange={e => setSort(e.target.value as SortKey)}
+                style={{
+                  height: 36,
+                  border: "1px solid #D9D9D9",
+                  borderRadius: 8,
+                  padding: "0 12px",
+                  fontSize: 14,
+                  color: "#1E1E1E",
+                  background: "#FFFFFF",
+                  cursor: "pointer",
+                  outline: "none",
+                }}
+              >
+                {SORT_OPTIONS.map(o => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div
               style={{
-                height: 36,
-                border: "1px solid #D9D9D9",
-                borderRadius: 8,
-                padding: "0 12px",
-                fontSize: 14,
-                color: "#1E1E1E",
-                background: "#FFFFFF",
-                cursor: "pointer",
-                outline: "none",
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                gap: 24,
               }}
             >
-              {SORT_OPTIONS.map(o => (
-                <option key={o.value} value={o.value}>{o.label}</option>
+              {uiItems.map(item => (
+                <PropertyCard
+                  key={item.id}
+                  property={item}
+                  testId={`propertyCard-${item.id}`}
+                />
               ))}
-            </select>
-          </div>
-        )}
+            </div>
 
-        {visible.length > 0 && (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-              gap: 24,
-            }}
-          >
-            {visible.map(property => (
-              <PropertyCard
-                key={property.id}
-                property={property}
-                testId={`propertyCard-${property.id}`}
-              />
-            ))}
-          </div>
-        )}
-
-        {hasMore && (
-          <div style={{ display: "flex", justifyContent: "center", marginTop: 48 }}>
-            <button
-              type="button"
-              className="lm-btn"
-              onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
-              style={{
-                background: "#3A2E4F",
-                color: "#D9D9D9",
-                border: "none",
-                borderRadius: 16,
-                padding: "12px 40px",
-                fontSize: 15,
-                fontWeight: 500,
-                cursor: "pointer",
-                transition: "box-shadow 0.2s",
-              }}
-            >
-              Load more
-            </button>
-          </div>
+            {hasMore && (
+              <div style={{ display: "flex", justifyContent: "center", marginTop: 48 }}>
+                <button
+                  type="button"
+                  className="lm-btn"
+                  onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+                  style={{
+                    background: "#3A2E4F",
+                    color: "#D9D9D9",
+                    border: "none",
+                    borderRadius: 16,
+                    padding: "12px 40px",
+                    fontSize: 15,
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    transition: "box-shadow 0.2s",
+                  }}
+                >
+                  Load more
+                </button>
+              </div>
+            )}
+          </>
         )}
 
       </div>

@@ -1,10 +1,11 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { ReadonlyURLSearchParams } from "next/navigation";
 import { mockProperties, type MockProperty } from "@/components/Property/mockProperties";
 import PropertyCard from "@/components/Property/PropertyCard";
+import HorizontalFilter, { type FilterState } from "@/components/Home/HorizontalFilter";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,6 +34,72 @@ const CONDITION_LABEL: Record<string, string> = {
   needsrenovation: "Needs Renovation",
   underconstruction: "Under Construction",
 };
+
+// ─── URL → FilterState (inverse of HorizontalFilter's buildParams) ────────────
+// Labels must exactly match HorizontalFilter's option arrays for pill sync.
+
+const TRANSACTION_FROM_URL: Record<string, string> = {
+  buy: "Buy", rent: "Rent", antiparochi: "Antiparochi",
+};
+
+
+const FEATURE_FROM_URL: Record<string, string> = {
+  parking: "Parking", pool: "Pool", seaview: "Sea View",
+  garden: "Garden", furnished: "Furnished", investment: "Investment",
+};
+
+const CONDITION_FROM_URL: Record<string, string> = {
+  renovated: "Renovated",
+  needsrenovation: "Needs renovation",
+  underconstruction: "Under construction",
+};
+
+function parseParamsToFilter(params: ReadonlyURLSearchParams): Partial<FilterState> {
+  const f: Partial<FilterState> = {};
+
+  const transaction = params.get("transaction");
+  if (transaction) f.transaction = TRANSACTION_FROM_URL[transaction] ?? "";
+
+  const type = params.get("type");
+  if (type) f.propertyTypes = type.split(",").map(t => t.charAt(0).toUpperCase() + t.slice(1));
+
+  const location = params.get("location");
+  if (location) f.location = location; // slug stored directly in FilterState
+
+  const priceMin = params.get("priceMin");
+  if (priceMin) f.priceMin = priceMin;
+
+  const priceMax = params.get("priceMax");
+  if (priceMax) f.priceMax = priceMax;
+
+  const bedrooms = params.get("bedrooms");
+  if (bedrooms) f.bedrooms = `${bedrooms}+`;
+
+  if (params.get("gv") === "1") f.goldenVisa = true;
+
+  const features = params.get("features");
+  if (features) f.features = features.split(",").map(s => FEATURE_FROM_URL[s] ?? s);
+
+  const baths = params.get("baths");
+  if (baths) f.bathrooms = `${baths}+`;
+
+  const sizeMin = params.get("sizeMin");
+  if (sizeMin) f.sizeMin = sizeMin;
+
+  const sizeMax = params.get("sizeMax");
+  if (sizeMax) f.sizeMax = sizeMax;
+
+  const yearMin = params.get("yearMin");
+  if (yearMin) f.yearMin = yearMin;
+
+  const yearMax = params.get("yearMax");
+  if (yearMax) f.yearMax = yearMax;
+
+  const condition = params.get("condition");
+  if (condition) f.conditions = condition.split(",").map(s => CONDITION_FROM_URL[s] ?? s);
+
+  return f;
+}
 
 // ─── Build chips from active params ──────────────────────────────────────────
 
@@ -165,7 +232,7 @@ function applyFilters(
     if (params.get("gv") === "1" && !p.is_golden_visa) return false;
 
     const features = params.get("features");
-    if (features && !features.split(",").every(f => p.features.includes(f))) return false;
+    if (features && !features.split(",").every(f => (p.features as string[]).includes(f))) return false;
 
     const baths = params.get("baths");
     if (baths && p.bathrooms < Number(baths)) return false;
@@ -254,6 +321,9 @@ function PropertiesContent() {
   const chips = buildChips(params);
   const filtered = applySort(applyFilters(mockProperties, params), sort);
 
+  // Derive FilterState from current URL — passed to HorizontalFilter for pill sync
+  const initialFilter = useMemo(() => parseParamsToFilter(params), [params]);
+
   // ── Pagination ──────────────────────────────────────────────────────────────
   const PAGE_SIZE = 12;
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -274,6 +344,10 @@ function PropertiesContent() {
     router.replace(`/properties${qs ? `?${qs}` : ""}`);
   }
 
+  function resetFilters() {
+    router.replace("/properties");
+  }
+
   function setSort(value: SortKey) {
     const next = new URLSearchParams(params.toString());
     if (value === "curated") next.delete("sort");
@@ -283,8 +357,29 @@ function PropertiesContent() {
   }
 
   return (
+    <>
+      <style>{`
+        .lm-btn:hover{box-shadow:0 4px 18px rgba(58,46,79,0.28)}
+        .rs-btn:hover{box-shadow:0 4px 18px rgba(58,46,79,0.28)}
+        @media (min-width:1024px){
+          .filter-sticky-wrap{position:sticky;top:0;z-index:100;background:#FFFFFF;border-bottom:1px solid #D9D9D9}
+        }
+      `}</style>
+
+      <div className="filter-sticky-wrap">
+        <HorizontalFilter
+          initialFilter={initialFilter}
+          onSearch={(p) => {
+            // Preserve active sort when re-searching from /properties
+            const existingSort = params.get("sort");
+            if (existingSort) p.set("sort", existingSort);
+            const qs = p.toString();
+            router.replace(`/properties${qs ? `?${qs}` : ""}`);
+          }}
+        />
+      </div>
+
     <main style={{ backgroundColor: "#FFFFFF", minHeight: "100vh" }}>
-      <style>{`.lm-btn:hover{box-shadow:0 4px 18px rgba(58,46,79,0.28)}`}</style>
       <div style={{ maxWidth: 1360, margin: "0 auto", padding: "48px 24px 80px" }}>
 
         <h1 style={{ fontSize: 32, fontWeight: 700, color: "#1E1E1E", margin: "0 0 4px" }}>
@@ -293,13 +388,48 @@ function PropertiesContent() {
 
         <FilterChips chips={chips} onRemove={removeFilter} />
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
-          <p style={{ fontSize: 14, color: "#888888", margin: 0 }}>
-            {filtered.length === 0
-              ? "No properties match your search. Try adjusting the filters."
-              : `Showing ${visible.length} of ${filtered.length} result${filtered.length === 1 ? "" : "s"}`}
-          </p>
-          {filtered.length > 0 && (
+        {filtered.length === 0 ? (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
+              padding: "80px 24px",
+              gap: 12,
+            }}
+          >
+            <div style={{ fontSize: 20, fontWeight: 600, color: "#1E1E1E" }}>
+              No properties found
+            </div>
+            <div style={{ fontSize: 14, color: "#888888" }}>
+              Try adjusting your filters.
+            </div>
+            <button
+              type="button"
+              className="rs-btn"
+              onClick={resetFilters}
+              style={{
+                marginTop: 8,
+                background: "#3A2E4F",
+                color: "#D9D9D9",
+                border: "none",
+                borderRadius: 16,
+                padding: "12px 32px",
+                fontSize: 15,
+                fontWeight: 500,
+                cursor: "pointer",
+                transition: "box-shadow 0.2s",
+              }}
+            >
+              Reset Filters
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
+            <p style={{ fontSize: 14, color: "#888888", margin: 0 }}>
+              {`Showing ${visible.length} of ${filtered.length} result${filtered.length === 1 ? "" : "s"}`}
+            </p>
             <select
               value={sort}
               onChange={e => setSort(e.target.value as SortKey)}
@@ -319,8 +449,8 @@ function PropertiesContent() {
                 <option key={o.value} value={o.value}>{o.label}</option>
               ))}
             </select>
-          )}
-        </div>
+          </div>
+        )}
 
         {visible.length > 0 && (
           <div
@@ -365,6 +495,7 @@ function PropertiesContent() {
 
       </div>
     </main>
+    </>
   );
 }
 

@@ -145,6 +145,7 @@ function buildParams(f: FilterState): URLSearchParams {
 const INP: React.CSSProperties = {
   height: 38, border: "1px solid #D9D9D9", borderRadius: 8,
   padding: "0 12px", fontSize: 14, color: "#1E1E1E",
+  background: "#F4F4F4",
   width: "100%", outline: "none", boxSizing: "border-box",
 };
 
@@ -167,7 +168,8 @@ const STYLES = `
     transition:border-color .15s,color .15s}
   .fc:hover{border-color:#C1121F;color:#C1121F}
   .fp-more{color:#C1121F!important}
-  .fp-more.fp-on{background:#3A2E4F!important;color:#D9D9D9!important}
+  .fp-more.fp-on{background:#3A2E4F!important;color:#F4F4F4!important}
+  .fp-inp::placeholder{color:#404040}
   .chip{height:34px;border-radius:17px;border:1px solid #D9D9D9;background:#FFFFFF;
     color:#3A2E4F;font-size:13px;cursor:pointer;padding:0 14px;flex-shrink:0;
     transition:background .15s}
@@ -270,8 +272,10 @@ function InlinePanel({ openPanel, filter, setFilter, onClose }: {
           <p style={{ margin: "0 0 10px", fontSize: 12, color: "#888" }}>Price range (€ thousands)</p>
           <div style={{ display: "flex", gap: 8 }}>
             <input type="number" placeholder="Min" value={filter.priceMin}
+              data-testid="filterInputMin" className="fp-inp"
               onChange={e => setFilter(f => ({ ...f, priceMin: e.target.value }))} style={INP} />
             <input type="number" placeholder="Max" value={filter.priceMax}
+              className="fp-inp"
               onChange={e => setFilter(f => ({ ...f, priceMax: e.target.value }))} style={INP} />
           </div>
         </div>
@@ -314,8 +318,10 @@ function InlinePanel({ openPanel, filter, setFilter, onClose }: {
           <p style={{ margin: "0 0 10px", fontSize: 12, color: "#888" }}>Size range (sqm)</p>
           <div style={{ display: "flex", gap: 8 }}>
             <input type="number" placeholder="Min" value={filter.sizeMin}
+              className="fp-inp"
               onChange={e => setFilter(f => ({ ...f, sizeMin: e.target.value }))} style={INP} />
             <input type="number" placeholder="Max" value={filter.sizeMax}
+              className="fp-inp"
               onChange={e => setFilter(f => ({ ...f, sizeMax: e.target.value }))} style={INP} />
           </div>
         </div>
@@ -325,8 +331,10 @@ function InlinePanel({ openPanel, filter, setFilter, onClose }: {
           <p style={{ margin: "0 0 10px", fontSize: 12, color: "#888" }}>Year built</p>
           <div style={{ display: "flex", gap: 8 }}>
             <input type="number" placeholder="From" value={filter.yearMin}
+              className="fp-inp"
               onChange={e => setFilter(f => ({ ...f, yearMin: e.target.value }))} style={INP} />
             <input type="number" placeholder="To" value={filter.yearMax}
+              className="fp-inp"
               onChange={e => setFilter(f => ({ ...f, yearMax: e.target.value }))} style={INP} />
           </div>
         </div>
@@ -457,8 +465,10 @@ function MobileDrawer({ open, filter, setFilter, onClose, onApply, onClear }: {
           <MobAccordion title="Price" id="price" open={acc === "price"} onToggle={setAcc}>
             <div style={{ display: "flex", gap: 8 }}>
               <input type="number" placeholder="Min €k" value={filter.priceMin}
+                className="fp-inp"
                 onChange={e => setFilter(f => ({ ...f, priceMin: e.target.value }))} style={INP} />
               <input type="number" placeholder="Max €k" value={filter.priceMax}
+                className="fp-inp"
                 onChange={e => setFilter(f => ({ ...f, priceMax: e.target.value }))} style={INP} />
             </div>
           </MobAccordion>
@@ -511,8 +521,10 @@ function MobileDrawer({ open, filter, setFilter, onClose, onApply, onClear }: {
           <MobAccordion title="Size (sqm)" id="size" open={acc === "size"} onToggle={setAcc}>
             <div style={{ display: "flex", gap: 8 }}>
               <input type="number" placeholder="Min" value={filter.sizeMin}
+                className="fp-inp"
                 onChange={e => setFilter(f => ({ ...f, sizeMin: e.target.value }))} style={INP} />
               <input type="number" placeholder="Max" value={filter.sizeMax}
+                className="fp-inp"
                 onChange={e => setFilter(f => ({ ...f, sizeMax: e.target.value }))} style={INP} />
             </div>
           </MobAccordion>
@@ -520,8 +532,10 @@ function MobileDrawer({ open, filter, setFilter, onClose, onApply, onClear }: {
           <MobAccordion title="Year Built" id="yearBuilt" open={acc === "yearBuilt"} onToggle={setAcc}>
             <div style={{ display: "flex", gap: 8 }}>
               <input type="number" placeholder="From" value={filter.yearMin}
+                className="fp-inp"
                 onChange={e => setFilter(f => ({ ...f, yearMin: e.target.value }))} style={INP} />
               <input type="number" placeholder="To" value={filter.yearMax}
+                className="fp-inp"
                 onChange={e => setFilter(f => ({ ...f, yearMax: e.target.value }))} style={INP} />
             </div>
           </MobAccordion>
@@ -600,6 +614,13 @@ export default function HorizontalFilter({ initialFilter, onSearch }: Props = {}
     setFilter({ ...INITIAL, ...initialFilter });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initKey]);
+
+  // DEBUG — remove after verification
+  useEffect(() => {
+    const moreCls = `fp fp-more${showMore ? " fp-on" : ""}`;
+    console.log("[Filter] More className:", moreCls);
+    console.log("[Filter] Search className: fs  (border-radius: 16px, background: #D9D9D9)");
+  }, [showMore]);
 
   function togglePanel(key: PanelKey) {
     setOpenPanel(prev => prev === key ? null : key);

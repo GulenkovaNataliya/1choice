@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -81,6 +82,61 @@ function toggleMulti(arr: string[], v: string): string[] {
   return arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v];
 }
 
+function hasValue(key: PanelKey, f: FilterState): boolean {
+  switch (key) {
+    case "transaction": return f.transaction !== "";
+    case "type":        return f.propertyTypes.length > 0;
+    case "location":    return f.location !== "";
+    case "price":       return f.priceMin !== "" || f.priceMax !== "";
+    case "bedrooms":    return f.bedrooms !== "";
+    case "features":    return f.features.length > 0;
+    case "bathrooms":   return f.bathrooms !== "";
+    case "size":        return f.sizeMin !== "" || f.sizeMax !== "";
+    case "yearBuilt":   return f.yearMin !== "" || f.yearMax !== "";
+    case "condition":   return f.conditions.length > 0;
+    default:            return false;
+  }
+}
+
+// ─── URL param builder ───────────────────────────────────────────────────────
+
+const FEATURE_SLUG: Record<string, string> = {
+  "Parking": "parking", "Pool": "pool", "Sea View": "seaview",
+  "Garden": "garden", "Furnished": "furnished", "Investment": "investment",
+};
+
+const CONDITION_SLUG: Record<string, string> = {
+  "Renovated": "renovated",
+  "Needs renovation": "needsrenovation",
+  "Under construction": "underconstruction",
+};
+
+function buildParams(f: FilterState): URLSearchParams {
+  const p = new URLSearchParams();
+
+  if (f.transaction)        p.set("transaction", f.transaction.toLowerCase());
+  if (f.propertyTypes.length)
+    p.set("type", f.propertyTypes.map(t => t.toLowerCase()).join(","));
+  if (f.location)
+    p.set("location", f.location.toLowerCase().replace(/\s+/g, "-"));
+  if (f.priceMin)           p.set("priceMin", f.priceMin);
+  if (f.priceMax)           p.set("priceMax", f.priceMax);
+  if (f.bedrooms)           p.set("bedrooms", f.bedrooms.replace("+", ""));
+  if (f.goldenVisa)         p.set("gv", "1");
+
+  if (f.features.length)
+    p.set("features", f.features.map(v => FEATURE_SLUG[v] ?? v.toLowerCase()).join(","));
+  if (f.bathrooms)          p.set("baths", f.bathrooms.replace("+", ""));
+  if (f.sizeMin)            p.set("sizeMin", f.sizeMin);
+  if (f.sizeMax)            p.set("sizeMax", f.sizeMax);
+  if (f.yearMin)            p.set("yearMin", f.yearMin);
+  if (f.yearMax)            p.set("yearMax", f.yearMax);
+  if (f.conditions.length)
+    p.set("condition", f.conditions.map(v => CONDITION_SLUG[v] ?? v.toLowerCase()).join(","));
+
+  return p;
+}
+
 // ─── Shared input style ──────────────────────────────────────────────────────
 
 const INP: React.CSSProperties = {
@@ -98,10 +154,15 @@ const STYLES = `
     transition:background .15s,color .15s}
   .fp:hover{background:#C8C8C8}
   .fp-on{background:#3A2E4F!important;color:#D9D9D9!important}
-  .fs{height:42px;border-radius:21px;border:none;background:#D9D9D9;color:#C1121F;
+  .fs{height:42px;border-radius:21px;border:1px solid #C1121F;background:#1E1E1E;color:#C1121F;
     padding:0 28px;font-size:14px;font-weight:600;cursor:pointer;flex-shrink:0;
     transition:background .15s}
-  .fs:hover{background:#C8C8C8}
+  .fs:hover{background:#3A2E4F}
+  .fc{height:42px;border-radius:21px;border:1px solid #D9D9D9;background:transparent;
+    color:#3A2E4F;padding:0 20px;font-size:14px;cursor:pointer;flex-shrink:0;
+    transition:border-color .15s,color .15s}
+  .fc:hover{border-color:#C1121F;color:#C1121F}
+  .fp-more,.fp-more.fp-on{color:#C1121F!important}
   .chip{height:34px;border-radius:17px;border:1px solid #D9D9D9;background:#FFFFFF;
     color:#3A2E4F;font-size:13px;cursor:pointer;padding:0 14px;flex-shrink:0;
     transition:background .15s}
@@ -134,6 +195,8 @@ const PANEL_STYLE: React.CSSProperties = {
   borderRadius: 12,
   padding: "16px 20px",
   marginTop: 8,
+  height: 120,
+  overflowY: "auto",
 };
 
 function InlinePanel({ openPanel, filter, setFilter }: {
@@ -454,6 +517,7 @@ function MobileDrawer({ open, filter, setFilter, onClose, onApply, onClear }: {
 // ─── Main component ──────────────────────────────────────────────────────────
 
 export default function HorizontalFilter() {
+  const router = useRouter();
   const [openPanel, setOpenPanel] = useState<PanelKey>(null);
   const [showMore, setShowMore] = useState(false);
   const [filter, setFilter] = useState<FilterState>(INITIAL);
@@ -504,7 +568,11 @@ export default function HorizontalFilter() {
     console.log("Filter:", filter);
   }, [filter]);
 
-  const handleClear = useCallback(() => setFilter(INITIAL), []);
+  const handleClear = useCallback(() => {
+    setFilter(INITIAL);
+    setOpenPanel(null);
+    setShowMore(false);
+  }, []);
 
   const row1PanelOpen = openPanel !== null && (ROW1_KEYS as string[]).includes(openPanel);
   const row2PanelOpen = openPanel !== null && (ROW2_KEYS as string[]).includes(openPanel);
@@ -533,31 +601,31 @@ export default function HorizontalFilter() {
           {/* Row 1 */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
             <button type="button" data-testid="filterTransaction"
-              className={`fp${openPanel === "transaction" ? " fp-on" : ""}`}
+              className={`fp${(openPanel === "transaction" || hasValue("transaction", filter)) ? " fp-on" : ""}`}
               onClick={() => togglePanel("transaction")}>
               {getPillLabel("transaction", filter)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
             </button>
 
             <button type="button" data-testid="filterPropertyType"
-              className={`fp${openPanel === "type" ? " fp-on" : ""}`}
+              className={`fp${(openPanel === "type" || hasValue("type", filter)) ? " fp-on" : ""}`}
               onClick={() => togglePanel("type")}>
               {getPillLabel("type", filter)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
             </button>
 
             <button type="button" data-testid="filterLocation"
-              className={`fp${openPanel === "location" ? " fp-on" : ""}`}
+              className={`fp${(openPanel === "location" || hasValue("location", filter)) ? " fp-on" : ""}`}
               onClick={() => togglePanel("location")}>
               {getPillLabel("location", filter)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
             </button>
 
             <button type="button" data-testid="filterPrice"
-              className={`fp${openPanel === "price" ? " fp-on" : ""}`}
+              className={`fp${(openPanel === "price" || hasValue("price", filter)) ? " fp-on" : ""}`}
               onClick={() => togglePanel("price")}>
               {getPillLabel("price", filter)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
             </button>
 
             <button type="button" data-testid="filterBedrooms"
-              className={`fp${openPanel === "bedrooms" ? " fp-on" : ""}`}
+              className={`fp${(openPanel === "bedrooms" || hasValue("bedrooms", filter)) ? " fp-on" : ""}`}
               onClick={() => togglePanel("bedrooms")}>
               {getPillLabel("bedrooms", filter)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
             </button>
@@ -571,15 +639,25 @@ export default function HorizontalFilter() {
 
             {/* More... — toggles Row 2 */}
             <button type="button" data-testid="filterMore"
-              className={`fp${showMore ? " fp-on" : ""}`}
+              className={`fp fp-more${showMore ? " fp-on" : ""}`}
               onClick={toggleMore}>
               More… <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
             </button>
 
             <div style={{ flex: 1 }} />
 
+            <button type="button" data-testid="filterClear" className="fc"
+              onClick={handleClear}>
+              Clear
+            </button>
+
             <button type="button" data-testid="filterSearch" className="fs"
-              onClick={() => console.log("Filter:", filter)}>
+              onClick={() => {
+                const params = buildParams(filter);
+                const qs = params.toString();
+                console.log("Search →", `/properties${qs ? `?${qs}` : ""}`);
+                router.push(`/properties${qs ? `?${qs}` : ""}`);
+              }}>
               Search
             </button>
           </div>
@@ -594,31 +672,31 @@ export default function HorizontalFilter() {
             <div style={{ marginTop: 10 }}>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
                 <button type="button" data-testid="filterFeatures"
-                  className={`fp${openPanel === "features" ? " fp-on" : ""}`}
+                  className={`fp${(openPanel === "features" || hasValue("features", filter)) ? " fp-on" : ""}`}
                   onClick={() => togglePanel("features")}>
                   {getPillLabel("features", filter)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
                 </button>
 
                 <button type="button" data-testid="filterBathrooms"
-                  className={`fp${openPanel === "bathrooms" ? " fp-on" : ""}`}
+                  className={`fp${(openPanel === "bathrooms" || hasValue("bathrooms", filter)) ? " fp-on" : ""}`}
                   onClick={() => togglePanel("bathrooms")}>
                   {getPillLabel("bathrooms", filter)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
                 </button>
 
                 <button type="button" data-testid="filterSize"
-                  className={`fp${openPanel === "size" ? " fp-on" : ""}`}
+                  className={`fp${(openPanel === "size" || hasValue("size", filter)) ? " fp-on" : ""}`}
                   onClick={() => togglePanel("size")}>
                   {getPillLabel("size", filter)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
                 </button>
 
                 <button type="button" data-testid="filterYearBuilt"
-                  className={`fp${openPanel === "yearBuilt" ? " fp-on" : ""}`}
+                  className={`fp${(openPanel === "yearBuilt" || hasValue("yearBuilt", filter)) ? " fp-on" : ""}`}
                   onClick={() => togglePanel("yearBuilt")}>
                   {getPillLabel("yearBuilt", filter)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
                 </button>
 
                 <button type="button" data-testid="filterCondition"
-                  className={`fp${openPanel === "condition" ? " fp-on" : ""}`}
+                  className={`fp${(openPanel === "condition" || hasValue("condition", filter)) ? " fp-on" : ""}`}
                   onClick={() => togglePanel("condition")}>
                   {getPillLabel("condition", filter)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
                 </button>

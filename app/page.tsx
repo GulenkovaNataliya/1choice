@@ -1,8 +1,26 @@
+import type { Metadata } from "next";
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import HeroVideo from "@/components/HeroVideo";
 import PropertyCard from "@/components/Property/PropertyCard";
 import Footer from "@/components/Layout/Footer";
+
+export const metadata: Metadata = {
+  title: "1Choice | Real Estate in Greece",
+  description:
+    "Curated properties for sale in Greece, 1ChoiceDeals, and Golden Visa guidance.",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "1Choice | Real Estate in Greece",
+    description:
+      "Curated properties for sale in Greece, 1ChoiceDeals, and Golden Visa guidance.",
+    url: "https://1choice.gr/",
+    siteName: "1Choice",
+    type: "website",
+  },
+};
 
 function titleCase(s: string) {
   return s
@@ -38,8 +56,9 @@ export default async function Home() {
 
   const { data } = await supabase
     .from("properties")
-    .select("id,title,slug,price,location,bedrooms,bathrooms,size,cover_image_path")
+    .select("id,title,slug,price,location,bedrooms,bathrooms,size,featured,created_at,cover_image_path")
     .eq("featured", true)
+    .order("created_at", { ascending: false })
     .limit(4);
 
   const featured = (data ?? []).map((p) => ({
@@ -58,8 +77,32 @@ export default async function Home() {
     size_sqm: p.size ?? undefined,
   }));
 
+  const schemaOrg = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "1Choice",
+    url: "https://1choice.gr",
+    logo: "https://1choice.gr/logo/logo-main.png",
+  };
+
+  const schemaWebSite = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "1Choice",
+    url: "https://1choice.gr",
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaOrg) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaWebSite) }}
+      />
+
       {/* 1. Hero */}
       <HeroVideo />
 

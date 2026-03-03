@@ -21,12 +21,18 @@ export const metadata: Metadata = {
   },
 };
 
+const PAGE_SIZE = 12;
+
 export default async function PropertiesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ location?: string }>;
+  searchParams: Promise<{ location?: string; page?: string }>;
 }) {
-  const { location } = await searchParams;
+  const { location, page: pageParam } = await searchParams;
+
+  const page = Math.max(1, Number(pageParam ?? "1") || 1);
+  const from = (page - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -34,18 +40,29 @@ export default async function PropertiesPage({
 
   let q = supabase
     .from("properties")
-    .select("id,title,slug,price,location,bedrooms,bathrooms,size,featured,created_at,cover_image_path")
+    .select(
+      "id,title,slug,price,location,bedrooms,bathrooms,size,featured,created_at,cover_image_path",
+      { count: "exact" }
+    )
     .order("featured", { ascending: false })
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
   if (location) q = q.eq("location", location);
 
-  const { data } = await q;
+  const { data, count } = await q;
   const properties = (data ?? []) as PropertyRow[];
+  const total = count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <Suspense>
-      <PropertiesClient initialProperties={properties} />
+      <PropertiesClient
+        initialProperties={properties}
+        currentPage={page}
+        totalPages={totalPages}
+        total={total}
+      />
     </Suspense>
   );
 }

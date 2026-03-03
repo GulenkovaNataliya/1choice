@@ -247,7 +247,17 @@ function FilterChips({ chips, onRemove }: { chips: Chip[]; onRemove: (keys: stri
 
 // ─── Main client component ────────────────────────────────────────────────────
 
-export default function PropertiesClient({ initialProperties }: { initialProperties: PropertyRow[] }) {
+export default function PropertiesClient({
+  initialProperties,
+  currentPage,
+  totalPages,
+  total,
+}: {
+  initialProperties: PropertyRow[];
+  currentPage: number;
+  totalPages: number;
+  total: number;
+}) {
   const params = useSearchParams();
   const router = useRouter();
 

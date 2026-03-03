@@ -71,6 +71,8 @@ export default async function PropertiesPage({
   const properties = (data ?? []) as PropertyRow[];
   const total = count ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const hasNext = page < totalPages;
+  const hasPrev = page > 1;
 
   return (
     <Suspense>
@@ -79,6 +81,8 @@ export default async function PropertiesPage({
         currentPage={page}
         totalPages={totalPages}
         total={total}
+        hasNext={hasNext}
+        hasPrev={hasPrev}
       />
     </Suspense>
   );

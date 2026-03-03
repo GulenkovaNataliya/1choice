@@ -253,11 +253,15 @@ export default function PropertiesClient({
   currentPage,
   totalPages,
   total,
+  hasNext,
+  hasPrev,
 }: {
   initialProperties: PropertyRow[];
   currentPage: number;
   totalPages: number;
   total: number;
+  hasNext: boolean;
+  hasPrev: boolean;
 }) {
   const params = useSearchParams();
   const router = useRouter();
@@ -377,7 +381,7 @@ export default function PropertiesClient({
 
           {totalPages > 1 && (
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 16, marginTop: 48 }}>
-              {currentPage > 1 ? (
+              {hasPrev ? (
                 <Link
                   href={prevParams.toString() ? `/properties?${prevParams.toString()}` : "/properties"}
                   onClick={(e) => e.stopPropagation()}
@@ -393,7 +397,7 @@ export default function PropertiesClient({
                 {currentPage} / {totalPages}
               </span>
 
-              {currentPage < totalPages ? (
+              {hasNext ? (
                 <Link
                   href={nextParams.toString() ? `/properties?${nextParams.toString()}` : "/properties"}
                   onClick={(e) => e.stopPropagation()}

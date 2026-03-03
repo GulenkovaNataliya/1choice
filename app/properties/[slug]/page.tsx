@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import PropertyDetailClient from "./PropertyDetailClient";
 
 export async function generateMetadata({
@@ -15,7 +16,7 @@ export async function generateMetadata({
 
   const { data } = await supabase
     .from("properties")
-    .select("title, price, location")
+    .select("title, price, location, cover_image_path")
     .eq("slug", slug)
     .single();
 
@@ -25,6 +26,11 @@ export async function generateMetadata({
     };
   }
 
+  const supabaseHost = new URL(url).host;
+  const ogImage = data.cover_image_path
+    ? `https://${supabaseHost}/storage/v1/object/public/property-images/${data.cover_image_path}`
+    : undefined;
+
   return {
     title: `${data.title} | 1Choice`,
     description: `€${data.price} property located in ${data.location}. Explore full details on 1Choice.`,
@@ -33,6 +39,7 @@ export async function generateMetadata({
       description: `€${data.price} property located in ${data.location}.`,
       type: "article",
       url: `https://1choice.gr/properties/${slug}`,
+      images: ogImage ? [{ url: ogImage }] : undefined,
     },
   };
 }
@@ -55,7 +62,9 @@ export default async function PropertyDetailPage({
     .eq("slug", slug)
     .single();
 
-  const schema = property ? {
+  if (!property) notFound();
+
+  const schema = {
     "@context": "https://schema.org",
     "@type": "RealEstateListing",
     name: property.title,
@@ -65,16 +74,14 @@ export default async function PropertyDetailPage({
       price: property.price,
       priceCurrency: "EUR",
     },
-  } : null;
+  };
 
   return (
     <>
-      {schema && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-        />
-      )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      />
       <PropertyDetailClient />
     </>
   );

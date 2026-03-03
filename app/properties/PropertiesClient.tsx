@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useMemo } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { ReadonlyURLSearchParams } from "next/navigation";
 import type { PropertyRow } from "@/lib/properties/fetchProperties";
@@ -267,16 +268,18 @@ export default function PropertiesClient({
 
   const filtered = applySort(applyFilters(initialProperties, params), sort);
 
-  const PAGE_SIZE = 12;
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const selectedLocation = params.get("location");
 
-  const paramStr = params.toString();
-  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [paramStr]);
+  const baseParams = new URLSearchParams();
+  if (selectedLocation) baseParams.set("location", selectedLocation);
 
-  const visible = filtered.slice(0, visibleCount);
-  const hasMore = visibleCount < filtered.length;
+  const prevParams = new URLSearchParams(baseParams);
+  prevParams.set("page", String(Math.max(1, currentPage - 1)));
 
-  const uiItems = visible.map(p => ({
+  const nextParams = new URLSearchParams(baseParams);
+  nextParams.set("page", String(Math.min(totalPages, currentPage + 1)));
+
+  const uiItems = filtered.map(p => ({
     id: p.id,
     slug: p.slug,
     title: p.title,
@@ -293,6 +296,7 @@ export default function PropertiesClient({
   function removeFilter(keys: string[]) {
     const next = new URLSearchParams(params.toString());
     keys.forEach(k => next.delete(k));
+    next.set("page", "1");
     const qs = next.toString();
     router.replace(`/properties${qs ? `?${qs}` : ""}`);
   }
@@ -310,7 +314,6 @@ export default function PropertiesClient({
   return (
     <>
       <style>{`
-        .lm-btn:hover{box-shadow:0 4px 18px rgba(58,46,79,0.28)}
         .rs-btn:hover{box-shadow:0 4px 18px rgba(58,46,79,0.28)}
         @media (min-width:1024px){
           .filter-sticky-wrap{position:sticky;top:0;z-index:100;background:#FFFFFF;border-bottom:1px solid #D9D9D9}
@@ -323,6 +326,7 @@ export default function PropertiesClient({
           onSearch={(p) => {
             const existingSort = params.get("sort");
             if (existingSort) p.set("sort", existingSort);
+            p.set("page", "1");
             const qs = p.toString();
             router.replace(`/properties${qs ? `?${qs}` : ""}`);
           }}
@@ -353,7 +357,7 @@ export default function PropertiesClient({
             <>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
                 <p style={{ fontSize: 14, color: "#888888", margin: 0 }}>
-                  {`Showing ${visible.length} of ${filtered.length} result${filtered.length === 1 ? "" : "s"}`}
+                  {`Showing ${filtered.length} of ${total} result${total === 1 ? "" : "s"}`}
                 </p>
                 <select value={sort} onChange={e => setSort(e.target.value as SortKey)}
                   style={{ height: 36, border: "1px solid #D9D9D9", borderRadius: 8, padding: "0 12px", fontSize: 14, color: "#1E1E1E", background: "#FFFFFF", cursor: "pointer", outline: "none" }}>
@@ -367,12 +371,33 @@ export default function PropertiesClient({
                 ))}
               </div>
 
-              {hasMore && (
-                <div style={{ display: "flex", justifyContent: "center", marginTop: 48 }}>
-                  <button type="button" className="lm-btn" onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
-                    style={{ background: "#3A2E4F", color: "#D9D9D9", border: "none", borderRadius: 16, padding: "12px 40px", fontSize: 15, fontWeight: 500, cursor: "pointer", transition: "box-shadow 0.2s" }}>
-                    Load more
-                  </button>
+              {totalPages > 1 && (
+                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 16, marginTop: 48 }}>
+                  {currentPage > 1 ? (
+                    <Link
+                      href={`/properties?${prevParams.toString()}`}
+                      style={{ background: "#3A2E4F", color: "#D9D9D9", borderRadius: 16, padding: "12px 32px", fontSize: 15, fontWeight: 500, textDecoration: "none" }}
+                    >
+                      ← Prev
+                    </Link>
+                  ) : (
+                    <span style={{ padding: "12px 32px", fontSize: 15, color: "#D9D9D9" }}>← Prev</span>
+                  )}
+
+                  <span style={{ fontSize: 14, color: "#888888" }}>
+                    {currentPage} / {totalPages}
+                  </span>
+
+                  {currentPage < totalPages ? (
+                    <Link
+                      href={`/properties?${nextParams.toString()}`}
+                      style={{ background: "#3A2E4F", color: "#D9D9D9", borderRadius: 16, padding: "12px 32px", fontSize: 15, fontWeight: 500, textDecoration: "none" }}
+                    >
+                      Next →
+                    </Link>
+                  ) : (
+                    <span style={{ padding: "12px 32px", fontSize: 15, color: "#D9D9D9" }}>Next →</span>
+                  )}
                 </div>
               )}
             </>

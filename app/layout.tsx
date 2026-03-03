@@ -13,6 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://1choice.gr"),
   title: "First Choice Real Estate",
   description: "Private Greek properties. Selected carefully.",
 };

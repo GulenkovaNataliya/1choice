@@ -28,6 +28,12 @@ export async function generateMetadata({
   return {
     title: `${data.title} | 1Choice`,
     description: `€${data.price} property located in ${data.location}. Explore full details on 1Choice.`,
+    openGraph: {
+      title: `${data.title} | 1Choice`,
+      description: `€${data.price} property located in ${data.location}.`,
+      type: "article",
+      url: `https://1choice.gr/properties/${slug}`,
+    },
   };
 }
 

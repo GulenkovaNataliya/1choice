@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { ReadonlyURLSearchParams } from "next/navigation";
-import { fetchProperties, type PropertyRow } from "@/lib/properties/fetchProperties";
+import type { PropertyRow } from "@/lib/properties/fetchProperties";
 import { publicImageUrl } from "@/lib/storage/publicImageUrl";
 import PropertyCard from "@/components/Property/PropertyCard";
 import HorizontalFilter, { type FilterState } from "@/components/Home/HorizontalFilter";
@@ -247,30 +247,15 @@ function FilterChips({ chips, onRemove }: { chips: Chip[]; onRemove: (keys: stri
 
 // ─── Main client component ────────────────────────────────────────────────────
 
-export default function PropertiesClient() {
+export default function PropertiesClient({ initialProperties }: { initialProperties: PropertyRow[] }) {
   const params = useSearchParams();
   const router = useRouter();
 
   const sort = (params.get("sort") ?? "curated") as SortKey;
   const chips = buildChips(params);
   const initialFilter = useMemo(() => parseParamsToFilter(params), [params]);
-  const selectedLocationSlug = params.get("location") ?? null;
 
-  const [properties, setProperties] = useState<PropertyRow[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let mounted = true;
-    setLoading(true);
-    fetchProperties({ location: selectedLocationSlug }).then((rows) => {
-      if (!mounted) return;
-      setProperties(rows);
-      setLoading(false);
-    });
-    return () => { mounted = false; };
-  }, [selectedLocationSlug]);
-
-  const filtered = applySort(applyFilters(properties, params), sort);
+  const filtered = applySort(applyFilters(initialProperties, params), sort);
 
   const PAGE_SIZE = 12;
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -343,7 +328,7 @@ export default function PropertiesClient() {
 
           <FilterChips chips={chips} onRemove={removeFilter} />
 
-          {!loading && filtered.length === 0 && (
+          {filtered.length === 0 && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "80px 24px", gap: 12 }}>
               <div style={{ fontSize: 20, fontWeight: 600, color: "#1E1E1E" }}>No properties found</div>
               <div style={{ fontSize: 14, color: "#888888" }}>Try adjusting your filters.</div>
@@ -354,7 +339,7 @@ export default function PropertiesClient() {
             </div>
           )}
 
-          {!loading && filtered.length > 0 && (
+          {filtered.length > 0 && (
             <>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
                 <p style={{ fontSize: 14, color: "#888888", margin: 0 }}>

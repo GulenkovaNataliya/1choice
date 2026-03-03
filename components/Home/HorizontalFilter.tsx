@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { LOCATIONS, LOCATION_GROUPS } from "@/components/Data/locations";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -38,7 +39,6 @@ const INITIAL: FilterState = {
 
 const TRANSACTIONS   = ["Buy", "Rent", "Antiparochi"];
 const PROPERTY_TYPES = ["Apartment", "Maisonette", "House", "Villa", "Land", "Commercial", "Investment"];
-const LOCATIONS      = ["Athens Centre", "Glyfada", "Kifisia", "Kolonaki", "Piraeus", "Santorini", "Thessaloniki"];
 const BEDROOMS_OPTS  = ["1+", "2+", "3+", "4+", "5+"];
 const BATHROOMS_OPTS = ["1+", "2+", "3+", "4+"];
 const CONDITIONS     = ["Renovated", "Needs renovation", "Under construction"];
@@ -57,7 +57,10 @@ function getPillLabel(key: PanelKey, f: FilterState): string {
       if (!f.propertyTypes.length) return "Property Type";
       if (f.propertyTypes.length === 1) return f.propertyTypes[0];
       return `Type (${f.propertyTypes.length})`;
-    case "location": return f.location || "Location";
+    case "location": {
+      if (!f.location) return "Location";
+      return LOCATIONS.find(l => l.slug === f.location)?.label ?? f.location;
+    }
     case "price":
       if (!f.priceMin && !f.priceMax) return "Price";
       if (f.priceMin && f.priceMax) return `€${f.priceMin}k – €${f.priceMax}k`;
@@ -118,7 +121,7 @@ function buildParams(f: FilterState): URLSearchParams {
   if (f.propertyTypes.length)
     p.set("type", f.propertyTypes.map(t => t.toLowerCase()).join(","));
   if (f.location)
-    p.set("location", f.location.toLowerCase().replace(/\s+/g, "-"));
+    p.set("location", f.location);
   if (f.priceMin)           p.set("priceMin", f.priceMin);
   if (f.priceMax)           p.set("priceMax", f.priceMax);
   if (f.bedrooms)           p.set("bedrooms", f.bedrooms.replace("+", ""));
@@ -154,15 +157,17 @@ const STYLES = `
     transition:background .15s,color .15s}
   .fp:hover{background:#C8C8C8}
   .fp-on{background:#3A2E4F!important;color:#D9D9D9!important}
-  .fs{height:42px;border-radius:21px;border:1px solid #C1121F;background:#1E1E1E;color:#C1121F;
+  .fs{height:42px;border-radius:16px;border:1px solid #C1121F;background:#D9D9D9;color:#C1121F;
     padding:0 28px;font-size:14px;font-weight:600;cursor:pointer;flex-shrink:0;
-    transition:background .15s}
-  .fs:hover{background:#3A2E4F}
+    transition:background .15s,color .15s,border-color .15s}
+  .fs:hover{background:#3A2E4F;border-color:#3A2E4F;color:#D9D9D9}
+  .fs:active{background:#3A2E4F;border-color:#3A2E4F;color:#D9D9D9}
   .fc{height:42px;border-radius:21px;border:1px solid #D9D9D9;background:transparent;
     color:#3A2E4F;padding:0 20px;font-size:14px;cursor:pointer;flex-shrink:0;
     transition:border-color .15s,color .15s}
   .fc:hover{border-color:#C1121F;color:#C1121F}
-  .fp-more,.fp-more.fp-on{color:#C1121F!important}
+  .fp-more{color:#C1121F!important}
+  .fp-more.fp-on{background:#3A2E4F!important;color:#D9D9D9!important}
   .chip{height:34px;border-radius:17px;border:1px solid #D9D9D9;background:#FFFFFF;
     color:#3A2E4F;font-size:13px;cursor:pointer;padding:0 14px;flex-shrink:0;
     transition:background .15s}
@@ -199,10 +204,11 @@ const PANEL_STYLE: React.CSSProperties = {
   overflowY: "auto",
 };
 
-function InlinePanel({ openPanel, filter, setFilter }: {
+function InlinePanel({ openPanel, filter, setFilter, onClose }: {
   openPanel: PanelKey;
   filter: FilterState;
   setFilter: React.Dispatch<React.SetStateAction<FilterState>>;
+  onClose: () => void;
 }) {
   if (!openPanel) return null;
   return (
@@ -230,18 +236,32 @@ function InlinePanel({ openPanel, filter, setFilter }: {
         </div>
       )}
       {openPanel === "location" && (
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          <button type="button"
-            className={`chip${!filter.location ? " chip-on" : ""}`}
-            onClick={() => setFilter(f => ({ ...f, location: "" }))}>
-            Any
-          </button>
-          {LOCATIONS.map(opt => (
-            <button key={opt} type="button"
-              className={`chip${filter.location === opt ? " chip-on" : ""}`}
-              onClick={() => setFilter(f => ({ ...f, location: opt }))}>
-              {opt}
+        <div>
+          <div style={{ marginBottom: 10 }}>
+            <button type="button"
+              className={`chip${!filter.location ? " chip-on" : ""}`}
+              onClick={() => { setFilter(f => ({ ...f, location: "" })); onClose(); }}>
+              Any
             </button>
+          </div>
+          {LOCATION_GROUPS.map(group => (
+            <div key={group} style={{ marginBottom: 10 }}>
+              <div style={{
+                fontSize: 10, fontWeight: 700, color: "#AAAAAA",
+                textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 6,
+              }}>
+                {group}
+              </div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {LOCATIONS.filter(l => l.group === group).map(loc => (
+                  <button key={loc.slug} type="button"
+                    className={`chip${filter.location === loc.slug ? " chip-on" : ""}`}
+                    onClick={() => { setFilter(f => ({ ...f, location: loc.slug })); onClose(); }}>
+                    {loc.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -407,15 +427,29 @@ function MobileDrawer({ open, filter, setFilter, onClose, onApply, onClear }: {
           </MobAccordion>
 
           <MobAccordion title="Location" id="location" open={acc === "location"} onToggle={setAcc}>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              <button type="button" className={`chip${!filter.location ? " chip-on" : ""}`}
-                onClick={() => setFilter(f => ({ ...f, location: "" }))}>Any</button>
-              {LOCATIONS.map(opt => (
-                <button key={opt} type="button"
-                  className={`chip${filter.location === opt ? " chip-on" : ""}`}
-                  onClick={() => setFilter(f => ({ ...f, location: opt }))}>
-                  {opt}
-                </button>
+            <div>
+              <div style={{ marginBottom: 8 }}>
+                <button type="button" className={`chip${!filter.location ? " chip-on" : ""}`}
+                  onClick={() => setFilter(f => ({ ...f, location: "" }))}>Any</button>
+              </div>
+              {LOCATION_GROUPS.map(group => (
+                <div key={group} style={{ marginBottom: 10 }}>
+                  <div style={{
+                    fontSize: 10, fontWeight: 700, color: "#AAAAAA",
+                    textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 6,
+                  }}>
+                    {group}
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {LOCATIONS.filter(l => l.group === group).map(loc => (
+                      <button key={loc.slug} type="button"
+                        className={`chip${filter.location === loc.slug ? " chip-on" : ""}`}
+                        onClick={() => setFilter(f => ({ ...f, location: loc.slug }))}>
+                        {loc.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </MobAccordion>
@@ -516,11 +550,18 @@ function MobileDrawer({ open, filter, setFilter, onClose, onApply, onClear }: {
 
 // ─── Main component ──────────────────────────────────────────────────────────
 
-export default function HorizontalFilter() {
+type Props = {
+  /** Pre-populate filter state from URL params (used on /properties). */
+  initialFilter?: Partial<FilterState>;
+  /** When provided, called on Search/Clear instead of router.push (caller handles URL update). */
+  onSearch?: (params: URLSearchParams) => void;
+};
+
+export default function HorizontalFilter({ initialFilter, onSearch }: Props = {}) {
   const router = useRouter();
   const [openPanel, setOpenPanel] = useState<PanelKey>(null);
   const [showMore, setShowMore] = useState(false);
-  const [filter, setFilter] = useState<FilterState>(INITIAL);
+  const [filter, setFilter] = useState<FilterState>({ ...INITIAL, ...initialFilter });
   const [isMobile, setIsMobile] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -550,6 +591,16 @@ export default function HorizontalFilter() {
     return () => mq.removeEventListener("change", h);
   }, []);
 
+  // Sync filter state when initialFilter changes externally (URL updated via chips / back-forward)
+  const initKey = JSON.stringify(initialFilter ?? null);
+  const prevInitKey = useRef(initKey);
+  useEffect(() => {
+    if (prevInitKey.current === initKey) return;
+    prevInitKey.current = initKey;
+    setFilter({ ...INITIAL, ...initialFilter });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initKey]);
+
   function togglePanel(key: PanelKey) {
     setOpenPanel(prev => prev === key ? null : key);
   }
@@ -572,7 +623,8 @@ export default function HorizontalFilter() {
     setFilter(INITIAL);
     setOpenPanel(null);
     setShowMore(false);
-  }, []);
+    if (onSearch) onSearch(new URLSearchParams());
+  }, [onSearch]);
 
   const row1PanelOpen = openPanel !== null && (ROW1_KEYS as string[]).includes(openPanel);
   const row2PanelOpen = openPanel !== null && (ROW2_KEYS as string[]).includes(openPanel);
@@ -653,10 +705,13 @@ export default function HorizontalFilter() {
 
             <button type="button" data-testid="filterSearch" className="fs"
               onClick={() => {
-                const params = buildParams(filter);
-                const qs = params.toString();
-                console.log("Search →", `/properties${qs ? `?${qs}` : ""}`);
-                router.push(`/properties${qs ? `?${qs}` : ""}`);
+                const p = buildParams(filter);
+                if (onSearch) {
+                  onSearch(p);
+                } else {
+                  const qs = p.toString();
+                  router.push(`/properties${qs ? `?${qs}` : ""}`);
+                }
               }}>
               Search
             </button>
@@ -664,7 +719,7 @@ export default function HorizontalFilter() {
 
           {/* Row 1 inline panel */}
           {row1PanelOpen && (
-            <InlinePanel openPanel={openPanel} filter={filter} setFilter={setFilter} />
+            <InlinePanel openPanel={openPanel} filter={filter} setFilter={setFilter} onClose={() => setOpenPanel(null)} />
           )}
 
           {/* Row 2 — only when More... is active */}
@@ -704,7 +759,7 @@ export default function HorizontalFilter() {
 
               {/* Row 2 inline panel */}
               {row2PanelOpen && (
-                <InlinePanel openPanel={openPanel} filter={filter} setFilter={setFilter} />
+                <InlinePanel openPanel={openPanel} filter={filter} setFilter={setFilter} onClose={() => setOpenPanel(null)} />
               )}
             </div>
           )}

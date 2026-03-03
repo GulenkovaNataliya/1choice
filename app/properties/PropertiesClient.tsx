@@ -313,6 +313,7 @@ export default function PropertiesClient({
     const next = new URLSearchParams(params.toString());
     if (value === "curated") next.delete("sort");
     else next.set("sort", value);
+    next.delete("page");
     const qs = next.toString();
     router.replace(`/properties${qs ? `?${qs}` : ""}`);
   }
@@ -378,6 +379,10 @@ export default function PropertiesClient({
               </div>
             </>
           )}
+
+          <div style={{ fontSize: 12, opacity: 0.7 }}>
+            page={currentPage} totalPages={totalPages} total={total} hasNext={String(hasNext)}
+          </div>
 
           {totalPages > 1 && (
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 16, marginTop: 48 }}>

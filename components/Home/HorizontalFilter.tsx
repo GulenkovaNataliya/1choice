@@ -725,6 +725,12 @@ export default function HorizontalFilter({ initialFilter, onSearch }: Props = {}
             </button>
 
             <button type="button" data-testid="filterSearch" className="fs"
+              style={{
+                backgroundColor: "#D9D9D9",
+                color: "#C1121F",
+                border: "1px solid #C1121F",
+                borderRadius: "16px",
+              }}
               onClick={() => {
                 const p = buildParams(filter);
                 if (onSearch) {

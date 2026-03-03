@@ -273,11 +273,13 @@ export default function PropertiesClient({
   const baseParams = new URLSearchParams();
   if (selectedLocation) baseParams.set("location", selectedLocation);
 
+  const prevPage = Math.max(1, currentPage - 1);
   const prevParams = new URLSearchParams(baseParams);
-  prevParams.set("page", String(Math.max(1, currentPage - 1)));
+  if (prevPage > 1) prevParams.set("page", String(prevPage));
 
+  const nextPage = Math.min(totalPages, currentPage + 1);
   const nextParams = new URLSearchParams(baseParams);
-  nextParams.set("page", String(Math.min(totalPages, currentPage + 1)));
+  if (nextPage > 1) nextParams.set("page", String(nextPage));
 
   const uiItems = filtered.map(p => ({
     id: p.id,
@@ -296,7 +298,7 @@ export default function PropertiesClient({
   function removeFilter(keys: string[]) {
     const next = new URLSearchParams(params.toString());
     keys.forEach(k => next.delete(k));
-    next.set("page", "1");
+    next.delete("page");
     const qs = next.toString();
     router.replace(`/properties${qs ? `?${qs}` : ""}`);
   }
@@ -326,7 +328,7 @@ export default function PropertiesClient({
           onSearch={(p) => {
             const existingSort = params.get("sort");
             if (existingSort) p.set("sort", existingSort);
-            p.set("page", "1");
+            p.delete("page");
             const qs = p.toString();
             router.replace(`/properties${qs ? `?${qs}` : ""}`);
           }}
@@ -370,37 +372,39 @@ export default function PropertiesClient({
                   <PropertyCard key={item.id} property={item} testId={`propertyCard-${item.id}`} />
                 ))}
               </div>
-
-              {totalPages > 1 && (
-                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 16, marginTop: 48 }}>
-                  {currentPage > 1 ? (
-                    <Link
-                      href={`/properties?${prevParams.toString()}`}
-                      style={{ background: "#3A2E4F", color: "#D9D9D9", borderRadius: 16, padding: "12px 32px", fontSize: 15, fontWeight: 500, textDecoration: "none" }}
-                    >
-                      ← Prev
-                    </Link>
-                  ) : (
-                    <span style={{ padding: "12px 32px", fontSize: 15, color: "#D9D9D9" }}>← Prev</span>
-                  )}
-
-                  <span style={{ fontSize: 14, color: "#888888" }}>
-                    {currentPage} / {totalPages}
-                  </span>
-
-                  {currentPage < totalPages ? (
-                    <Link
-                      href={`/properties?${nextParams.toString()}`}
-                      style={{ background: "#3A2E4F", color: "#D9D9D9", borderRadius: 16, padding: "12px 32px", fontSize: 15, fontWeight: 500, textDecoration: "none" }}
-                    >
-                      Next →
-                    </Link>
-                  ) : (
-                    <span style={{ padding: "12px 32px", fontSize: 15, color: "#D9D9D9" }}>Next →</span>
-                  )}
-                </div>
-              )}
             </>
+          )}
+
+          {totalPages > 1 && (
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 16, marginTop: 48 }}>
+              {currentPage > 1 ? (
+                <Link
+                  href={prevParams.toString() ? `/properties?${prevParams.toString()}` : "/properties"}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ background: "#3A2E4F", color: "#D9D9D9", borderRadius: 16, padding: "12px 32px", fontSize: 15, fontWeight: 500, textDecoration: "none" }}
+                >
+                  ← Prev
+                </Link>
+              ) : (
+                <span style={{ padding: "12px 32px", fontSize: 15, color: "#D9D9D9" }}>← Prev</span>
+              )}
+
+              <span style={{ fontSize: 14, color: "#888888" }}>
+                {currentPage} / {totalPages}
+              </span>
+
+              {currentPage < totalPages ? (
+                <Link
+                  href={nextParams.toString() ? `/properties?${nextParams.toString()}` : "/properties"}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ background: "#3A2E4F", color: "#D9D9D9", borderRadius: 16, padding: "12px 32px", fontSize: 15, fontWeight: 500, textDecoration: "none" }}
+                >
+                  Next →
+                </Link>
+              ) : (
+                <span style={{ padding: "12px 32px", fontSize: 15, color: "#D9D9D9" }}>Next →</span>
+              )}
+            </div>
           )}
 
         </div>

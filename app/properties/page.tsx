@@ -4,22 +4,39 @@ import { createClient } from "@supabase/supabase-js";
 import PropertiesClient from "./PropertiesClient";
 import type { PropertyRow } from "@/lib/properties/fetchProperties";
 
-export const metadata: Metadata = {
-  title: "Properties for Sale in Greece | 1Choice",
-  description:
-    "Curated properties for sale in Greece. Apartments, villas, investment opportunities and Golden Visa eligible real estate.",
-  alternates: {
-    canonical: "/properties",
-  },
-  openGraph: {
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ location?: string; page?: string }>;
+}): Promise<Metadata> {
+  const { location, page: pageParam } = await searchParams;
+
+  const p = new URLSearchParams();
+  if (location) p.set("location", location);
+
+  const page = Number(pageParam ?? "1");
+  if (page > 1) p.set("page", String(page));
+
+  const query = p.toString();
+  const canonical = query ? `/properties?${query}` : "/properties";
+
+  return {
     title: "Properties for Sale in Greece | 1Choice",
     description:
-      "Curated properties for sale in Greece. Apartments, villas and investment real estate in Greece.",
-    url: "https://1choice.gr/properties",
-    siteName: "1Choice",
-    type: "website",
-  },
-};
+      "Curated properties for sale in Greece. Apartments, villas, investment opportunities and Golden Visa eligible real estate.",
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      title: "Properties for Sale in Greece | 1Choice",
+      description:
+        "Curated properties for sale in Greece. Apartments, villas and investment real estate in Greece.",
+      url: "https://1choice.gr/properties",
+      siteName: "1Choice",
+      type: "website",
+    },
+  };
+}
 
 const PAGE_SIZE = 12;
 

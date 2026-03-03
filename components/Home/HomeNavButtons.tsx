@@ -3,10 +3,14 @@
 import Link from "next/link";
 
 const BUTTONS = [
-  { label: "Properties", href: "/properties", testId: "navProperties" },
-  { label: "1ChoiceDeals", href: "/1choicedeals", testId: "navDeals" },
-  { label: "Golden Visa", href: "/golden-visa-greece", testId: "navGoldenVisa" },
-  { label: "Private Collection", href: "/private", testId: "navVip" },
+  { label: "Properties",                   href: "/properties",                  testId: "navProperties" },
+  { label: "1ChoiceDeals",                 href: "/1choicedeals",                testId: "navDeals" },
+  { label: "Golden Visa",                  href: "/golden-visa-greece",          testId: "navGoldenVisa" },
+  { label: "Investment & Ownership Guide", href: "/investment-ownership-guide",  testId: "navGuide" },
+  { label: "Private Collection",           href: "/private",                     testId: "navVip" },
+  { label: "About 1Choice",                href: "/about",                       testId: "navAbout" },
+  { label: "Contact",                      href: "/contact",                     testId: "navContact" },
+  { label: "Legal",                        href: "/legal",                       testId: "navLegal" },
 ];
 
 export default function HomeNavButtons() {

@@ -3,12 +3,14 @@
 import Link from "next/link";
 
 const LINKS = [
-  { label: "Properties", href: "/properties", testId: "footerLink-properties" },
-  { label: "1ChoiceDeals", href: "/1choicedeals", testId: "footerLink-deals" },
-  { label: "Golden Visa", href: "/golden-visa-greece", testId: "footerLink-gv" },
-  { label: "About", href: "/about", testId: "footerLink-about" },
-  { label: "Contact", href: "/contact", testId: "footerLink-contact" },
-  { label: "Legal", href: "/legal", testId: "footerLink-legal" },
+  { label: "Properties",                   href: "/properties",                 testId: "footerLink-properties" },
+  { label: "1ChoiceDeals",                 href: "/1choicedeals",               testId: "footerLink-deals" },
+  { label: "Golden Visa",                  href: "/golden-visa-greece",         testId: "footerLink-gv" },
+  { label: "Investment & Ownership Guide", href: "/investment-ownership-guide", testId: "footerLink-guide" },
+  { label: "Private Collection",           href: "/private",                    testId: "footerLink-private" },
+  { label: "About 1Choice",                href: "/about",                      testId: "footerLink-about" },
+  { label: "Contact",                      href: "/contact",                    testId: "footerLink-contact" },
+  { label: "Legal",                        href: "/legal",                      testId: "footerLink-legal" },
 ];
 
 const linkStyle: React.CSSProperties = {

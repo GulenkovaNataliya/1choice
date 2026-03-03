@@ -186,6 +186,7 @@ const STYLES = `
   .mob-close{background:none;border:none;cursor:pointer;color:#1E1E1E;font-size:26px;
     line-height:1;padding:0 2px}
   .mob-close:hover{opacity:.6}
+  .filter-label{font-size:12px;color:#888888;margin:0 0 10px}
   .mob-apply{flex:2;height:44px;border-radius:22px;border:none;background:#3A2E4F;
     color:#D9D9D9;font-size:15px;font-weight:600;cursor:pointer}
   .mob-apply:hover{background:#1E1E1E}
@@ -249,7 +250,7 @@ function InlinePanel({ openPanel, filter, setFilter, onClose }: {
           {LOCATION_GROUPS.map(group => (
             <div key={group} style={{ marginBottom: 10 }}>
               <div style={{
-                fontSize: 10, fontWeight: 700, color: "#AAAAAA",
+                fontSize: 10, fontWeight: 700, color: "#1E1E1E",
                 textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 6,
               }}>
                 {group}
@@ -269,7 +270,7 @@ function InlinePanel({ openPanel, filter, setFilter, onClose }: {
       )}
       {openPanel === "price" && (
         <div style={{ maxWidth: 320 }}>
-          <p style={{ margin: "0 0 10px", fontSize: 12, color: "#888" }}>Price range (€ thousands)</p>
+          <p className="filter-label">Price range (€ thousands)</p>
           <div style={{ display: "flex", gap: 8 }}>
             <input type="number" placeholder="Min" value={filter.priceMin}
               data-testid="filterInputMin" className="fp-inp"
@@ -315,7 +316,7 @@ function InlinePanel({ openPanel, filter, setFilter, onClose }: {
       )}
       {openPanel === "size" && (
         <div style={{ maxWidth: 320 }}>
-          <p style={{ margin: "0 0 10px", fontSize: 12, color: "#888" }}>Size range (sqm)</p>
+          <p className="filter-label">Size range (sqm)</p>
           <div style={{ display: "flex", gap: 8 }}>
             <input type="number" placeholder="Min" value={filter.sizeMin}
               className="fp-inp"
@@ -328,7 +329,7 @@ function InlinePanel({ openPanel, filter, setFilter, onClose }: {
       )}
       {openPanel === "yearBuilt" && (
         <div style={{ maxWidth: 320 }}>
-          <p style={{ margin: "0 0 10px", fontSize: 12, color: "#888" }}>Year built</p>
+          <p className="filter-label">Year built</p>
           <div style={{ display: "flex", gap: 8 }}>
             <input type="number" placeholder="From" value={filter.yearMin}
               className="fp-inp"

@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import HeroVideo from "@/components/HeroVideo";
 import PropertyCard from "@/components/Property/PropertyCard";
+import QuickLinksGrid from "@/components/Home/QuickLinksGrid";
 import Footer from "@/components/Layout/Footer";
 
 export const metadata: Metadata = {
@@ -30,23 +31,6 @@ function titleCase(s: string) {
     .join(" ");
 }
 
-const QUICK_LINKS = [
-  {
-    label: "1ChoiceDeals",
-    desc: "Exclusive curated deals for savvy investors.",
-    href: "/1choicedeals",
-  },
-  {
-    label: "Golden Visa",
-    desc: "Investment pathways to Greek residency.",
-    href: "/golden-visa-greece",
-  },
-  {
-    label: "Investment & Ownership Guide",
-    desc: "Everything you need to buy property in Greece.",
-    href: "/investment-ownership-guide",
-  },
-];
 
 export default async function Home() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -109,45 +93,7 @@ export default async function Home() {
       {/* 2. Quick Links */}
       <section style={{ background: "#FFFFFF", padding: "64px 24px" }}>
         <div style={{ maxWidth: 1360, margin: "0 auto" }}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-              gap: 20,
-            }}
-          >
-            {QUICK_LINKS.map(({ label, desc, href }) => (
-              <Link
-                key={href}
-                href={href}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 8,
-                  background: "#F4F4F4",
-                  borderRadius: 16,
-                  padding: "28px 24px",
-                  textDecoration: "none",
-                  color: "inherit",
-                  border: "1px solid transparent",
-                  transition: "border-color 0.2s, box-shadow 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "#3A2E4F";
-                  e.currentTarget.style.boxShadow = "0 4px 16px rgba(58,46,79,0.12)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "transparent";
-                  e.currentTarget.style.boxShadow = "none";
-                }}
-              >
-                <span style={{ fontSize: 16, fontWeight: 600, color: "#1E1E1E" }}>
-                  {label}
-                </span>
-                <span style={{ fontSize: 13, color: "#404040" }}>{desc}</span>
-              </Link>
-            ))}
-          </div>
+          <QuickLinksGrid />
         </div>
       </section>
 

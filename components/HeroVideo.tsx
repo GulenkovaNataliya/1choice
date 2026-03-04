@@ -187,7 +187,10 @@ export default function HeroVideo() {
             color: "#3A2E4F",
             margin: 0,
             maxWidth: 480,
-            textShadow: "0 1px 2px rgba(0,0,0,0.25)",
+            background: "rgba(255,255,255,0.75)",
+            padding: "6px 12px",
+            borderRadius: 6,
+            display: "inline-block",
           }}
         >
           Curated villas, apartments and investment properties across Greece.

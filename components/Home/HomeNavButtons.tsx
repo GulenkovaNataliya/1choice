@@ -1,75 +1,43 @@
-"use client";
-
 import Link from "next/link";
 
-const BUTTONS = [
-  { label: "Properties", href: "/properties", testId: "navProperties" },
-  { label: "1ChoiceDeals", href: "/1choicedeals", testId: "navDeals" },
-  { label: "Golden Visa", href: "/golden-visa-greece", testId: "navGoldenVisa" },
-  { label: "Private Collection", href: "/private", testId: "navVip" },
+type NavItem =
+  | { label: string; href: string; disabled?: false }
+  | { label: string; disabled: true };
+
+const NAV_ITEMS: NavItem[] = [
+  { label: "Properties", href: "/properties" },
+  { label: "1ChoiceDeals", href: "/1choicedeals" },
+  { label: "Golden Visa", href: "/golden-visa-greece" },
+  { label: "Private Collection", disabled: true },
 ];
+
+const BASE = "flex items-center justify-center rounded-xl px-6 py-5 text-center font-medium bg-[#3A2E4F] text-[#D9D9D9]";
 
 export default function HomeNavButtons() {
   return (
-    <section style={{ backgroundColor: "#FFFFFF", width: "100%" }}>
-      <div
-        style={{
-          maxWidth: 1360,
-          margin: "0 auto",
-          padding: "24px 24px 32px",
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: 32,
-        }}
-        className="home-nav-grid"
-      >
-        {BUTTONS.map(({ label, href, testId }) => (
-          <Link
-            key={href}
-            href={href}
-            data-testid={testId}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              minHeight: 72,
-              backgroundColor: "#3A2E4F",
-              color: "#D9D9D9",
-              border: "1px solid #3A2E4F",
-              borderRadius: 16,
-              fontSize: 16,
-              fontWeight: 500,
-              textDecoration: "none",
-              textAlign: "center",
-              padding: "16px 24px",
-              transition: "border-color 0.2s, box-shadow 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "#C1121F";
-              e.currentTarget.style.boxShadow = "0 2px 12px rgba(193,18,31,0.15)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "#3A2E4F";
-              e.currentTarget.style.boxShadow = "none";
-            }}
-          >
-            {label}
-          </Link>
-        ))}
+    <section className="w-full px-4 md:px-8 py-10">
+      <div className="mx-auto w-full max-w-5xl">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          {NAV_ITEMS.map((item) =>
+            item.disabled ? (
+              <span
+                key={item.label}
+                className={`${BASE} opacity-50 pointer-events-none cursor-default`}
+              >
+                {item.label}
+              </span>
+            ) : (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`${BASE} hover:opacity-90 transition`}
+              >
+                {item.label}
+              </Link>
+            )
+          )}
+        </div>
       </div>
-
-      <style>{`
-        @media (max-width: 640px) {
-          .home-nav-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
-            gap: 16px !important;
-          }
-        }
-        .home-nav-grid a:focus-visible {
-          outline: 2px solid #C1121F;
-          outline-offset: 3px;
-        }
-      `}</style>
     </section>
   );
 }

@@ -8,8 +8,6 @@ const DRAWER_LINKS = [
   { label: "Golden Visa", href: "/golden-visa-greece" },
   { label: "Investment & Ownership Guide", href: "/investment-ownership-guide" },
   { label: "Private Collection", href: "/private" },
-  { label: "About 1Choice", href: "/about" },
-  { label: "Contact", href: "/contact" },
   { label: "Legal", href: "/legal" },
 ];
 
@@ -155,85 +153,6 @@ export default function HeroVideo() {
           </div>
         </div>
       )}
-
-      {/* Centered overlay — headline + CTAs */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 10,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "0 24px",
-          textAlign: "center",
-          pointerEvents: "none",
-        }}
-      >
-        <h1
-          style={{
-            fontSize: "clamp(28px, 5vw, 52px)",
-            fontWeight: 700,
-            color: "#FFFFFF",
-            lineHeight: 1.2,
-            margin: "0 0 16px",
-            textShadow: "0 2px 10px rgba(0,0,0,0.45)",
-          }}
-        >
-          Properties in Greece,<br />Selected Carefully
-        </h1>
-        <p
-          style={{
-            fontSize: 17,
-            color: "rgba(255,255,255,0.88)",
-            margin: "0 0 36px",
-            maxWidth: 480,
-            textShadow: "0 1px 5px rgba(0,0,0,0.35)",
-          }}
-        >
-          Curated villas, apartments and investment properties across Greece.
-        </p>
-        <div
-          style={{
-            display: "flex",
-            gap: 14,
-            flexWrap: "wrap",
-            justifyContent: "center",
-            pointerEvents: "auto",
-          }}
-        >
-          <a
-            href="/properties"
-            style={{
-              background: "#FFFFFF",
-              color: "#1E1E1E",
-              padding: "13px 30px",
-              borderRadius: 16,
-              fontSize: 15,
-              fontWeight: 600,
-              textDecoration: "none",
-            }}
-          >
-            Browse Properties
-          </a>
-          <a
-            href="/contact"
-            style={{
-              background: "rgba(255,255,255,0.12)",
-              color: "#FFFFFF",
-              border: "1.5px solid rgba(255,255,255,0.65)",
-              padding: "13px 30px",
-              borderRadius: 16,
-              fontSize: 15,
-              fontWeight: 500,
-              textDecoration: "none",
-            }}
-          >
-            Contact
-          </a>
-        </div>
-      </div>
 
       {/* Video */}
       <video

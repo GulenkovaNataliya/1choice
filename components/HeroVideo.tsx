@@ -186,7 +186,7 @@ export default function HeroVideo() {
             fontSize: 17,
             color: "#3A2E4F",
             margin: 0,
-            maxWidth: 480,
+            whiteSpace: "nowrap",
             background: "rgba(255,255,255,0.75)",
             padding: "6px 12px",
             borderRadius: 6,

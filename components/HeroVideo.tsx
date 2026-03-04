@@ -154,6 +154,46 @@ export default function HeroVideo() {
         </div>
       )}
 
+      {/* Centered text overlay */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 10,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "0 24px",
+          textAlign: "center",
+          pointerEvents: "none",
+        }}
+      >
+        <h1
+          style={{
+            fontSize: "clamp(28px, 5vw, 52px)",
+            fontWeight: 700,
+            color: "#FFFFFF",
+            lineHeight: 1.2,
+            margin: "0 0 16px",
+            textShadow: "0 2px 10px rgba(0,0,0,0.45)",
+          }}
+        >
+          Properties in Greece,<br />Selected Carefully
+        </h1>
+        <p
+          style={{
+            fontSize: 17,
+            color: "#3A2E4F",
+            margin: 0,
+            maxWidth: 480,
+            textShadow: "0 1px 2px rgba(0,0,0,0.25)",
+          }}
+        >
+          Curated villas, apartments and investment properties across Greece.
+        </p>
+      </div>
+
       {/* Video */}
       <video
         autoPlay

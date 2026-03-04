@@ -1,27 +1,48 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
 import Link from "next/link";
-import { getSupabase } from "@/lib/supabase/client";
-import { publicImageUrl } from "@/lib/storage/publicImageUrl";
+import PropertyGalleryClient from "@/components/Property/PropertyGalleryClient";
+import PropertyAccordionsClient from "@/components/Property/PropertyAccordionsClient";
+import PropertyCard from "@/components/Property/PropertyCard";
 
-// ─── Type ─────────────────────────────────────────────────────────────────────
+// ── Types ───────────────────────────────────────────────────────────────────
 
-type Property = {
+export type PropertyData = {
   id: string;
   title: string;
   slug: string;
-  price: number;
+  price: number | null;
   location: string;
   bedrooms: number | null;
   bathrooms: number | null;
   size: number | null;
   featured: boolean | null;
   cover_image_path: string | null;
+  is_golden_visa?: boolean | null;
+  is_1choice_deal?: boolean | null;
+  description?: string | null;
+  floor?: number | null;
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+type SimilarProperty = {
+  id: string;
+  slug: string;
+  title: string;
+  area: string;
+  price_eur: number | null;
+  is_golden_visa: boolean;
+  is_1choice_deal: boolean;
+  cover_image: string | null;
+  bedrooms?: number;
+  bathrooms?: number;
+  size_sqm?: number;
+};
+
+type Props = {
+  property: PropertyData;
+  coverUrl: string | null;
+  similarProperties: SimilarProperty[];
+};
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
 
 function formatPrice(price: number) {
   return "€" + price.toLocaleString("en-EU");
@@ -31,146 +52,25 @@ function titleCase(s: string) {
   return s
     .replace(/-/g, " ")
     .split(" ")
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
 }
 
-const SLOT_BG = ["#E8E8E8", "#DDDDE4", "#E4E0DC", "#DCE4E0", "#E0DCE4"];
-const IMAGE_COUNT = 5;
-
-// ─── Image Gallery ────────────────────────────────────────────────────────────
-
-function ImageGallery({ title, coverUrl }: { title: string; coverUrl: string | null }) {
-  const [active, setActive] = useState(0);
-
-  return (
-    <div>
-      {/* Main image — 16:9 */}
-      <div
-        style={{
-          position: "relative",
-          width: "100%",
-          paddingTop: "56.25%",
-          background: SLOT_BG[active],
-          borderRadius: 12,
-          overflow: "hidden",
-          marginBottom: 10,
-        }}
-      >
-        {coverUrl && active === 0 ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={coverUrl}
-            alt={title}
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        ) : (
-          <div
-            style={{
-              position: "absolute", inset: 0,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              color: "#AAAAAA", fontSize: 14,
-            }}
-          >
-            Photo {active + 1}
-          </div>
-        )}
-      </div>
-
-      {/* Thumbnail strip */}
-      <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
-        {Array.from({ length: IMAGE_COUNT }, (_, i) => (
-          <button
-            key={i}
-            type="button"
-            onClick={() => setActive(i)}
-            style={{
-              flexShrink: 0,
-              width: 88,
-              height: 60,
-              borderRadius: 8,
-              border: active === i ? "2px solid #3A2E4F" : "2px solid transparent",
-              outline: "none",
-              background: SLOT_BG[i],
-              cursor: "pointer",
-              padding: 0,
-              transition: "border-color 0.15s",
-              overflow: "hidden",
-              position: "relative",
-            }}
-          >
-            {coverUrl && i === 0 ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={coverUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            ) : (
-              <span style={{ fontSize: 11, color: "#AAAAAA" }}>{i + 1}</span>
-            )}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── Contact Panel ────────────────────────────────────────────────────────────
-
-function ContactPanel() {
-  return (
-    <div
-      style={{
-        background: "#F9F9F9",
-        border: "1px solid #EBEBEB",
-        borderRadius: 16,
-        padding: "28px 24px",
-      }}
-    >
-      <div style={{ fontSize: 17, fontWeight: 600, color: "#1E1E1E", marginBottom: 20 }}>
-        Request Information
-      </div>
-
-      <button
-        type="button"
-        style={{
-          width: "100%", height: 48, borderRadius: 12, border: "none",
-          background: "#1E1E1E", color: "#C1121F",
-          fontSize: 15, fontWeight: 600, cursor: "pointer", marginBottom: 12,
-        }}
-      >
-        Contact Agent
-      </button>
-
-      <button
-        type="button"
-        style={{
-          width: "100%", height: 48, borderRadius: 12, border: "none",
-          background: "#3A2E4F", color: "#D9D9D9",
-          fontSize: 15, fontWeight: 500, cursor: "pointer",
-        }}
-      >
-        Schedule Viewing
-      </button>
-    </div>
-  );
-}
-
-// ─── Breadcrumb ───────────────────────────────────────────────────────────────
+// ── Sub-components ───────────────────────────────────────────────────────────
 
 function Breadcrumb({ title }: { title: string }) {
   return (
-    <nav aria-label="Breadcrumb" style={{ marginBottom: 20 }}>
-      <ol
-        style={{
-          listStyle: "none", margin: 0, padding: 0,
-          display: "flex", flexWrap: "wrap", alignItems: "center",
-        }}
-      >
-        <li className="bc-item">
-          <Link href="/" className="bc-link">Home</Link>
+    <nav aria-label="Breadcrumb" className="mb-5">
+      <ol className="flex flex-wrap items-center gap-x-2 text-sm text-[#404040]">
+        <li>
+          <Link href="/" className="hover:text-[#3A2E4F] transition">Home</Link>
+          <span className="ml-2 text-[#BBBBBB] select-none">/</span>
         </li>
-        <li className="bc-item">
-          <Link href="/properties" className="bc-link">Properties</Link>
+        <li>
+          <Link href="/properties" className="hover:text-[#3A2E4F] transition">Properties</Link>
+          <span className="ml-2 text-[#BBBBBB] select-none">/</span>
         </li>
-        <li className="bc-item" aria-current="page" style={{ color: "#404040" }}>
+        <li className="text-[#404040] truncate max-w-[200px]" aria-current="page">
           {title}
         </li>
       </ol>
@@ -178,171 +78,162 @@ function Breadcrumb({ title }: { title: string }) {
   );
 }
 
-// ─── Client component ─────────────────────────────────────────────────────────
+function SpecPill({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="flex flex-col items-center bg-[#F4F4F4] rounded-xl px-5 py-3 min-w-[80px]">
+      <span className="text-lg font-bold text-[#1E1E1E]">{value}</span>
+      <span className="text-xs text-[#888888] uppercase tracking-wide mt-0.5">{label}</span>
+    </div>
+  );
+}
 
-export default function PropertyDetailClient() {
-  const { slug } = useParams<{ slug: string }>();
+// ── Main component ───────────────────────────────────────────────────────────
 
-  const [property, setProperty] = useState<Property | null>(null);
-  const [loading, setLoading] = useState(true);
+export default function PropertyDetailClient({ property, coverUrl, similarProperties }: Props) {
+  const {
+    title, price, location, bedrooms, bathrooms, size, featured,
+    is_golden_visa, is_1choice_deal, description, floor,
+  } = property;
 
-  useEffect(() => {
-    const load = async () => {
-      const supabase = getSupabase();
-      const { data } = await supabase
-        .from("properties")
-        .select("*")
-        .eq("slug", slug)
-        .single();
+  const areaLabel = titleCase(location ?? "");
 
-      setProperty(data);
-      setLoading(false);
-    };
-
-    load();
-  }, [slug]);
-
-  if (loading) return null;
-
-  // 404 state
-  if (!property) {
-    return (
-      <main style={{ background: "#FFFFFF", minHeight: "100vh" }}>
-        <div
-          style={{
-            maxWidth: 1360, margin: "0 auto", padding: "80px 24px",
-            display: "flex", flexDirection: "column", alignItems: "center",
-            gap: 16, textAlign: "center",
-          }}
-        >
-          <div style={{ fontSize: 56, fontWeight: 700, color: "#D9D9D9" }}>404</div>
-          <div style={{ fontSize: 20, fontWeight: 600, color: "#1E1E1E" }}>
-            Property not found
-          </div>
-          <div style={{ fontSize: 14, color: "#888888" }}>
-            This listing may have been removed or the URL is incorrect.
-          </div>
-          <Link
-            href="/properties"
-            style={{
-              marginTop: 8, color: "#3A2E4F",
-              fontSize: 14, fontWeight: 500, textDecoration: "none",
-            }}
-          >
-            ← Back to Properties
-          </Link>
-        </div>
-      </main>
-    );
-  }
-
-  const { title, price, location, bedrooms, bathrooms, size, cover_image_path } = property;
-  const areaLabel = titleCase(location);
-  const coverUrl = cover_image_path ? publicImageUrl(cover_image_path) : null;
-
-  const specs = [
-    bedrooms  ? { label: "Bedrooms",  value: String(bedrooms) }  : null,
-    bathrooms ? { label: "Bathrooms", value: String(bathrooms) } : null,
-    size      ? { label: "Size",      value: `${size} sqm` }     : null,
-  ].filter(Boolean) as { label: string; value: string }[];
+  const mapsQuery = encodeURIComponent(`${areaLabel}, Greece`);
 
   return (
-    <>
-      <style>{`
-        .pd-grid {
-          display: flex;
-          flex-direction: column;
-          gap: 32px;
-          margin-top: 36px;
-        }
-        .pd-sticky { /* normal flow on mobile */ }
-        @media (min-width: 768px) {
-          .pd-grid {
-            display: grid;
-            grid-template-columns: 1fr 300px;
-            gap: 48px;
-            align-items: start;
-          }
-          .pd-sticky {
-            position: sticky;
-            top: 24px;
-          }
-        }
-        .pd-spec-pill {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding: 12px 20px;
-          background: #F4F4F4;
-          border-radius: 12px;
-          min-width: 80px;
-        }
-        .pd-sep {
-          border: none;
-          border-top: 1px solid #F0F0F0;
-          margin: 28px 0;
-        }
-        .bc-item { font-size: 13px; color: #404040; }
-        .bc-item:not(:last-child)::after {
-          content: "/";
-          margin: 0 8px;
-          color: #BBBBBB;
-          user-select: none;
-        }
-        .bc-link { color: #404040; text-decoration: none; transition: color 0.15s; }
-        .bc-link:hover { color: #3A2E4F; }
-      `}</style>
+    <main className="min-h-screen bg-white">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 pb-20">
 
-      <main style={{ background: "#FFFFFF", minHeight: "100vh" }}>
-        <div style={{ maxWidth: 1360, margin: "0 auto", padding: "40px 24px 80px" }}>
+        {/* Gallery — full width */}
+        <PropertyGalleryClient
+          title={title}
+          coverUrl={coverUrl}
+          isFeatured={featured ?? false}
+          isGoldenVisa={is_golden_visa ?? false}
+          is1ChoiceDeal={is_1choice_deal ?? false}
+        />
 
-          <ImageGallery title={title} coverUrl={coverUrl} />
+        {/* 2-column layout */}
+        <div className="flex flex-col md:flex-row gap-10 mt-10">
 
-          <div className="pd-grid">
+          {/* ── LEFT ~65% ── */}
+          <div className="w-full md:w-[65%] flex flex-col gap-6">
+            <Breadcrumb title={title} />
 
-            {/* ── LEFT COLUMN ── */}
             <div>
-              <Breadcrumb title={title} />
-
-              <h1
-                style={{
-                  fontSize: 28, fontWeight: 700, color: "#1E1E1E",
-                  margin: "0 0 8px", lineHeight: 1.3,
-                }}
-              >
+              <h1 className="text-2xl md:text-3xl font-bold text-[#1E1E1E] leading-tight mb-2">
                 {title}
               </h1>
-
-              <div style={{ fontSize: 15, color: "#404040", marginBottom: 20 }}>
-                {areaLabel}
-              </div>
-
-              <div style={{ fontSize: 28, fontWeight: 700, color: "#1E1E1E", marginBottom: 28 }}>
-                {price ? formatPrice(price) : "Price on request"}
-              </div>
-
-              {specs.length > 0 && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 28 }}>
-                  {specs.map(s => (
-                    <div key={s.label} className="pd-spec-pill">
-                      <span style={{ fontSize: 18, fontWeight: 700, color: "#1E1E1E" }}>{s.value}</span>
-                      <span style={{ fontSize: 11, color: "#888888", marginTop: 2 }}>{s.label.toUpperCase()}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <p className="text-[#404040] text-sm">{areaLabel}</p>
             </div>
 
-            {/* ── RIGHT COLUMN — sticky on desktop ── */}
+            <p className="text-2xl font-bold text-[#1E1E1E]">
+              {price ? formatPrice(price) : "Price on request"}
+            </p>
+
+            {/* Spec pills */}
+            <div className="flex flex-wrap gap-3">
+              {size      && <SpecPill value={`${size}`}       label="sqm" />}
+              {bedrooms  && <SpecPill value={`${bedrooms}`}   label="bedrooms" />}
+              {bathrooms && <SpecPill value={`${bathrooms}`}  label="bathrooms" />}
+              {floor     && <SpecPill value={`${floor}`}      label="floor" />}
+            </div>
+
+            {/* Description */}
+            {description && (
+              <div className="text-[#404040] text-sm leading-relaxed">
+                {description}
+              </div>
+            )}
+
+            {/* Characteristics grid */}
             <div>
-              <div className="pd-sticky">
-                <ContactPanel />
+              <h2 className="text-base font-semibold text-[#1E1E1E] mb-3">Characteristics</h2>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                {size      && <><span className="text-[#888888]">Size</span>        <span className="text-[#1E1E1E] font-medium">{size} sqm</span></>}
+                {bedrooms  && <><span className="text-[#888888]">Bedrooms</span>    <span className="text-[#1E1E1E] font-medium">{bedrooms}</span></>}
+                {bathrooms && <><span className="text-[#888888]">Bathrooms</span>   <span className="text-[#1E1E1E] font-medium">{bathrooms}</span></>}
+                {floor     && <><span className="text-[#888888]">Floor</span>       <span className="text-[#1E1E1E] font-medium">{floor}</span></>}
+                <span className="text-[#888888]">Location</span>  <span className="text-[#1E1E1E] font-medium">{areaLabel}</span>
               </div>
             </div>
 
+            {/* Accordions */}
+            <div>
+              <h2 className="text-base font-semibold text-[#1E1E1E] mb-3">Property Details</h2>
+              <PropertyAccordionsClient />
+            </div>
           </div>
+
+          {/* ── RIGHT ~35% sticky ── */}
+          <div className="w-full md:w-[35%]">
+            <div className="md:sticky md:top-8 self-start bg-white border border-[#E8E8E8] rounded-2xl p-6 flex flex-col gap-5">
+              <p className="text-2xl font-bold text-[#1E1E1E]">
+                {price ? formatPrice(price) : "Price on request"}
+              </p>
+
+              {/* Quick facts */}
+              <div className="flex flex-col gap-2 text-sm text-[#404040] border-b border-[#F0F0F0] pb-5">
+                {size      && <span>{size} sqm</span>}
+                {bedrooms  && <span>{bedrooms} bedrooms</span>}
+                {bathrooms && <span>{bathrooms} bathrooms</span>}
+                {floor     && <span>Floor {floor}</span>}
+                <span>{areaLabel}</span>
+              </div>
+
+              {/* CTAs */}
+              <div className="flex flex-col gap-3">
+                {/* TODO: wire to chat/consultation handler when available */}
+                <button
+                  type="button"
+                  disabled
+                  className="w-full py-3 rounded-xl bg-[#1E1E1E] text-[#C1121F] font-semibold text-sm opacity-60 cursor-default pointer-events-none"
+                >
+                  Start a Conversation
+                </button>
+                {/* TODO: wire to schedule viewing flow when available */}
+                <button
+                  type="button"
+                  disabled
+                  className="w-full py-3 rounded-xl bg-[#3A2E4F] text-[#D9D9D9] font-medium text-sm opacity-60 cursor-default pointer-events-none"
+                >
+                  Schedule Viewing
+                </button>
+              </div>
+            </div>
+          </div>
+
         </div>
-      </main>
-    </>
+
+        {/* Map */}
+        <section className="mt-16">
+          <h2 className="text-xl font-semibold text-[#1E1E1E] mb-4">Location</h2>
+          <div className="bg-[#F4F4F4] rounded-2xl h-64 flex flex-col items-center justify-center gap-4 border border-[#E8E8E8]">
+            <div className="w-16 h-16 rounded-full border-4 border-[#3A2E4F] opacity-30" />
+            <p className="text-[#888888] text-sm">Approximate area: {areaLabel}</p>
+            <a
+              href={`https://maps.google.com?q=${mapsQuery}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-[#3A2E4F] hover:opacity-70 transition underline underline-offset-2"
+            >
+              Open in Google Maps
+            </a>
+          </div>
+        </section>
+
+        {/* Similar Properties */}
+        {similarProperties.length > 0 && (
+          <section className="mt-16">
+            <h2 className="text-xl font-semibold text-[#1E1E1E] mb-6">Similar Properties</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {similarProperties.map((p) => (
+                <PropertyCard key={p.id} property={p} />
+              ))}
+            </div>
+          </section>
+        )}
+
+      </div>
+    </main>
   );
 }

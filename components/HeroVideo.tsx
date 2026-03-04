@@ -7,7 +7,6 @@ const DRAWER_LINKS = [
   { label: "1ChoiceDeals", href: "/1choicedeals" },
   { label: "Golden Visa", href: "/golden-visa-greece" },
   { label: "Investment & Ownership Guide", href: "/investment-ownership-guide" },
-  { label: "Private Collection", href: "/private" },
   { label: "Legal", href: "/legal" },
 ];
 

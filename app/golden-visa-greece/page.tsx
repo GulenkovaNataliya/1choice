@@ -116,9 +116,25 @@ export default async function GoldenVisaPage({
           {/* Right: catalog (~65%) */}
           <div className="w-full md:w-[65%]">
             {properties.length === 0 ? (
-              <p className="text-[#404040] text-base py-8">
-                Selected opportunities are shared upon request.
-              </p>
+              <div className="border border-[#D9D9D9] rounded-2xl p-8 flex flex-col gap-4 bg-white">
+                <h2 className="text-lg font-semibold text-[#1E1E1E]">
+                  Golden Visa Opportunities
+                </h2>
+                <p className="text-[#404040] text-sm leading-relaxed">
+                  Selected opportunities are shared upon request.
+                </p>
+                <p className="text-[#888888] text-sm leading-relaxed">
+                  Many qualifying opportunities are shared privately. Contact our advisor to receive curated options.
+                </p>
+                {/* TODO: wire to advisory consultation handler when available */}
+                <button
+                  type="button"
+                  disabled
+                  className="self-start bg-[#3A2E4F] text-[#D9D9D9] px-6 py-3 rounded-xl text-sm font-medium opacity-50 cursor-default pointer-events-none"
+                >
+                  Start a Golden Visa Consultation
+                </button>
+              </div>
             ) : (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">

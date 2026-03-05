@@ -1,7 +1,7 @@
-import { getSupabase } from "@/lib/supabase/client";
+// Re-exported for backwards compatibility.
+// Uses the render endpoint at catalog size (width=600, quality=75).
+import { renderImageUrl } from "@/lib/storage/imageUrl";
 
-export function publicImageUrl(path: string, bucket = "property-images") {
-  const supabase = getSupabase();
-  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-  return data.publicUrl;
+export function publicImageUrl(path: string, _bucket = "property-images"): string {
+  return renderImageUrl(path, "catalog", _bucket) ?? "";
 }

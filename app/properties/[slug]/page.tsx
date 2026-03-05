@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import PropertyDetailClient, { type PropertyData } from "./PropertyDetailClient";
+import { renderImageUrl } from "@/lib/storage/imageUrl";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -39,10 +40,7 @@ export async function generateMetadata({
     };
   }
 
-  const supabaseHost = new URL(url).host;
-  const ogImage = data.cover_image_path
-    ? `https://${supabaseHost}/storage/v1/object/public/property-images/${data.cover_image_path}`
-    : undefined;
+  const ogImage = renderImageUrl(data.cover_image_path, "gallery") ?? undefined;
 
   return {
     title: `${data.title} | 1Choice`,
@@ -69,8 +67,6 @@ export default async function PropertyDetailPage({
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
   const supabase = createClient(url, key);
-  const supabaseHost = new URL(url).host;
-
   // Fetch full property data
   const { data: property } = await supabase
     .from("properties")
@@ -80,9 +76,10 @@ export default async function PropertyDetailPage({
 
   if (!property) notFound();
 
-  const coverUrl = property.cover_image_path
-    ? `https://${supabaseHost}/storage/v1/object/public/property-images/${property.cover_image_path}`
-    : null;
+  const coverUrl = renderImageUrl(
+    property.cover_image_url ?? property.cover_image_path,
+    "gallery"
+  );
 
   // Similar properties (same location first, then fallback to recent)
   const { data: similar } = await supabase
@@ -102,9 +99,7 @@ export default async function PropertyDetailPage({
     price_eur: p.price,
     is_golden_visa: p.is_golden_visa ?? false,
     is_1choice_deal: false,
-    cover_image: p.cover_image_path
-      ? `https://${supabaseHost}/storage/v1/object/public/property-images/${p.cover_image_path}`
-      : null,
+    cover_image: renderImageUrl(p.cover_image_path, "catalog"),
     bedrooms: p.bedrooms ?? undefined,
     bathrooms: p.bathrooms ?? undefined,
     size_sqm: p.size ?? undefined,

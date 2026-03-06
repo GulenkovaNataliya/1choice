@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { createClient } from "@supabase/supabase-js";
 import PropertiesClient from "./PropertiesClient";
 import type { PropertyRow } from "@/lib/properties/fetchProperties";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function generateMetadata({
   searchParams,
@@ -51,9 +51,7 @@ export default async function PropertiesPage({
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  const supabase = createClient(url, key);
+  const supabase = await createSupabaseServerClient();
 
   let q = supabase
     .from("properties")

@@ -1,16 +1,13 @@
-import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import PropertiesTable, { type AdminProperty } from "@/components/admin/PropertiesTable";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata = {
   title: "Properties | Admin",
 };
 
 export default async function AdminPropertiesPage() {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const supabase = await createSupabaseServerClient();
 
   const { data: properties, error } = await supabase
     .from("properties")

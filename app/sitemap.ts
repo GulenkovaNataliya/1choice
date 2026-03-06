@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const BASE_URL = "https://1choice.gr";
 
@@ -13,12 +13,11 @@ const STATIC_PAGES: MetadataRoute.Sitemap = [
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return STATIC_PAGES;
+  }
 
-  if (!supabaseUrl || !supabaseKey) return STATIC_PAGES;
-
-  const supabase = createClient(supabaseUrl, supabaseKey);
+  const supabase = await createSupabaseServerClient();
 
   const { data: properties } = await supabase
     .from("properties")

@@ -1,24 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
+import { updateSupabaseSession } from "@/lib/supabase/middleware";
+
+// ── ADMIN_EMAILS allowlist ────────────────────────────────────────────────────
 
 /**
- * Admin route protection — email allowlist.
+ * Parse ADMIN_EMAILS from the environment into a normalised Set<string>.
  *
- * Requires cookie-based Supabase auth.
- * If you are using the default localStorage client, install @supabase/ssr
- * and update lib/supabase/client.ts to use a cookie storage adapter so the
- * access token is readable here.
+ * Expected format (comma-separated, spaces allowed):
+ *   ADMIN_EMAILS=alice@example.com, bob@example.com
  *
- * The Supabase access token is a signed JWT. We decode the payload (base64)
- * to read the email claim without making a network call.
- *
- * Cookie names checked (in order):
- *   sb-access-token                     ← @supabase/ssr default
- *   sb-<project-ref>-auth-token         ← legacy / custom setups
+ * Rules applied:
+ *   - Each value is trimmed of surrounding whitespace
+ *   - Lowercased for case-insensitive comparison
+ *   - Empty entries are discarded
  */
-
-const ADMIN_PREFIX = "/admin";
-
-/** Parse allowed emails from ADMIN_EMAILS env var (comma-separated). */
 function allowedEmails(): Set<string> {
   return new Set(
     (process.env.ADMIN_EMAILS ?? "")
@@ -28,79 +23,76 @@ function allowedEmails(): Set<string> {
   );
 }
 
-/** Decode a JWT payload without verifying the signature. */
-function decodeJwtPayload(token: string): Record<string, unknown> | null {
-  try {
-    const part = token.split(".")[1];
-    if (!part) return null;
-    // base64url → base64
-    const base64 = part.replace(/-/g, "+").replace(/_/g, "/");
-    const json = Buffer.from(base64, "base64").toString("utf8");
-    return JSON.parse(json) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
-
-/** Extract the email from an access token JWT. */
-function emailFromToken(token: string): string | null {
-  const payload = decodeJwtPayload(token);
-  if (!payload) return null;
-  // Supabase puts the user email in `email`
-  return typeof payload.email === "string" ? payload.email.toLowerCase() : null;
-}
+// ── Middleware ────────────────────────────────────────────────────────────────
 
 /**
- * Find the Supabase access token from the request cookies.
- * Supabase ssr stores it as "sb-access-token".
- * Older / custom setups may use "sb-<ref>-auth-token" (JSON value).
+ * Next.js middleware — runs before every matched request.
+ *
+ * Responsibilities:
+ *   1. Refresh the Supabase auth session cookie so it stays alive across
+ *      page navigations (handled inside updateSupabaseSession).
+ *   2. Protect /admin and all sub-routes: only users whose email is in the
+ *      ADMIN_EMAILS allowlist are permitted through.
+ *
+ * WHY COOKIE-BASED AUTH IS REQUIRED HERE:
+ *   Middleware runs on the Edge Runtime. There is no DOM, no window, and no
+ *   localStorage. The only auth state reachable from middleware is what
+ *   arrives in HTTP cookies. @supabase/ssr stores the session as a signed
+ *   cookie, making it the only reliable way to authenticate requests server-
+ *   side without an extra network call to Supabase's API on every request.
+ *
+ * REDIRECT TARGET: / (homepage)
+ *   Unauthenticated and unauthorised users are sent to the public homepage,
+ *   which avoids leaking the existence of the admin area via a /login page.
  */
-function getAccessToken(request: NextRequest): string | null {
-  // @supabase/ssr standard cookie
-  const direct = request.cookies.get("sb-access-token")?.value;
-  if (direct) return direct;
+export async function middleware(request: NextRequest) {
+  // Always run session refresh first — this keeps auth cookies alive and
+  // populates `user` from the validated JWT stored in the request cookie.
+  const { response, user } = await updateSupabaseSession(request);
 
-  // Legacy: sb-<project-ref>-auth-token contains a JSON-encoded session
-  for (const [name, cookie] of request.cookies) {
-    if (name.startsWith("sb-") && name.endsWith("-auth-token")) {
-      try {
-        const session = JSON.parse(cookie.value) as { access_token?: string };
-        if (session.access_token) return session.access_token;
-      } catch {
-        // not JSON — might be the raw token
-        return cookie.value;
-      }
-    }
-  }
-
-  return null;
-}
-
-export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // TODO: re-enable admin protection using @supabase/ssr cookie-based auth
-  // (requires migrating lib/supabase/client.ts to a cookie storage adapter
-  //  so the access token is readable in middleware)
-  //
-  // if (!pathname.startsWith(ADMIN_PREFIX)) {
-  //   return NextResponse.next();
-  // }
-  // const token = getAccessToken(request);
-  // if (!token) {
-  //   return NextResponse.redirect(new URL("/", request.url));
-  // }
-  // const email = emailFromToken(token);
-  // const allowed = allowedEmails();
-  // if (!email || !allowed.has(email)) {
-  //   return NextResponse.redirect(new URL("/", request.url));
-  // }
+  // Only admin routes require further checks.
+  if (!pathname.startsWith("/admin")) {
+    return response;
+  }
 
-  void pathname; // suppress unused-var warning while guard is disabled
+  // ── Admin guard ──────────────────────────────────────────────────────────
 
-  return NextResponse.next();
+  // CASE A: user is not authenticated at all → redirect to homepage
+  if (!user) {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  // CASE B: user is authenticated but email is absent or not in the allowlist
+  const email = user.email?.toLowerCase() ?? "";
+  if (!email || !allowedEmails().has(email)) {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  // CASE C: authenticated + email is in ADMIN_EMAILS → allow through
+  return response;
 }
 
+// ── Matcher ───────────────────────────────────────────────────────────────────
+
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: [
+    /*
+     * Run on every request path EXCEPT:
+     *   _next/static   — compiled JS/CSS bundles
+     *   _next/image    — Next.js image optimisation API
+     *   favicon.ico    — browser favicon requests
+     *   sitemap.xml    — SEO sitemap
+     *   robots.txt     — crawler instructions
+     *   image files    — svg, png, jpg, jpeg, gif, webp
+     *
+     * This means middleware runs on all HTML pages (including public ones),
+     * but only /admin paths are subject to the auth guard above.
+     * CASE D: public routes (/, /properties, /golden-visa-greece, etc.)
+     *         hit middleware, get their session cookies refreshed, then pass
+     *         straight through — no redirect, no auth check.
+     */
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
 import PropertyDetailClient, { type PropertyData } from "./PropertyDetailClient";
 import { renderImageUrl } from "@/lib/storage/imageUrl";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -23,10 +23,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  const { createClient: create } = await import("@supabase/supabase-js");
-  const supabase = create(url, key);
+  const supabase = await createSupabaseServerClient();
 
   const { data } = await supabase
     .from("properties")
@@ -64,9 +61,7 @@ export default async function PropertyDetailPage({
 }) {
   const { slug } = await params;
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  const supabase = createClient(url, key);
+  const supabase = await createSupabaseServerClient();
   // Fetch full property data
   const { data: property } = await supabase
     .from("properties")

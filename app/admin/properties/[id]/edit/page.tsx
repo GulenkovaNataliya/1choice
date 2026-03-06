@@ -1,16 +1,13 @@
-import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import PropertyForm from "@/components/admin/PropertyForm";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata = {
   title: "Edit Property | Admin",
 };
 
 export default async function EditPropertyPage({ params }: { params: { id: string } }) {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const supabase = await createSupabaseServerClient();
 
   const { data: property, error } = await supabase
     .from("properties")

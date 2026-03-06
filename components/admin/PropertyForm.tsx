@@ -204,7 +204,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
       } else {
         lastSavedRef.current = current;
         setSaveStatus("saved");
-        logActivity(propertyId, "update", { autosave: true });
+        logActivity(propertyId!, "update", { autosave: true });
       }
     } catch {
       setSaveStatus("error");
@@ -266,7 +266,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
           const meta = slugChanged
             ? { slug_changed: true, from: originalSlug, to: newSlug }
             : { updated: true };
-          logActivity(propertyId, "update", meta);
+          logActivity(propertyId!, "update", meta);
           // Move the baseline forward so future edits don't re-insert the same redirect
           if (slugChanged) originalSlugRef.current = newSlug;
         }

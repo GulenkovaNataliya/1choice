@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import PropertyCard from "@/components/Property/PropertyCard";
 import GoldenVisaAccordionClient from "./GoldenVisaAccordionClient";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Golden Visa Greece | 1Choice",
@@ -31,10 +31,8 @@ export default async function GoldenVisaPage({
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  const supabase = createClient(url, key);
-  const supabaseHost = new URL(url).host;
+  const supabase = await createSupabaseServerClient();
+  const supabaseHost = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).host;
 
   // TODO: once `published` and `vip` columns exist in the `properties` table, set this to true:
   //   .eq("published", true)

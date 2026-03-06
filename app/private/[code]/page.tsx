@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
 import PropertyDetailClient, { type PropertyData } from "@/app/properties/[slug]/PropertyDetailClient";
 import { renderImageUrl } from "@/lib/storage/imageUrl";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata = {
   robots: { index: false, follow: false },
@@ -22,10 +22,7 @@ export default async function PrivatePropertyPage({
 }) {
   const { code } = await params;
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const supabase = await createSupabaseServerClient();
 
   // 1. Resolve by property_code
   const { data: property } = await supabase

@@ -168,6 +168,8 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
   // Tracks the JSON snapshot of the last successfully autosaved state
   const lastSavedRef = useRef<string>(JSON.stringify({ ...INITIAL, ...initialValues }));
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Capture the slug as it was when the edit page loaded — never changes
+  const originalSlugRef = useRef<string>(initialValues?.slug?.trim() ?? "");
 
   function set<K extends keyof FormState>(field: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -230,12 +232,35 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
       let dbError;
 
       if (mode === "edit") {
+        const newSlug = form.slug.trim() || toSlug(form.title);
+        const originalSlug = originalSlugRef.current;
+        const slugChanged = originalSlug && newSlug !== originalSlug;
+
+        // Insert slug redirect before updating the property
+        if (slugChanged) {
+          try {
+            await supabase.from("property_slug_redirects").insert({
+              old_slug: originalSlug,
+              property_id: propertyId,
+            });
+          } catch {
+            // Ignore — duplicate old_slug or any other error must not block the update
+          }
+        }
+
         const { error } = await supabase
           .from("properties")
           .update(buildPayload(form, true))
           .eq("id", propertyId);
         dbError = error;
-        if (!error) logActivity(propertyId, "update", { updated: true });
+        if (!error) {
+          const meta = slugChanged
+            ? { slug_changed: true, from: originalSlug, to: newSlug }
+            : { updated: true };
+          logActivity(propertyId, "update", meta);
+          // Move the baseline forward so future edits don't re-insert the same redirect
+          if (slugChanged) originalSlugRef.current = newSlug;
+        }
       } else {
         const { data: created, error } = await supabase
           .from("properties")

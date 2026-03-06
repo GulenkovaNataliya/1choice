@@ -54,6 +54,38 @@ function ActionButton({
   );
 }
 
+// ── Toggle switch ─────────────────────────────────────────────────────────────
+
+function Toggle({
+  on,
+  disabled,
+  onChange,
+  label,
+}: {
+  on: boolean;
+  disabled?: boolean;
+  onChange: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      onClick={onChange}
+      disabled={disabled}
+      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-40 disabled:cursor-default
+        ${on ? "bg-[#1E1E1E]" : "bg-[#D9D9D9]"}`}
+    >
+      <span
+        className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform duration-200
+          ${on ? "translate-x-4" : "translate-x-0"}`}
+      />
+    </button>
+  );
+}
+
 // ── Row ───────────────────────────────────────────────────────────────────────
 
 function PropertyRow({
@@ -72,6 +104,30 @@ function PropertyRow({
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const isArchived = property.status === "archived";
+
+  // Optimistic local state for publish toggles
+  const [pub1choice, setPub1choice] = useState(property.publish_1choice ?? false);
+  const [pubDeals, setPubDeals] = useState(property.publish_deals ?? false);
+
+  async function togglePublish(field: "publish_1choice" | "publish_deals") {
+    const next = field === "publish_1choice" ? !pub1choice : !pubDeals;
+    // Optimistic update
+    if (field === "publish_1choice") setPub1choice(next);
+    else setPubDeals(next);
+
+    const { error } = await getSupabase()
+      .from("properties")
+      .update({ [field]: next })
+      .eq("id", property.id);
+
+    if (error) {
+      // Roll back on failure
+      if (field === "publish_1choice") setPub1choice(!next);
+      else setPubDeals(!next);
+    } else {
+      logActivity(property.id, "update", { field, value: next });
+    }
+  }
 
   async function archive() {
     setBusy(true);
@@ -158,10 +214,18 @@ function PropertyRow({
           : <span className="text-[#AAAAAA]">—</span>}
       </td>
       <td className="px-4 py-3">
-        {property.publish_1choice ? <span className="text-[#1E1E1E] font-medium">Yes</span> : <span className="text-[#AAAAAA]">No</span>}
+        <Toggle
+          on={pub1choice}
+          onChange={() => togglePublish("publish_1choice")}
+          label="Toggle Publish 1Choice"
+        />
       </td>
       <td className="px-4 py-3">
-        {property.publish_deals ? <span className="text-[#1E1E1E] font-medium">Yes</span> : <span className="text-[#AAAAAA]">No</span>}
+        <Toggle
+          on={pubDeals}
+          onChange={() => togglePublish("publish_deals")}
+          label="Toggle Publish Deals"
+        />
       </td>
       <td className="px-4 py-3"><Badge active={property.vip} /></td>
       <td className="px-4 py-3"><Badge active={property.featured} /></td>

@@ -1,40 +1,39 @@
 import type { MetadataRoute } from "next";
 import { createClient } from "@supabase/supabase-js";
 
+const BASE_URL = "https://1choice.gr";
+
+const STATIC_PAGES: MetadataRoute.Sitemap = [
+  { url: `${BASE_URL}/`,                           changeFrequency: "weekly",  priority: 1.0 },
+  { url: `${BASE_URL}/properties`,                 changeFrequency: "daily",   priority: 0.9 },
+  { url: `${BASE_URL}/golden-visa-greece`,         changeFrequency: "monthly", priority: 0.8 },
+  { url: `${BASE_URL}/investment-ownership-guide`, changeFrequency: "monthly", priority: 0.7 },
+  { url: `${BASE_URL}/about`,                      changeFrequency: "monthly", priority: 0.6 },
+  { url: `${BASE_URL}/contact`,                    changeFrequency: "monthly", priority: 0.6 },
+];
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = "https://1choice.gr";
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  const staticUrls: MetadataRoute.Sitemap = [
-    { url: `${baseUrl}/`, changeFrequency: "weekly", priority: 1 },
-    { url: `${baseUrl}/properties`, changeFrequency: "daily", priority: 0.9 },
-    { url: `${baseUrl}/1choicedeals`, changeFrequency: "weekly", priority: 0.7 },
-    { url: `${baseUrl}/golden-visa-greece`, changeFrequency: "weekly", priority: 0.7 },
-    { url: `${baseUrl}/investment-ownership-guide`, changeFrequency: "monthly", priority: 0.6 },
-    { url: `${baseUrl}/private`, changeFrequency: "weekly", priority: 0.6 },
-    { url: `${baseUrl}/about`, changeFrequency: "monthly", priority: 0.5 },
-    { url: `${baseUrl}/contact`, changeFrequency: "monthly", priority: 0.5 },
-    { url: `${baseUrl}/legal`, changeFrequency: "yearly", priority: 0.3 },
-  ];
+  if (!supabaseUrl || !supabaseKey) return STATIC_PAGES;
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
-  if (!url || !key) return staticUrls;
-
-  const supabase = createClient(url, key);
-
-  const { data } = await supabase
+  const { data: properties } = await supabase
     .from("properties")
-    .select("slug, created_at")
-    .order("created_at", { ascending: false });
+    .select("slug, updated_at")
+    .eq("status", "published")
+    .eq("publish_1choice", true)
+    .eq("vip", false)
+    .not("slug", "is", null);
 
-  const propertyUrls: MetadataRoute.Sitemap =
-    (data ?? []).map((p) => ({
-      url: `${baseUrl}/properties/${p.slug}`,
-      lastModified: p.created_at ? new Date(p.created_at) : undefined,
-      changeFrequency: "weekly",
-      priority: 0.7,
-    }));
+  const propertyEntries: MetadataRoute.Sitemap = (properties ?? []).map((p) => ({
+    url: `${BASE_URL}/properties/${p.slug}`,
+    lastModified: p.updated_at ? new Date(p.updated_at) : undefined,
+    changeFrequency: "weekly",
+    priority: 0.8,
+  }));
 
-  return [...staticUrls, ...propertyUrls];
+  return [...STATIC_PAGES, ...propertyEntries];
 }

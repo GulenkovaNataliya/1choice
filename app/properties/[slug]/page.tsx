@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import PropertyDetailClient, { type PropertyData } from "./PropertyDetailClient";
 import { renderImageUrl } from "@/lib/storage/imageUrl";
@@ -74,7 +74,37 @@ export default async function PropertyDetailPage({
     .eq("slug", slug)
     .single();
 
-  if (!property) notFound();
+  if (!property) {
+    // Slug not found — check property_slug_redirects for a permanent redirect
+    const { data: redirect } = await supabase
+      .from("property_slug_redirects")
+      .select("property_id")
+      .eq("old_slug", slug)
+      .single();
+
+    if (redirect?.property_id) {
+      const { data: current } = await supabase
+        .from("properties")
+        .select("slug")
+        .eq("id", redirect.property_id)
+        .single();
+
+      if (current?.slug && current.slug !== slug) {
+        permanentRedirect(`/properties/${current.slug}`);
+      }
+    }
+
+    notFound();
+  }
+
+  // Public visibility guard — must pass all three conditions
+  if (
+    property.status !== "published" ||
+    property.publish_1choice !== true ||
+    property.vip === true
+  ) {
+    notFound();
+  }
 
   const coverUrl = renderImageUrl(
     property.cover_image_url ?? property.cover_image_path,

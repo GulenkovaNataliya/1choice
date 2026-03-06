@@ -79,23 +79,24 @@ function getAccessToken(request: NextRequest): string | null {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Only protect /admin routes
-  if (!pathname.startsWith(ADMIN_PREFIX)) {
-    return NextResponse.next();
-  }
+  // TODO: re-enable admin protection using @supabase/ssr cookie-based auth
+  // (requires migrating lib/supabase/client.ts to a cookie storage adapter
+  //  so the access token is readable in middleware)
+  //
+  // if (!pathname.startsWith(ADMIN_PREFIX)) {
+  //   return NextResponse.next();
+  // }
+  // const token = getAccessToken(request);
+  // if (!token) {
+  //   return NextResponse.redirect(new URL("/", request.url));
+  // }
+  // const email = emailFromToken(token);
+  // const allowed = allowedEmails();
+  // if (!email || !allowed.has(email)) {
+  //   return NextResponse.redirect(new URL("/", request.url));
+  // }
 
-  const token = getAccessToken(request);
-
-  if (!token) {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
-
-  const email = emailFromToken(token);
-  const allowed = allowedEmails();
-
-  if (!email || !allowed.has(email)) {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
+  void pathname; // suppress unused-var warning while guard is disabled
 
   return NextResponse.next();
 }

@@ -27,6 +27,9 @@ type FormState = {
   status: "draft" | "published" | "archived";
   cover_image_url: string;
   gallery_image_urls: string[];
+  latitude: string;
+  longitude: string;
+  approximate_location: boolean;
 };
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -50,6 +53,9 @@ const INITIAL: FormState = {
   status: "draft",
   cover_image_url: "",
   gallery_image_urls: [],
+  latitude: "",
+  longitude: "",
+  approximate_location: false,
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -83,6 +89,9 @@ function buildPayload(form: FormState, resolveSlug = false) {
     status: form.status,
     cover_image_url: form.cover_image_url || null,
     gallery_image_urls: form.gallery_image_urls,
+    latitude: form.latitude ? Number(form.latitude) : null,
+    longitude: form.longitude ? Number(form.longitude) : null,
+    approximate_location: form.approximate_location,
   };
 }
 
@@ -299,14 +308,20 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
         </div>
       )}
 
+      {/* Property Code */}
+      <div className="bg-white border border-[#E8E8E8] rounded-lg px-4 py-2.5">
+        <span className="text-xs text-[#AAAAAA]">Property Code: </span>
+        <span className="text-xs font-mono font-semibold text-[#1E1E1E]">{propertyCode}</span>
+      </div>
+
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">
           {error}
         </div>
       )}
 
-      {/* Basic */}
-      <Section title="Basic">
+      {/* Basic Info */}
+      <Section title="Basic Info">
         <Field label="Title">
           <input
             type="text"
@@ -443,8 +458,39 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
         </Field>
       </Section>
 
-      {/* Photos */}
-      <Section title="Photos">
+      {/* Map */}
+      <Section title="Map">
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Latitude" hint="optional">
+            <input
+              type="number"
+              step="any"
+              value={form.latitude}
+              onChange={(e) => set("latitude", e.target.value)}
+              className={inputCls}
+              placeholder="37.9838"
+            />
+          </Field>
+          <Field label="Longitude" hint="optional">
+            <input
+              type="number"
+              step="any"
+              value={form.longitude}
+              onChange={(e) => set("longitude", e.target.value)}
+              className={inputCls}
+              placeholder="23.7275"
+            />
+          </Field>
+        </div>
+        <Checkbox
+          label="Approximate location"
+          checked={form.approximate_location}
+          onChange={(v) => set("approximate_location", v)}
+        />
+      </Section>
+
+      {/* Media */}
+      <Section title="Media">
         <PropertyImageUpload
           propertyCode={propertyCode}
           initialCoverUrl={form.cover_image_url || null}
@@ -460,8 +506,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
       </Section>
 
       {/* Actions */}
-      <div className="flex items-center justify-between pt-2">
-        <p className="text-xs text-[#AAAAAA]">Code: {propertyCode}</p>
+      <div className="flex items-center justify-end pt-2">
         <button
           type="submit"
           disabled={loading}

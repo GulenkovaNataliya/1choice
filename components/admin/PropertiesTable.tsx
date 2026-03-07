@@ -444,8 +444,14 @@ export default function PropertiesTable({ rows }: { rows: AdminProperty[] }) {
             <tbody className="divide-y divide-[#F0F0F0]">
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={COL_COUNT} className="px-4 py-10 text-center text-[#888888]">
-                    No properties found.
+                  <td colSpan={COL_COUNT} className="px-4 py-12 text-center">
+                    <p className="text-sm text-[#888888] mb-3">No properties yet.</p>
+                    <Link
+                      href="/admin/properties/new"
+                      className="inline-block px-4 py-2 bg-[#1E1E1E] text-white text-xs font-semibold rounded hover:bg-[#333333] transition-colors"
+                    >
+                      Add first property
+                    </Link>
                   </td>
                 </tr>
               ) : (

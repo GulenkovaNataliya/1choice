@@ -33,7 +33,15 @@ export default async function AdminPropertiesPage() {
           New Property
         </Link>
       </div>
-      <PropertiesTable rows={rows} />
+
+      {error ? (
+        <div className="bg-white border border-red-200 rounded-lg px-6 py-8 text-center">
+          <p className="text-sm font-semibold text-red-600 mb-1">Failed to load properties</p>
+          <p className="text-xs text-[#888888]">{error.message}</p>
+        </div>
+      ) : (
+        <PropertiesTable rows={rows} />
+      )}
     </div>
   );
 }

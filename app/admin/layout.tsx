@@ -1,4 +1,4 @@
-import Link from "next/link";
+import AdminNav from "@/components/admin/AdminNav";
 import LogoutButton from "@/components/admin/LogoutButton";
 
 export const metadata = {
@@ -11,32 +11,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <header className="bg-white border-b border-[#E0E0E0]">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center gap-8">
           <span className="text-sm font-bold text-[#1E1E1E] uppercase tracking-widest">Admin</span>
-          <nav className="flex items-center gap-6">
-            <Link
-              href="/admin/properties"
-              className="text-sm text-[#555555] hover:text-[#1E1E1E] transition-colors"
-            >
-              Properties
-            </Link>
-            <Link
-              href="/admin/leads"
-              className="text-sm text-[#555555] hover:text-[#1E1E1E] transition-colors"
-            >
-              Leads
-            </Link>
-            <Link
-              href="/admin/areas"
-              className="text-sm text-[#555555] hover:text-[#1E1E1E] transition-colors"
-            >
-              Areas
-            </Link>
-            <Link
-              href="/admin/settings"
-              className="text-sm text-[#555555] hover:text-[#1E1E1E] transition-colors"
-            >
-              Settings
-            </Link>
-          </nav>
+          <AdminNav />
           <div className="ml-auto">
             <LogoutButton />
           </div>

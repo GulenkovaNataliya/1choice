@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import { getSupabase } from "@/lib/supabase/client";
 
 type ExportData = {
+  id: string;
   property_code: string | null;
   title: string;
-  slug: string;
+  slug: string | null;
+  description: string | null;
   price_eur: number | null;
   location_text: string | null;
   cover_image_url: string | null;
@@ -21,9 +23,11 @@ type ExportData = {
 
 function buildExportJson(d: ExportData): object {
   return {
+    id: d.id,
     property_code: d.property_code ?? null,
     title: d.title,
-    slug: d.slug,
+    slug: d.slug || d.property_code || "",
+    description: d.description ?? null,
     price_eur: d.price_eur ?? null,
     location_text: d.location_text ?? null,
     cover_image_url: d.cover_image_url ?? null,
@@ -56,7 +60,7 @@ export default function DealsExportModal({ propertyId, onClose }: Props) {
       const { data: row } = await getSupabase()
         .from("properties")
         .select(
-          "property_code,title,slug,price_eur,location_text,cover_image_url,gallery_image_urls,featured,is_golden_visa,vip,status,publish_1choice,publish_deals"
+          "id,property_code,title,slug,description,price_eur,location_text,cover_image_url,gallery_image_urls,featured,is_golden_visa,vip,status,publish_1choice,publish_deals"
         )
         .eq("id", propertyId)
         .single();
@@ -113,7 +117,7 @@ export default function DealsExportModal({ propertyId, onClose }: Props) {
                   {[
                     ["Code",        data.property_code ?? "—"],
                     ["Title",       data.title],
-                    ["Slug",        data.slug || "—"],
+                    ["Slug",        data.slug || data.property_code || "—"],
                     ["Price (€)",   data.price_eur != null ? data.price_eur.toLocaleString("en-EU") : "—"],
                     ["Location",    data.location_text ?? "—"],
                     ["Cover URL",   data.cover_image_url

@@ -11,6 +11,8 @@ type UploadedImage = {
 
 type ChangePayload = { coverUrl: string; galleryUrls: string[] };
 
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
 type Props = {
   propertyCode: string;
   initialCoverUrl?: string | null;
@@ -53,7 +55,16 @@ export default function PropertyImageUpload({
   }
 
   async function uploadFiles(files: FileList | File[]) {
-    const list = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    const all = Array.from(files);
+    const rejected = all.filter((f) => !ALLOWED_TYPES.includes(f.type));
+    const list = all.filter((f) => ALLOWED_TYPES.includes(f.type));
+
+    if (rejected.length > 0) {
+      setError(
+        `Unsupported format${rejected.length > 1 ? "s" : ""}: ${rejected.map((f) => f.name).join(", ")}. Use JPG, PNG, or WebP.`
+      );
+    }
+
     if (list.length === 0) return;
 
     setUploading(true);
@@ -109,6 +120,17 @@ export default function PropertyImageUpload({
     setDragging(false);
   }
 
+  function setCover(index: number) {
+    if (index === 0) return;
+    setImages((prev) => {
+      const next = [...prev];
+      const [item] = next.splice(index, 1);
+      next.unshift(item);
+      notifyParent(next);
+      return next;
+    });
+  }
+
   function removeImage(index: number) {
     setImages((prev) => {
       const next = prev.filter((_, i) => i !== index);
@@ -131,7 +153,7 @@ export default function PropertyImageUpload({
         <input
           ref={inputRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp"
           multiple
           className="hidden"
           onChange={handleInputChange}
@@ -168,10 +190,19 @@ export default function PropertyImageUpload({
                 alt={`Photo ${i + 1}`}
                 className="w-full h-full object-cover"
               />
-              {i === 0 && (
+              {i === 0 ? (
                 <span className="absolute top-1.5 left-1.5 text-[10px] font-semibold bg-[#1E1E1E] text-white px-1.5 py-0.5 rounded">
                   Cover
                 </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setCover(i)}
+                  className="absolute top-1.5 left-1.5 text-[10px] font-semibold bg-black/50 text-white px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#1E1E1E]"
+                  aria-label="Set as cover"
+                >
+                  Set cover
+                </button>
               )}
               <button
                 type="button"

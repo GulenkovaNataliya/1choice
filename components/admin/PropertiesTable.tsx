@@ -105,15 +105,31 @@ function PropertyRow({
   const [busy, setBusy] = useState(false);
   const isArchived = property.status === "archived";
 
-  // Optimistic local state for publish toggles
+  // Optimistic state for all toggleable flags
   const [pub1choice, setPub1choice] = useState(property.publish_1choice ?? false);
   const [pubDeals, setPubDeals] = useState(property.publish_deals ?? false);
+  const [vip, setVip] = useState(property.vip ?? false);
+  const [featured, setFeatured] = useState(property.featured ?? false);
+  const [goldenVisa, setGoldenVisa] = useState(property.is_golden_visa ?? false);
+  const [savingField, setSavingField] = useState<string | null>(null);
+  const [toggleError, setToggleError] = useState<string | null>(null);
 
-  async function togglePublish(field: "publish_1choice" | "publish_deals") {
-    const next = field === "publish_1choice" ? !pub1choice : !pubDeals;
-    // Optimistic update
-    if (field === "publish_1choice") setPub1choice(next);
-    else setPubDeals(next);
+  type FlagField = "publish_1choice" | "publish_deals" | "vip" | "featured" | "is_golden_visa";
+
+  async function toggleFlag(field: FlagField) {
+    const stateMap: Record<FlagField, [boolean, (v: boolean) => void]> = {
+      publish_1choice: [pub1choice, setPub1choice],
+      publish_deals: [pubDeals, setPubDeals],
+      vip: [vip, setVip],
+      featured: [featured, setFeatured],
+      is_golden_visa: [goldenVisa, setGoldenVisa],
+    };
+    const [current, setter] = stateMap[field];
+    const next = !current;
+
+    setToggleError(null);
+    setSavingField(field);
+    setter(next); // optimistic
 
     const { error } = await getSupabase()
       .from("properties")
@@ -121,12 +137,12 @@ function PropertyRow({
       .eq("id", property.id);
 
     if (error) {
-      // Roll back on failure
-      if (field === "publish_1choice") setPub1choice(!next);
-      else setPubDeals(!next);
+      setter(current); // rollback on failure
+      setToggleError("Save failed — try again");
     } else {
       logActivity(property.id, "update", { field, value: next });
     }
+    setSavingField(null);
   }
 
   async function archive() {
@@ -216,43 +232,84 @@ function PropertyRow({
       <td className="px-4 py-3">
         <Toggle
           on={pub1choice}
-          onChange={() => togglePublish("publish_1choice")}
+          disabled={savingField === "publish_1choice"}
+          onChange={() => toggleFlag("publish_1choice")}
           label="Toggle Publish 1Choice"
         />
       </td>
       <td className="px-4 py-3">
         <Toggle
           on={pubDeals}
-          onChange={() => togglePublish("publish_deals")}
+          disabled={savingField === "publish_deals"}
+          onChange={() => toggleFlag("publish_deals")}
           label="Toggle Publish Deals"
         />
       </td>
-      <td className="px-4 py-3"><Badge active={property.vip} /></td>
-      <td className="px-4 py-3"><Badge active={property.featured} /></td>
-      <td className="px-4 py-3"><Badge active={property.is_golden_visa} /></td>
+      <td className="px-4 py-3">
+        <Toggle
+          on={vip}
+          disabled={savingField === "vip"}
+          onChange={() => toggleFlag("vip")}
+          label="Toggle VIP"
+        />
+      </td>
+      <td className="px-4 py-3">
+        <Toggle
+          on={featured}
+          disabled={savingField === "featured"}
+          onChange={() => toggleFlag("featured")}
+          label="Toggle Featured"
+        />
+      </td>
+      <td className="px-4 py-3">
+        <Toggle
+          on={goldenVisa}
+          disabled={savingField === "is_golden_visa"}
+          onChange={() => toggleFlag("is_golden_visa")}
+          label="Toggle Golden Visa"
+        />
+      </td>
       <td className="px-4 py-3 text-[#888888] whitespace-nowrap">
         {new Date(property.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
       </td>
       <td className="px-4 py-3">
-        <div className="flex items-center gap-3 whitespace-nowrap">
-          <Link
-            href={`/admin/properties/${property.id}/edit`}
-            className="text-xs font-medium text-[#1E1E1E] underline underline-offset-2 hover:text-[#555555] transition-colors"
-          >
-            Edit
-          </Link>
-          <ActionButton onClick={onExport} disabled={busy} className="text-blue-600 hover:text-blue-800">
-            Deals Export
-          </ActionButton>
-          <ActionButton onClick={duplicate} disabled={busy} className="text-[#555555] hover:text-[#1E1E1E]">
-            Duplicate
-          </ActionButton>
-          {isArchived
-            ? <ActionButton onClick={restore} disabled={busy} className="text-green-700 hover:text-green-900">Restore</ActionButton>
-            : <ActionButton onClick={archive} disabled={busy} className="text-[#888888] hover:text-[#1E1E1E]">Archive</ActionButton>}
-          <ActionButton onClick={remove} disabled={busy} className="text-red-600 hover:text-red-800">
-            Delete
-          </ActionButton>
+        <div className="flex flex-col gap-1.5">
+          {toggleError && (
+            <span className="text-xs text-red-600">{toggleError}</span>
+          )}
+          <div className="flex items-center gap-3 whitespace-nowrap">
+            <Link
+              href={`/admin/properties/${property.id}/edit`}
+              className="text-xs font-medium text-[#1E1E1E] underline underline-offset-2 hover:text-[#555555] transition-colors"
+            >
+              Edit
+            </Link>
+            {property.status === "published" && property.publish_deals ? (
+              <ActionButton onClick={onExport} disabled={busy} className="text-blue-600 hover:text-blue-800">
+                Deals Export
+              </ActionButton>
+            ) : (
+              <span
+                className="text-xs font-medium text-[#CCCCCC] cursor-default"
+                title={
+                  property.status !== "published"
+                    ? "Status must be published"
+                    : "Deals publishing not enabled"
+                }
+              >
+                Deals Export
+              </span>
+            )}
+            <ActionButton onClick={duplicate} disabled={busy} className="text-[#555555] hover:text-[#1E1E1E]">
+              Duplicate
+            </ActionButton>
+            {isArchived
+              ? <ActionButton onClick={restore} disabled={busy} className="text-green-700 hover:text-green-900">Restore</ActionButton>
+              : <ActionButton onClick={archive} disabled={busy} className="text-[#888888] hover:text-[#1E1E1E]">Archive</ActionButton>}
+            <ActionButton onClick={remove} disabled={busy} className="text-red-600 hover:text-red-800">
+              Delete
+            </ActionButton>
+          </div>
         </div>
       </td>
     </tr>

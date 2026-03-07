@@ -1,4 +1,5 @@
 import Link from "next/link";
+import LogoutButton from "@/components/admin/LogoutButton";
 
 export const metadata = {
   robots: { index: false, follow: false },
@@ -36,6 +37,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               Settings
             </Link>
           </nav>
+          <div className="ml-auto">
+            <LogoutButton />
+          </div>
         </div>
       </header>
       <div className="max-w-6xl mx-auto px-4 py-8">{children}</div>

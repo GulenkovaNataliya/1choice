@@ -41,9 +41,10 @@ function allowedEmails(): Set<string> {
  *   cookie, making it the only reliable way to authenticate requests server-
  *   side without an extra network call to Supabase's API on every request.
  *
- * REDIRECT TARGET: / (homepage)
- *   Unauthenticated and unauthorised users are sent to the public homepage,
- *   which avoids leaking the existence of the admin area via a /login page.
+ * REDIRECT TARGETS:
+ *   - Unauthenticated → /admin/login  (so they can sign in)
+ *   - Authenticated but not in ADMIN_EMAILS → /  (unauthorised; no admin login loop)
+ *   - Authenticated admin on /admin/login → /admin  (already signed in; skip login)
  */
 export async function middleware(request: NextRequest) {
   // Always run session refresh first — this keeps auth cookies alive and
@@ -57,11 +58,32 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // ── Admin guard ──────────────────────────────────────────────────────────
+  // ── /admin/login: open to all, but skip it for already-authenticated admins ──
+  // • Unauthenticated  → show the login form (no redirect needed)
+  // • Non-admin authed → also show the login form (they can try another account;
+  //                      no loop because /admin guard sends them to /, not back here)
+  // • Admin authed     → redirect to /admin (no point re-logging in)
+  if (pathname === "/admin/login") {
+    const email = user?.email?.toLowerCase() ?? "";
+    if (email && allowedEmails().has(email)) {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
+    return response;
+  }
 
-  // CASE A: user is not authenticated at all → redirect to homepage
+  // ── Password recovery pages: always accessible, auth handled client-side ──
+  if (
+    pathname === "/admin/forgot-password" ||
+    pathname === "/admin/reset-password"
+  ) {
+    return response;
+  }
+
+  // ── Admin guard (all other /admin/* routes) ───────────────────────────────
+
+  // CASE A: user is not authenticated at all → send to login page
   if (!user) {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 
   // CASE B: user is authenticated but email is absent or not in the allowlist

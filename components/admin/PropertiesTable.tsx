@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getSupabase } from "@/lib/supabase/client";
 import DealsExportModal from "@/components/admin/DealsExportModal";
-import { logActivity } from "@/lib/admin/logActivity";
+import { logActivity, type ActivityAction } from "@/lib/admin/logActivity";
 
 export type AdminProperty = {
   id: string;
@@ -116,6 +116,14 @@ function PropertyRow({
 
   type FlagField = "publish_1choice" | "publish_deals" | "vip" | "featured" | "is_golden_visa";
 
+  const flagActionMap: Record<FlagField, ActivityAction> = {
+    publish_1choice: "property_toggle_publish_1choice",
+    publish_deals:   "property_toggle_publish_deals",
+    vip:             "property_toggle_vip",
+    featured:        "property_toggle_featured",
+    is_golden_visa:  "property_toggle_golden_visa",
+  };
+
   async function toggleFlag(field: FlagField) {
     const stateMap: Record<FlagField, [boolean, (v: boolean) => void]> = {
       publish_1choice: [pub1choice, setPub1choice],
@@ -140,7 +148,10 @@ function PropertyRow({
       setter(current); // rollback on failure
       setToggleError("Save failed — try again");
     } else {
-      logActivity(property.id, "update", { field, value: next });
+      logActivity(property.id, flagActionMap[field], {
+        value: next,
+        property_code: property.property_code,
+      });
     }
     setSavingField(null);
   }
@@ -149,7 +160,7 @@ function PropertyRow({
     setBusy(true);
     const supabase = getSupabase();
     const { error } = await supabase.from("properties").update({ status: "archived" }).eq("id", property.id);
-    if (!error) logActivity(property.id, "archive", { previous_status: property.status, new_status: "archived" });
+    if (!error) logActivity(property.id, "property_archived", { previous_status: property.status, new_status: "archived", property_code: property.property_code });
     setBusy(false);
     onRefresh();
   }
@@ -158,7 +169,7 @@ function PropertyRow({
     setBusy(true);
     const supabase = getSupabase();
     const { error } = await supabase.from("properties").update({ status: "draft" }).eq("id", property.id);
-    if (!error) logActivity(property.id, "restore", { previous_status: "archived", new_status: "draft" });
+    if (!error) logActivity(property.id, "property_restored", { previous_status: "archived", new_status: "draft", property_code: property.property_code });
     setBusy(false);
     onRefresh();
   }
@@ -168,7 +179,7 @@ function PropertyRow({
     if (input !== "DELETE") return;
     setBusy(true);
     const supabase = getSupabase();
-    await logActivity(property.id, "delete", { title: property.title });
+    await logActivity(property.id, "property_deleted", { title: property.title, property_code: property.property_code });
     await supabase.from("properties").delete().eq("id", property.id);
     setBusy(false);
     onRefresh();
@@ -205,7 +216,7 @@ function PropertyRow({
     setBusy(false);
 
     if (inserted?.id) {
-      logActivity(inserted.id, "duplicate", { source_property_id: property.id });
+      logActivity(inserted.id, "property_duplicated", { source_property_id: property.id, source_property_code: property.property_code });
       router.push(`/admin/properties/${inserted.id}/edit`);
     }
   }
@@ -415,7 +426,7 @@ export default function PropertiesTable({ rows }: { rows: AdminProperty[] }) {
     if (!error) {
       ids.forEach((id) => {
         const p = rows.find((r) => r.id === id);
-        logActivity(id, "archive", { previous_status: p?.status ?? null, new_status: "archived", bulk: true });
+        logActivity(id, "properties_bulk_archived", { previous_status: p?.status ?? null, new_status: "archived", count: ids.length, property_code: p?.property_code });
       });
     }
     setBulkBusy(false);
@@ -429,7 +440,8 @@ export default function PropertiesTable({ rows }: { rows: AdminProperty[] }) {
     const { error } = await supabase.from("properties").update({ status: "draft" }).in("id", ids);
     if (!error) {
       ids.forEach((id) => {
-        logActivity(id, "restore", { previous_status: "archived", new_status: "draft", bulk: true });
+        const p = rows.find((r) => r.id === id);
+        logActivity(id, "properties_bulk_restored", { previous_status: "archived", new_status: "draft", count: ids.length, property_code: p?.property_code });
       });
     }
     setBulkBusy(false);
@@ -446,7 +458,7 @@ export default function PropertiesTable({ rows }: { rows: AdminProperty[] }) {
     await Promise.all(
       ids.map((id) => {
         const p = rows.find((r) => r.id === id);
-        return logActivity(id, "delete", { title: p?.title ?? "", bulk: true });
+        return logActivity(id, "properties_bulk_deleted", { title: p?.title ?? "", count: ids.length, property_code: p?.property_code });
       })
     );
     await supabase.from("properties").delete().in("id", ids);

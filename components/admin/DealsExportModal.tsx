@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getSupabase } from "@/lib/supabase/client";
+import { logActivity } from "@/lib/admin/logActivity";
 
 type ExportData = {
   id: string;
@@ -65,8 +66,12 @@ export default function DealsExportModal({ propertyId, onClose }: Props) {
         .eq("id", propertyId)
         .single();
 
-      setData(row as ExportData ?? null);
+      const parsed = row as ExportData ?? null;
+      setData(parsed);
       setLoading(false);
+      if (parsed) {
+        logActivity(propertyId, "property_deals_export_opened", { property_code: parsed.property_code });
+      }
     }
     fetch();
   }, [propertyId]);
@@ -76,6 +81,7 @@ export default function DealsExportModal({ propertyId, onClose }: Props) {
     await navigator.clipboard.writeText(JSON.stringify(buildExportJson(data), null, 2));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+    logActivity(propertyId, "property_deals_export_copied", { property_code: data.property_code });
   }
 
   const exportJson = data ? buildExportJson(data) : null;

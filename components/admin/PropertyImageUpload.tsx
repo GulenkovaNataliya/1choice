@@ -3,6 +3,7 @@
 import { useRef, useState, type DragEvent, type ChangeEvent } from "react";
 import { getSupabase } from "@/lib/supabase/client";
 import { renderImageUrl } from "@/lib/storage/imageUrl";
+import { logActivity } from "@/lib/admin/logActivity";
 
 type UploadedImage = {
   path: string; // storage path OR existing gallery URL (renderImageUrl can extract path from it)
@@ -15,6 +16,7 @@ const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 type Props = {
   propertyCode: string;
+  propertyId?: string;  // available in edit mode only; logging is skipped if absent
   initialCoverUrl?: string | null;
   initialGalleryUrls?: string[];
   onChange: (data: ChangePayload) => void;
@@ -30,6 +32,7 @@ function urlsToImages(urls: string[]): UploadedImage[] {
 
 export default function PropertyImageUpload({
   propertyCode,
+  propertyId,
   initialCoverUrl,
   initialGalleryUrls = [],
   onChange,
@@ -90,6 +93,9 @@ export default function PropertyImageUpload({
       }
 
       uploaded.push({ path, url: renderImageUrl(path, "admin") ?? path });
+      if (propertyId) {
+        logActivity(propertyId, "property_image_uploaded", { path, property_code: propertyCode });
+      }
     }
 
     setImages((prev) => {
@@ -122,6 +128,7 @@ export default function PropertyImageUpload({
 
   function setCover(index: number) {
     if (index === 0) return;
+    const coverPath = images[index]?.path;
     setImages((prev) => {
       const next = [...prev];
       const [item] = next.splice(index, 1);
@@ -129,14 +136,21 @@ export default function PropertyImageUpload({
       notifyParent(next);
       return next;
     });
+    if (coverPath && propertyId) {
+      logActivity(propertyId, "property_cover_changed", { path: coverPath, property_code: propertyCode });
+    }
   }
 
   function removeImage(index: number) {
+    const removedPath = images[index]?.path;
     setImages((prev) => {
       const next = prev.filter((_, i) => i !== index);
       notifyParent(next);
       return next;
     });
+    if (removedPath && propertyId) {
+      logActivity(propertyId, "property_image_removed", { path: removedPath, property_code: propertyCode });
+    }
   }
 
   return (

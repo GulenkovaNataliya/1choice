@@ -204,7 +204,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
       } else {
         lastSavedRef.current = current;
         setSaveStatus("saved");
-        logActivity(propertyId!, "update", { autosave: true });
+        logActivity(propertyId!, "property_updated", { autosave: true, property_code: propertyCode });
       }
     } catch {
       setSaveStatus("error");
@@ -263,10 +263,19 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
           .eq("id", propertyId);
         dbError = error;
         if (!error) {
+          // Log status change separately when status was changed
+          const originalStatus = initialValues?.status;
+          if (originalStatus && form.status !== originalStatus) {
+            logActivity(propertyId!, "property_status_changed", {
+              from: originalStatus,
+              to: form.status,
+              property_code: propertyCode,
+            });
+          }
           const meta = slugChanged
-            ? { slug_changed: true, from: originalSlug, to: newSlug }
-            : { updated: true };
-          logActivity(propertyId!, "update", meta);
+            ? { slug_changed: true, from: originalSlug, to: newSlug, property_code: propertyCode }
+            : { property_code: propertyCode };
+          logActivity(propertyId!, "property_updated", meta);
           // Move the baseline forward so future edits don't re-insert the same redirect
           if (slugChanged) originalSlugRef.current = newSlug;
         }
@@ -277,7 +286,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
           .select("id")
           .single();
         dbError = error;
-        if (!error && created?.id) logActivity(created.id, "create", { title: form.title });
+        if (!error && created?.id) logActivity(created.id, "property_created", { title: form.title, property_code: propertyCode });
       }
 
       if (dbError) {
@@ -493,6 +502,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
       <Section title="Media">
         <PropertyImageUpload
           propertyCode={propertyCode}
+          propertyId={mode === "edit" ? propertyId : undefined}
           initialCoverUrl={form.cover_image_url || null}
           initialGalleryUrls={form.gallery_image_urls}
           onChange={({ coverUrl, galleryUrls }) => {

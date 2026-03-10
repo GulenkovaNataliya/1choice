@@ -316,7 +316,7 @@ export default function CreatePropertyForm() {
             onChange={(v) => set("publish_1choice", v)}
           />
           <CheckboxField
-            label="Publish on Deals"
+            label="Publish on 1ChoiceDeals"
             checked={form.publish_deals}
             onChange={(v) => set("publish_deals", v)}
           />

@@ -481,7 +481,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
       <Section title="Publishing">
         <div className="grid grid-cols-2 gap-3 mb-2">
           <Checkbox label="Publish on 1Choice" checked={form.publish_1choice} onChange={(v) => set("publish_1choice", v)} />
-          <Checkbox label="Publish on Deals" checked={form.publish_deals} onChange={(v) => set("publish_deals", v)} />
+          <Checkbox label="Publish on 1ChoiceDeals" checked={form.publish_deals} onChange={(v) => set("publish_deals", v)} />
         </div>
         <Field label="Status">
           <select

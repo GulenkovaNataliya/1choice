@@ -772,7 +772,7 @@ export default function ChatWidget() {
                         className="mt-0.5 shrink-0 accent-[#1E1E1E]"
                       />
                       <span className="text-xs text-[#555555] leading-snug">
-                        I agree to be contacted via WhatsApp by the 1Choice team.
+                        I agree to be contacted via WhatsApp regarding my inquiry.
                       </span>
                     </label>
                     {errors.consent_whatsapp && (

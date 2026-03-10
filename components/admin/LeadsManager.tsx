@@ -27,11 +27,15 @@ export type Lead = {
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 const SOURCE_LABELS: Record<string, string> = {
-  home: "Home",
-  properties: "Properties",
-  property: "Property",
-  "golden-visa": "Golden Visa",
-  deals: "Deals",
+  home:               "Home",
+  properties:         "Properties",
+  property:           "Property",
+  "golden-visa":      "Golden Visa",
+  "investment-guide": "Investment Guide",
+  private:            "Private",
+  deals:              "Deals",
+  // backward compat: old leads submitted with source="chat" before STEP 137
+  chat:               "Chat",
 };
 
 const STATUS_OPTIONS = [
@@ -60,6 +64,49 @@ function StatusBadge({ status }: { status: string }) {
     <span className={`inline-block px-2 py-0.5 text-xs font-semibold rounded ${cls}`}>
       {label}
     </span>
+  );
+}
+
+// ── Chat log renderer ─────────────────────────────────────────────────────────
+// New leads store chat_log as JSON [{role,text}]. Old leads may have raw strings.
+// Tries to parse as structured conversation; falls back to <pre> for old data.
+
+function ChatLogDisplay({ raw }: { raw: string }) {
+  try {
+    const msgs = JSON.parse(raw) as Array<{ role: string; text: string }>;
+    if (
+      Array.isArray(msgs) &&
+      msgs.length > 0 &&
+      msgs.every((m) => typeof m.role === "string" && typeof m.text === "string")
+    ) {
+      return (
+        <div className="bg-[#F4F4F4] rounded-lg px-4 py-3 flex flex-col gap-2">
+          {msgs.map((m, i) => (
+            <div
+              key={i}
+              className={`flex text-xs ${m.role === "user" ? "justify-end" : "justify-start"}`}
+            >
+              <span
+                className={`px-2.5 py-1.5 rounded-xl leading-relaxed max-w-[85%] ${
+                  m.role === "user"
+                    ? "bg-[#1E1E1E] text-white"
+                    : "bg-white text-[#1E1E1E] border border-[#E0E0E0]"
+                }`}
+              >
+                {m.text}
+              </span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+  } catch {
+    // fall through to raw display
+  }
+  return (
+    <pre className="text-xs text-[#1E1E1E] whitespace-pre-wrap bg-[#F4F4F4] rounded-lg px-4 py-3 overflow-x-auto leading-relaxed">
+      {raw}
+    </pre>
   );
 }
 
@@ -101,10 +148,10 @@ function LeadDetailModal({
   }
 
   const rows: [string, React.ReactNode][] = [
-    ["Name",     lead.name],
-    ["Email",    lead.email ?? "—"],
-    ["Phone",    lead.phone ?? "—"],
-    ["Source",   sourceLabel(lead.source)],
+    ["Name",             lead.name],
+    ["Email",            lead.email ?? "—"],
+    ["WhatsApp / Phone", lead.phone ?? "—"],
+    ["Source",           sourceLabel(lead.source)],
     ["Page",     lead.page_url
       ? <span className="font-mono text-xs break-all">{lead.page_url}</span>
       : "—"],
@@ -162,9 +209,7 @@ function LeadDetailModal({
           {lead.chat_log && (
             <div>
               <p className="text-xs text-[#888888] uppercase tracking-widest mb-1.5">Chat Log</p>
-              <pre className="text-xs text-[#1E1E1E] whitespace-pre-wrap bg-[#F4F4F4] rounded-lg px-4 py-3 overflow-x-auto leading-relaxed">
-                {lead.chat_log}
-              </pre>
+              <ChatLogDisplay raw={lead.chat_log} />
             </div>
           )}
 

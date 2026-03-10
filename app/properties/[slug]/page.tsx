@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import PropertyDetailClient, { type PropertyData } from "./PropertyDetailClient";
+import SetChatContext from "@/components/chat/SetChatContext";
 import { renderImageUrl } from "@/lib/storage/imageUrl";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -14,7 +15,7 @@ function titleCase(s: string) {
     .join(" ");
 }
 
-// ── Metadata (unchanged) ─────────────────────────────────────────────────────
+// ── Metadata ─────────────────────────────────────────────────────────────────
 
 export async function generateMetadata({
   params,
@@ -27,26 +28,53 @@ export async function generateMetadata({
 
   const { data } = await supabase
     .from("properties")
-    .select("title, price, location, cover_image_path")
+    .select("title, slug, price, price_eur, location, location_text, cover_image_path, status, publish_1choice, vip")
     .eq("slug", slug)
     .single();
 
+  // No property found — no canonical, no rich metadata
   if (!data) {
-    return {
-      title: "Property | 1Choice",
-    };
+    return { title: "Property | 1Choice" };
   }
+
+  // Non-public property — do not expose canonical or OG metadata
+  if (
+    data.status !== "published" ||
+    data.publish_1choice !== true ||
+    data.vip === true
+  ) {
+    return { title: "Property | 1Choice" };
+  }
+
+  // Use the slug from the resolved DB record — this is always the canonical/current slug,
+  // never an old slug from property_slug_redirects (old slugs don't match properties.slug).
+  const canonicalSlug = data.slug as string;
+  const canonicalUrl = `https://1choice.gr/properties/${canonicalSlug}`;
+
+  // Handle both legacy (price/location) and current (price_eur/location_text) column names
+  const metaPrice    = (data as Record<string, unknown>).price_eur    ?? data.price    ?? null;
+  const metaLocation = (data as Record<string, unknown>).location_text ?? data.location ?? null;
 
   const ogImage = renderImageUrl(data.cover_image_path, "gallery") ?? undefined;
 
+  const metaDescription = metaPrice && metaLocation
+    ? `€${metaPrice} property located in ${metaLocation}. Explore full details on 1Choice.`
+    : `${data.title} — explore full details on 1Choice.`;
+  const ogDescription = metaPrice && metaLocation
+    ? `€${metaPrice} property located in ${metaLocation}.`
+    : `${data.title} on 1Choice.`;
+
   return {
     title: `${data.title} | 1Choice`,
-    description: `€${data.price} property located in ${data.location}. Explore full details on 1Choice.`,
+    description: metaDescription,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
       title: `${data.title} | 1Choice`,
-      description: `€${data.price} property located in ${data.location}.`,
+      description: ogDescription,
       type: "article",
-      url: `https://1choice.gr/properties/${slug}`,
+      url: canonicalUrl,
       images: ogImage ? [{ url: ogImage }] : undefined,
     },
   };
@@ -130,25 +158,71 @@ export default async function PropertyDetailPage({
     size_sqm: p.size ?? undefined,
   }));
 
-  const schema = {
+  // ── Structured data ────────────────────────────────────────────────────────
+
+  const BASE = "https://1choice.gr";
+  // Canonical URL uses the slug from the resolved DB record, not the URL param
+  const canonicalUrl = `${BASE}/properties/${property.slug}`;
+
+  // Price — handle both legacy (price) and current (price_eur) column names
+  const price: number | null = property.price_eur ?? property.price ?? null;
+
+  // Best available image: cover first, then first gallery item
+  const imageUrl: string | null =
+    coverUrl ??
+    (Array.isArray(property.gallery_image_urls) && property.gallery_image_urls.length > 0
+      ? (renderImageUrl(property.gallery_image_urls[0], "gallery") ?? null)
+      : null);
+
+  // Description — no null/empty strings in output
+  const location = property.location_text ?? property.location ?? "";
+  const description: string =
+    (property.description as string | null)?.trim() ||
+    `Property in ${titleCase(location)}, Greece`;
+
+  // Product schema — null-safe field inclusion
+  const productSchema: Record<string, unknown> = {
     "@context": "https://schema.org",
-    "@type": "RealEstateListing",
+    "@type": "Product",
     name: property.title,
-    description:
-      property.description ??
-      `€${property.price} property located in ${property.location}`,
-    offers: {
-      "@type": "Offer",
-      price: property.price,
-      priceCurrency: "EUR",
-    },
+    description,
+    url: canonicalUrl,
+    ...(property.property_code ? { sku: property.property_code } : {}),
+    ...(imageUrl ? { image: imageUrl } : {}),
+    ...(typeof price === "number" && price > 0
+      ? {
+          offers: {
+            "@type": "Offer",
+            price,
+            priceCurrency: "EUR",
+            availability: "https://schema.org/InStock",
+            url: canonicalUrl,
+          },
+        }
+      : {}),
+  };
+
+  // BreadcrumbList schema
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home",       item: `${BASE}/` },
+      { "@type": "ListItem", position: 2, name: "Properties", item: `${BASE}/properties` },
+      { "@type": "ListItem", position: 3, name: property.title, item: canonicalUrl },
+    ],
   };
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <SetChatContext
+        data={{
+          property_id:    property.id,
+          property_code:  property.property_code ?? null,
+          property_title: property.title,
+        }}
       />
       <PropertyDetailClient
         property={property as PropertyData}

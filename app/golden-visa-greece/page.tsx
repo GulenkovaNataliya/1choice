@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PropertyCard from "@/components/Property/PropertyCard";
 import GoldenVisaAccordionClient from "./GoldenVisaAccordionClient";
+import GoldenVisaCTAButton from "@/components/chat/GoldenVisaCTAButton";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -91,14 +92,9 @@ export default async function GoldenVisaPage({
           <p className="text-[#D9D9D9] text-lg mb-8">
             Residency by investment — own property in Greece and gain access to the Schengen Area.
           </p>
-          {/* TODO: wire to advisory consultation handler when available */}
-          <button
-            type="button"
-            disabled
-            className="bg-white text-[#3A2E4F] px-8 py-4 rounded-xl font-semibold opacity-60 cursor-default pointer-events-none"
-          >
+          <GoldenVisaCTAButton className="bg-white text-[#3A2E4F] px-8 py-4 rounded-xl font-semibold hover:bg-[#F0EDF7] transition-colors">
             Start a Golden Visa Consultation
-          </button>
+          </GoldenVisaCTAButton>
         </div>
       </section>
 
@@ -124,14 +120,9 @@ export default async function GoldenVisaPage({
                 <p className="text-[#888888] text-sm leading-relaxed">
                   Many qualifying opportunities are shared privately. Contact our advisor to receive curated options.
                 </p>
-                {/* TODO: wire to advisory consultation handler when available */}
-                <button
-                  type="button"
-                  disabled
-                  className="self-start bg-[#3A2E4F] text-[#D9D9D9] px-6 py-3 rounded-xl text-sm font-medium opacity-50 cursor-default pointer-events-none"
-                >
+                <GoldenVisaCTAButton className="self-start bg-[#3A2E4F] text-white px-6 py-3 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity">
                   Start a Golden Visa Consultation
-                </button>
+                </GoldenVisaCTAButton>
               </div>
             ) : (
               <>

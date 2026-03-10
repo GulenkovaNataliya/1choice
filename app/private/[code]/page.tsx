@@ -1,98 +1,66 @@
 import { notFound } from "next/navigation";
-import PropertyDetailClient, { type PropertyData } from "@/app/properties/[slug]/PropertyDetailClient";
-import { renderImageUrl } from "@/lib/storage/imageUrl";
+import type { Metadata } from "next";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { renderImageUrl } from "@/lib/storage/imageUrl";
+import PrivatePropertyDetail from "./PrivatePropertyDetail";
 
-export const metadata = {
+/*
+ * Required Supabase table (create once in the dashboard):
+ *
+ *   CREATE TABLE property_access_tokens (
+ *     id          uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
+ *     token       text        NOT NULL UNIQUE,
+ *     property_id uuid        NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
+ *     created_at  timestamptz DEFAULT now()
+ *   );
+ *
+ * Column mapping:
+ *   token       → secure random string shared in private links (/private/<token>)
+ *   property_id → FK to properties.id
+ *   created_at  → DB default, not inserted manually
+ */
+
+// Never index private pages
+export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-function titleCase(s: string) {
-  return s
-    .replace(/-/g, " ")
-    .split(" ")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
-}
-
-export default async function PrivatePropertyPage({
+export default async function PrivateTokenPage({
   params,
 }: {
   params: Promise<{ code: string }>;
 }) {
-  const { code } = await params;
+  // `code` is the URL segment — treated as a secure access token
+  const { code: token } = await params;
 
   const supabase = await createSupabaseServerClient();
 
-  // 1. Resolve by property_code
+  // 1. Resolve token → property_id
+  const { data: tokenRow } = await supabase
+    .from("property_access_tokens")
+    .select("property_id")
+    .eq("token", token)
+    .single();
+
+  if (!tokenRow?.property_id) notFound();
+
+  // 2. Fetch the linked property
   const { data: property } = await supabase
     .from("properties")
     .select("*")
-    .eq("property_code", code)
+    .eq("id", tokenRow.property_id)
     .single();
 
-  // 2. Not found
   if (!property) notFound();
 
-  // 3. Must be VIP — no status / publish_1choice check
+  // 3. Must still be a VIP property — block if flag was removed after token was issued
   if (property.vip !== true) notFound();
 
-  // 4. Build cover URL
+  // 4. Resolve cover image URL
   const coverUrl = renderImageUrl(
     property.cover_image_url ?? property.cover_image_path,
     "gallery"
   );
 
-  // 5. Similar VIP properties (same pattern as public detail page)
-  const { data: similar } = await supabase
-    .from("properties")
-    .select(
-      "id,title,slug,price,location,bedrooms,bathrooms,size,cover_image_path,is_golden_visa,created_at"
-    )
-    .eq("vip", true)
-    .neq("property_code", code)
-    .order("created_at", { ascending: false })
-    .limit(4);
-
-  const similarMapped = (similar ?? []).map((p) => ({
-    id: p.id,
-    slug: p.slug,
-    title: p.title,
-    area: titleCase(p.location ?? ""),
-    price_eur: p.price,
-    is_golden_visa: p.is_golden_visa ?? false,
-    is_1choice_deal: false,
-    cover_image: renderImageUrl(p.cover_image_path, "catalog"),
-    bedrooms: p.bedrooms ?? undefined,
-    bathrooms: p.bathrooms ?? undefined,
-    size_sqm: p.size ?? undefined,
-  }));
-
-  const schema = {
-    "@context": "https://schema.org",
-    "@type": "RealEstateListing",
-    name: property.title,
-    description:
-      property.description ??
-      `€${property.price} property located in ${property.location}`,
-    offers: {
-      "@type": "Offer",
-      price: property.price,
-      priceCurrency: "EUR",
-    },
-  };
-
-  return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-      />
-      <PropertyDetailClient
-        property={property as PropertyData}
-        coverUrl={coverUrl}
-        similarProperties={similarMapped}
-      />
-    </>
-  );
+  return <PrivatePropertyDetail property={property} coverUrl={coverUrl} />;
 }

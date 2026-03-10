@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import PropertyForm from "@/components/admin/PropertyForm";
+import PrivateLinkManager from "@/components/admin/PrivateLinkManager";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/adminClient";
 
 export const metadata = {
   title: "Edit Property | Admin",
@@ -18,6 +20,22 @@ export default async function EditPropertyPage({ params }: { params: { id: strin
     .single();
 
   if (error || !property) notFound();
+
+  // Fetch current private link token server-side to avoid loading flash
+  let initialToken: string | null = null;
+  try {
+    const admin = createSupabaseAdminClient();
+    const { data: tokenRow } = await admin
+      .from("property_access_tokens")
+      .select("token")
+      .eq("property_id", params.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    initialToken = tokenRow?.token ?? null;
+  } catch {
+    // Best-effort — if token fetch fails, PrivateLinkManager will show empty state
+  }
 
   const initialValues = {
     title: property.title ?? "",
@@ -46,12 +64,23 @@ export default async function EditPropertyPage({ params }: { params: { id: strin
         <h1 className="text-2xl font-bold text-[#1E1E1E]">Edit Property</h1>
         <p className="text-sm text-[#888888] mt-1">{property.property_code}</p>
       </div>
+
       <PropertyForm
         mode="edit"
         propertyId={property.id}
         propertyCode={property.property_code ?? ""}
         initialValues={initialValues}
       />
+
+      {/* Private link management — shown below the form, only relevant for VIP */}
+      <div className="mt-5">
+        <PrivateLinkManager
+          propertyId={property.id}
+          propertyCode={property.property_code ?? null}
+          isVip={property.vip ?? false}
+          initialToken={initialToken}
+        />
+      </div>
     </div>
   );
 }

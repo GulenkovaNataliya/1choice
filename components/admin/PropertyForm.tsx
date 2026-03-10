@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { getSupabase } from "@/lib/supabase/client";
 import { logActivity } from "@/lib/admin/logActivity";
 import PropertyImageUpload from "@/components/admin/PropertyImageUpload";
+import type { Area } from "@/lib/areas";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -12,6 +13,7 @@ type FormState = {
   title: string;
   slug: string;
   price_eur: string;
+  location_slug: string;
   location_text: string;
   size_sqm: string;
   bedrooms: string;
@@ -38,6 +40,7 @@ const INITIAL: FormState = {
   title: "",
   slug: "",
   price_eur: "",
+  location_slug: "",
   location_text: "",
   size_sqm: "",
   bedrooms: "",
@@ -74,6 +77,7 @@ function buildPayload(form: FormState, resolveSlug = false) {
     title: form.title,
     slug: resolveSlug ? (form.slug.trim() || toSlug(form.title)) : (form.slug || null),
     price_eur: form.price_eur ? Number(form.price_eur) : null,
+    location: form.location_slug || null,
     location_text: form.location_text || null,
     size_sqm: form.size_sqm ? Number(form.size_sqm) : null,
     bedrooms: form.bedrooms ? Number(form.bedrooms) : null,
@@ -164,10 +168,10 @@ function SaveIndicator({ status }: { status: SaveStatus }) {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 type Props =
-  | { mode?: "create"; propertyCode: string; propertyId?: never; initialValues?: never }
-  | { mode: "edit"; propertyId: string; propertyCode: string; initialValues: Partial<FormState> };
+  | { mode?: "create"; propertyCode: string; propertyId?: never; initialValues?: never; areas?: Area[] }
+  | { mode: "edit"; propertyId: string; propertyCode: string; initialValues: Partial<FormState>; areas?: Area[] };
 
-export default function PropertyForm({ mode = "create", propertyCode, propertyId, initialValues }: Props) {
+export default function PropertyForm({ mode = "create", propertyCode, propertyId, initialValues, areas = [] }: Props) {
   const router = useRouter();
   const [form, setForm] = useState<FormState>({ ...INITIAL, ...initialValues });
   const [loading, setLoading] = useState(false);
@@ -362,13 +366,38 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
             />
           </Field>
           <Field label="Location">
-            <input
-              type="text"
-              value={form.location_text}
-              onChange={(e) => set("location_text", e.target.value)}
-              className={inputCls}
-              placeholder="e.g. Athens"
-            />
+            {areas.length > 0 ? (
+              <select
+                value={form.location_slug}
+                onChange={(e) => {
+                  const slug = e.target.value;
+                  const area = areas.find((a) => a.slug === slug);
+                  setForm((prev) => ({
+                    ...prev,
+                    location_slug: slug,
+                    location_text: area?.name ?? "",
+                  }));
+                }}
+                className={inputCls}
+              >
+                <option value="">— select area —</option>
+                {Array.from(new Set(areas.map((a) => a.group_name))).map((group) => (
+                  <optgroup key={group} label={group}>
+                    {areas.filter((a) => a.group_name === group).map((a) => (
+                      <option key={a.slug} value={a.slug}>{a.name}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="text"
+                value={form.location_text}
+                onChange={(e) => set("location_text", e.target.value)}
+                className={inputCls}
+                placeholder="e.g. Athens"
+              />
+            )}
           </Field>
         </div>
       </Section>

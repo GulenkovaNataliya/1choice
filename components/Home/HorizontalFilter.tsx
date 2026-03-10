@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { LOCATIONS, LOCATION_GROUPS } from "@/components/Data/locations";
+import type { Area } from "@/lib/areas";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -49,7 +49,7 @@ const ROW2_KEYS: Row2Key[] = ["features", "bathrooms", "size", "yearBuilt", "con
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-function getPillLabel(key: PanelKey, f: FilterState): string {
+function getPillLabel(key: PanelKey, f: FilterState, areas: Area[]): string {
   if (!key) return "";
   switch (key) {
     case "transaction": return f.transaction || "Transaction";
@@ -59,7 +59,7 @@ function getPillLabel(key: PanelKey, f: FilterState): string {
       return `Type (${f.propertyTypes.length})`;
     case "location": {
       if (!f.location) return "Location";
-      return LOCATIONS.find(l => l.slug === f.location)?.label ?? f.location;
+      return areas.find(a => a.slug === f.location)?.name ?? f.location;
     }
     case "price":
       if (!f.priceMin && !f.priceMax) return "Price";
@@ -207,12 +207,14 @@ const PANEL_STYLE: React.CSSProperties = {
   overflowY: "auto",
 };
 
-function InlinePanel({ openPanel, filter, setFilter, onClose }: {
+function InlinePanel({ openPanel, filter, setFilter, onClose, areas }: {
   openPanel: PanelKey;
   filter: FilterState;
   setFilter: React.Dispatch<React.SetStateAction<FilterState>>;
   onClose: () => void;
+  areas: Area[];
 }) {
+  const areaGroups = Array.from(new Set(areas.map(a => a.group_name)));
   if (!openPanel) return null;
   return (
     <div style={PANEL_STYLE}>
@@ -247,7 +249,7 @@ function InlinePanel({ openPanel, filter, setFilter, onClose }: {
               Any
             </button>
           </div>
-          {LOCATION_GROUPS.map(group => (
+          {areaGroups.map(group => (
             <div key={group} style={{ marginBottom: 10 }}>
               <div style={{
                 fontSize: 10, fontWeight: 700, color: "#1E1E1E",
@@ -256,11 +258,11 @@ function InlinePanel({ openPanel, filter, setFilter, onClose }: {
                 {group}
               </div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {LOCATIONS.filter(l => l.group === group).map(loc => (
-                  <button key={loc.slug} type="button"
-                    className={`chip${filter.location === loc.slug ? " chip-on" : ""}`}
-                    onClick={() => { setFilter(f => ({ ...f, location: loc.slug })); onClose(); }}>
-                    {loc.label}
+                {areas.filter(a => a.group_name === group).map(area => (
+                  <button key={area.slug} type="button"
+                    className={`chip${filter.location === area.slug ? " chip-on" : ""}`}
+                    onClick={() => { setFilter(f => ({ ...f, location: area.slug })); onClose(); }}>
+                    {area.name}
                   </button>
                 ))}
               </div>
@@ -375,12 +377,14 @@ function MobAccordion({ title, id, open, onToggle, children }: {
 
 // ─── Mobile Drawer ───────────────────────────────────────────────────────────
 
-function MobileDrawer({ open, filter, setFilter, onClose, onApply, onClear }: {
+function MobileDrawer({ open, filter, setFilter, onClose, onApply, onClear, areas }: {
   open: boolean; filter: FilterState;
   setFilter: React.Dispatch<React.SetStateAction<FilterState>>;
   onClose: () => void; onApply: () => void; onClear: () => void;
+  areas: Area[];
 }) {
   const [acc, setAcc] = useState<MobileAccKey>(null);
+  const areaGroups = Array.from(new Set(areas.map(a => a.group_name)));
 
   useEffect(() => {
     if (!open) return;
@@ -441,7 +445,7 @@ function MobileDrawer({ open, filter, setFilter, onClose, onApply, onClear }: {
                 <button type="button" className={`chip${!filter.location ? " chip-on" : ""}`}
                   onClick={() => setFilter(f => ({ ...f, location: "" }))}>Any</button>
               </div>
-              {LOCATION_GROUPS.map(group => (
+              {areaGroups.map(group => (
                 <div key={group} style={{ marginBottom: 10 }}>
                   <div style={{
                     fontSize: 10, fontWeight: 700, color: "#AAAAAA",
@@ -450,11 +454,11 @@ function MobileDrawer({ open, filter, setFilter, onClose, onApply, onClear }: {
                     {group}
                   </div>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {LOCATIONS.filter(l => l.group === group).map(loc => (
-                      <button key={loc.slug} type="button"
-                        className={`chip${filter.location === loc.slug ? " chip-on" : ""}`}
-                        onClick={() => setFilter(f => ({ ...f, location: loc.slug }))}>
-                        {loc.label}
+                    {areas.filter(a => a.group_name === group).map(area => (
+                      <button key={area.slug} type="button"
+                        className={`chip${filter.location === area.slug ? " chip-on" : ""}`}
+                        onClick={() => setFilter(f => ({ ...f, location: area.slug }))}>
+                        {area.name}
                       </button>
                     ))}
                   </div>
@@ -570,9 +574,11 @@ type Props = {
   initialFilter?: Partial<FilterState>;
   /** When provided, called on Search/Clear instead of router.push (caller handles URL update). */
   onSearch?: (params: URLSearchParams) => void;
+  /** Active areas from DB — drives the location dropdown. */
+  areas?: Area[];
 };
 
-export default function HorizontalFilter({ initialFilter, onSearch }: Props = {}) {
+export default function HorizontalFilter({ initialFilter, onSearch, areas = [] }: Props = {}) {
   const router = useRouter();
   const [openPanel, setOpenPanel] = useState<PanelKey>(null);
   const [showMore, setShowMore] = useState(false);
@@ -664,6 +670,7 @@ export default function HorizontalFilter({ initialFilter, onSearch }: Props = {}
           <MobileDrawer
             open={drawerOpen} filter={filter} setFilter={setFilter}
             onClose={() => setDrawerOpen(false)} onApply={handleApply} onClear={handleClear}
+            areas={areas}
           />
         </div>
       )}
@@ -677,31 +684,31 @@ export default function HorizontalFilter({ initialFilter, onSearch }: Props = {}
             <button type="button" data-testid="filterTransaction"
               className={`fp${(openPanel === "transaction" || hasValue("transaction", filter)) ? " fp-on" : ""}`}
               onClick={() => togglePanel("transaction")}>
-              {getPillLabel("transaction", filter)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
+              {getPillLabel("transaction", filter, areas)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
             </button>
 
             <button type="button" data-testid="filterPropertyType"
               className={`fp${(openPanel === "type" || hasValue("type", filter)) ? " fp-on" : ""}`}
               onClick={() => togglePanel("type")}>
-              {getPillLabel("type", filter)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
+              {getPillLabel("type", filter, areas)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
             </button>
 
             <button type="button" data-testid="filterLocation"
               className={`fp${(openPanel === "location" || hasValue("location", filter)) ? " fp-on" : ""}`}
               onClick={() => togglePanel("location")}>
-              {getPillLabel("location", filter)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
+              {getPillLabel("location", filter, areas)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
             </button>
 
             <button type="button" data-testid="filterPrice"
               className={`fp${(openPanel === "price" || hasValue("price", filter)) ? " fp-on" : ""}`}
               onClick={() => togglePanel("price")}>
-              {getPillLabel("price", filter)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
+              {getPillLabel("price", filter, areas)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
             </button>
 
             <button type="button" data-testid="filterBedrooms"
               className={`fp${(openPanel === "bedrooms" || hasValue("bedrooms", filter)) ? " fp-on" : ""}`}
               onClick={() => togglePanel("bedrooms")}>
-              {getPillLabel("bedrooms", filter)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
+              {getPillLabel("bedrooms", filter, areas)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
             </button>
 
             {/* Golden Visa — direct toggle, no panel */}
@@ -747,7 +754,7 @@ export default function HorizontalFilter({ initialFilter, onSearch }: Props = {}
 
           {/* Row 1 inline panel */}
           {row1PanelOpen && (
-            <InlinePanel openPanel={openPanel} filter={filter} setFilter={setFilter} onClose={() => setOpenPanel(null)} />
+            <InlinePanel openPanel={openPanel} filter={filter} setFilter={setFilter} onClose={() => setOpenPanel(null)} areas={areas} />
           )}
 
           {/* Row 2 — only when More... is active */}
@@ -757,37 +764,37 @@ export default function HorizontalFilter({ initialFilter, onSearch }: Props = {}
                 <button type="button" data-testid="filterFeatures"
                   className={`fp${(openPanel === "features" || hasValue("features", filter)) ? " fp-on" : ""}`}
                   onClick={() => togglePanel("features")}>
-                  {getPillLabel("features", filter)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
+                  {getPillLabel("features", filter, areas)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
                 </button>
 
                 <button type="button" data-testid="filterBathrooms"
                   className={`fp${(openPanel === "bathrooms" || hasValue("bathrooms", filter)) ? " fp-on" : ""}`}
                   onClick={() => togglePanel("bathrooms")}>
-                  {getPillLabel("bathrooms", filter)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
+                  {getPillLabel("bathrooms", filter, areas)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
                 </button>
 
                 <button type="button" data-testid="filterSize"
                   className={`fp${(openPanel === "size" || hasValue("size", filter)) ? " fp-on" : ""}`}
                   onClick={() => togglePanel("size")}>
-                  {getPillLabel("size", filter)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
+                  {getPillLabel("size", filter, areas)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
                 </button>
 
                 <button type="button" data-testid="filterYearBuilt"
                   className={`fp${(openPanel === "yearBuilt" || hasValue("yearBuilt", filter)) ? " fp-on" : ""}`}
                   onClick={() => togglePanel("yearBuilt")}>
-                  {getPillLabel("yearBuilt", filter)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
+                  {getPillLabel("yearBuilt", filter, areas)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
                 </button>
 
                 <button type="button" data-testid="filterCondition"
                   className={`fp${(openPanel === "condition" || hasValue("condition", filter)) ? " fp-on" : ""}`}
                   onClick={() => togglePanel("condition")}>
-                  {getPillLabel("condition", filter)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
+                  {getPillLabel("condition", filter, areas)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
                 </button>
               </div>
 
               {/* Row 2 inline panel */}
               {row2PanelOpen && (
-                <InlinePanel openPanel={openPanel} filter={filter} setFilter={setFilter} onClose={() => setOpenPanel(null)} />
+                <InlinePanel openPanel={openPanel} filter={filter} setFilter={setFilter} onClose={() => setOpenPanel(null)} areas={areas} />
               )}
             </div>
           )}

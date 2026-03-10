@@ -31,43 +31,40 @@ export type SearchCriteria = {
   goldenVisa:   boolean;
 };
 
-// ── Location keyword → DB slug map ────────────────────────────────────────────
-// Ordered longest-first so "vouliagmeni" matches before "voula".
+// ── Dynamic location map — fetched from DB, cached per server instance ─────────
+// Falls back to empty map if DB is unreachable; classification still works via
+// the static DISCOVERY_RE regex patterns in /api/chat/route.ts.
 
-const LOCATION_MAP: [string, string][] = [
-  ["vouliagmeni",  "vouliagmeni"],
-  ["halkidiki",    "halkidiki"],
-  ["thessaloniki", "thessaloniki"],
-  ["markopoulo",   "markopoulo"],
-  ["lagonisi",     "lagonisi"],
-  ["anavissos",    "anavissos"],
-  ["kefalonia",    "kefalonia"],
-  ["zakynthos",    "zakynthos"],
-  ["santorini",    "santorini"],
-  ["psychiko",     "psychiko"],
-  ["kolonaki",     "kolonaki"],
-  ["glyfada",      "glyfada"],
-  ["piraeus",      "piraeus"],
-  ["kifisia",      "kifisia"],
-  ["saronida",     "saronida"],
-  ["mykonos",      "mykonos"],
-  ["attica",       "attica"],
-  ["athens",       "athens"],
-  ["spetses",      "spetses"],
-  ["rhodes",       "rhodes"],
-  ["corfu",        "corfu"],
-  ["crete",        "crete"],
-  ["hydra",        "hydra"],
-  ["aegina",       "aegina"],
-  ["poros",        "poros"],
-  ["paros",        "paros"],
-  ["vari",         "vari"],
-  ["voula",        "voula"],
-];
+type LocationRow = { name: string; slug: string };
+let _locationMapCache: [string, string][] | null = null;
 
-function extractLocation(message: string): string | null {
+async function getLocationMap(): Promise<[string, string][]> {
+  if (_locationMapCache) return _locationMapCache;
+
+  const admin = createSupabaseAdminClient();
+  const { data, error } = await admin
+    .from("locations")
+    .select("name,slug")
+    .eq("is_active", true);
+
+  if (error || !data) {
+    console.error("[chat/propertySearch] location map fetch error:", error?.message);
+    return [];
+  }
+
+  // Sort longest name first so "vouliagmeni" matches before "voula"
+  const map = (data as LocationRow[])
+    .map(r => [r.name.toLowerCase(), r.slug] as [string, string])
+    .sort((a, b) => b[0].length - a[0].length);
+
+  _locationMapCache = map;
+  return map;
+}
+
+async function extractLocation(message: string): Promise<string | null> {
   const lower = message.toLowerCase();
-  for (const [keyword, slug] of LOCATION_MAP) {
+  const map = await getLocationMap();
+  for (const [keyword, slug] of map) {
     if (lower.includes(keyword)) return slug;
   }
   return null;
@@ -103,9 +100,9 @@ function extractBedrooms(message: string): number | null {
 
 // ── Parse criteria from a free-text message ───────────────────────────────────
 
-export function parseCriteria(message: string): SearchCriteria {
+export async function parseCriteria(message: string): Promise<SearchCriteria> {
   return {
-    locationSlug: extractLocation(message),
+    locationSlug: await extractLocation(message),
     maxPrice:     extractMaxPrice(message),
     minBedrooms:  extractBedrooms(message),
     goldenVisa:   /golden\s*visa/i.test(message),

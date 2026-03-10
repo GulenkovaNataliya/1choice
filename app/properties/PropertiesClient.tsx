@@ -8,6 +8,7 @@ import type { PropertyRow } from "@/lib/properties/fetchProperties";
 import { publicImageUrl } from "@/lib/storage/publicImageUrl";
 import PropertyCard from "@/components/Property/PropertyCard";
 import HorizontalFilter, { type FilterState } from "@/components/Home/HorizontalFilter";
+import type { Area } from "@/lib/areas";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -255,6 +256,7 @@ export default function PropertiesClient({
   total,
   hasNext,
   hasPrev,
+  areas = [],
 }: {
   initialProperties: PropertyRow[];
   currentPage: number;
@@ -262,6 +264,7 @@ export default function PropertiesClient({
   total: number;
   hasNext: boolean;
   hasPrev: boolean;
+  areas?: Area[];
 }) {
   const params = useSearchParams();
   const router = useRouter();
@@ -330,6 +333,7 @@ export default function PropertiesClient({
       <div className="filter-sticky-wrap">
         <HorizontalFilter
           initialFilter={initialFilter}
+          areas={areas}
           onSearch={(p) => {
             const existingSort = params.get("sort");
             if (existingSort) p.set("sort", existingSort);

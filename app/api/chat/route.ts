@@ -405,7 +405,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (cls === "discovery") {
-      const criteria = parseCriteria(message);
+      const criteria = await parseCriteria(message);
 
       if (hasCriteria(criteria)) {
         // Query the real verified catalog ─────────────────────────────────────

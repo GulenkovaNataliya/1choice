@@ -3,6 +3,7 @@ import PropertyForm from "@/components/admin/PropertyForm";
 import PrivateLinkManager from "@/components/admin/PrivateLinkManager";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/adminClient";
+import { fetchActiveAreas } from "@/lib/areas";
 
 export const metadata = {
   title: "Edit Property | Admin",
@@ -11,13 +12,16 @@ export const metadata = {
 export default async function EditPropertyPage({ params }: { params: { id: string } }) {
   const supabase = await createSupabaseServerClient();
 
-  const { data: property, error } = await supabase
-    .from("properties")
-    .select(
-      "id,property_code,title,slug,price_eur,location_text,summary,description,size_sqm,bedrooms,bathrooms,floor,cover_image_url,gallery_image_urls,is_golden_visa,featured,vip,publish_1choice,publish_deals,status"
-    )
-    .eq("id", params.id)
-    .single();
+  const [{ data: property, error }, areas] = await Promise.all([
+    supabase
+      .from("properties")
+      .select(
+        "id,property_code,title,slug,price_eur,location,location_text,summary,description,size_sqm,bedrooms,bathrooms,floor,cover_image_url,gallery_image_urls,is_golden_visa,featured,vip,publish_1choice,publish_deals,status"
+      )
+      .eq("id", params.id)
+      .single(),
+    fetchActiveAreas(),
+  ]);
 
   if (error || !property) notFound();
 
@@ -41,6 +45,7 @@ export default async function EditPropertyPage({ params }: { params: { id: strin
     title: property.title ?? "",
     slug: property.slug ?? "",
     price_eur: property.price_eur != null ? String(property.price_eur) : "",
+    location_slug: (property as { location?: string | null }).location ?? "",
     location_text: property.location_text ?? "",
     summary: property.summary ?? "",
     description: property.description ?? "",
@@ -70,6 +75,7 @@ export default async function EditPropertyPage({ params }: { params: { id: strin
         propertyId={property.id}
         propertyCode={property.property_code ?? ""}
         initialValues={initialValues}
+        areas={areas}
       />
 
       {/* Private link management — shown below the form, only relevant for VIP */}

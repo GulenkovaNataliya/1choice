@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import PropertiesClient from "./PropertiesClient";
 import type { PropertyRow } from "@/lib/properties/fetchProperties";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { fetchActiveAreas } from "@/lib/areas";
 
 export async function generateMetadata({
   searchParams,
@@ -52,6 +53,7 @@ export default async function PropertiesPage({
   const to = from + PAGE_SIZE - 1;
 
   const supabase = await createSupabaseServerClient();
+  const areas = await fetchActiveAreas();
 
   let q = supabase
     .from("properties")
@@ -81,6 +83,7 @@ export default async function PropertiesPage({
         total={total}
         hasNext={hasNext}
         hasPrev={hasPrev}
+        areas={areas}
       />
     </Suspense>
   );

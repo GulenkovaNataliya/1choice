@@ -1,27 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabase } from "@/lib/supabase/client";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-type PropertyRef = { title: string; property_code: string | null } | null;
-
 export type Lead = {
   id: string;
   created_at: string;
+  lead_type: string | null;
   name: string;
   email: string | null;
   phone: string | null;
   source: string | null;
   page_url: string | null;
   property_id: string | null;
+  property_code: string | null;
+  property_title: string | null;
   summary: string | null;
-  chat_log: string | null;
+  full_chat: string | null;
   status: string;
   internal_note: string | null;
-  properties: PropertyRef;
 };
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -68,7 +68,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 // ── Chat log renderer ─────────────────────────────────────────────────────────
-// New leads store chat_log as JSON [{role,text}]. Old leads may have raw strings.
+// Leads store full_chat as JSON [{role,text}]. Old leads may have raw strings.
 // Tries to parse as structured conversation; falls back to <pre> for old data.
 
 function ChatLogDisplay({ raw }: { raw: string }) {
@@ -126,8 +126,8 @@ function LeadDetailModal({
   const [noteError, setNoteError] = useState<string | null>(null);
   const [noteSaved, setNoteSaved] = useState(false);
 
-  const propertyLabel = lead.properties
-    ? `${lead.properties.title}${lead.properties.property_code ? ` (${lead.properties.property_code})` : ""}`
+  const propertyLabel = lead.property_title
+    ? `${lead.property_title}${lead.property_code ? ` (${lead.property_code})` : ""}`
     : null;
 
   async function saveNote() {
@@ -206,10 +206,10 @@ function LeadDetailModal({
           )}
 
           {/* Chat log */}
-          {lead.chat_log && (
+          {lead.full_chat && (
             <div>
               <p className="text-xs text-[#888888] uppercase tracking-widest mb-1.5">Chat Log</p>
-              <ChatLogDisplay raw={lead.chat_log} />
+              <ChatLogDisplay raw={lead.full_chat} />
             </div>
           )}
 
@@ -253,10 +253,32 @@ function LeadDetailModal({
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export default function LeadsManager({ initialRows }: { initialRows: Lead[] }) {
+export default function LeadsManager({
+  initialRows,
+  selectedId = null,
+}: {
+  initialRows: Lead[];
+  selectedId?: string | null;
+}) {
   const router = useRouter();
   const [detailLead, setDetailLead] = useState<Lead | null>(null);
   const [savingStatusId, setSavingStatusId] = useState<string | null>(null);
+  const highlightedRowRef = useRef<HTMLTableRowElement | null>(null);
+
+  // Auto-open modal and scroll to highlighted row when selectedId is set
+  useEffect(() => {
+    if (!selectedId) return;
+    const lead = initialRows.find((l) => l.id === selectedId);
+    if (lead) {
+      setDetailLead(lead);
+    }
+  }, [selectedId, initialRows]);
+
+  useEffect(() => {
+    if (selectedId && highlightedRowRef.current) {
+      highlightedRowRef.current.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  }, [selectedId]);
 
   function refresh() {
     router.refresh();
@@ -304,8 +326,17 @@ export default function LeadsManager({ initialRows }: { initialRows: Lead[] }) {
             <tbody className="divide-y divide-[#F0F0F0]">
               {initialRows.map((lead) => {
                 const isSavingStatus = savingStatusId === lead.id;
+                const isHighlighted = lead.id === selectedId;
                 return (
-                  <tr key={lead.id} className="hover:bg-[#FAFAFA] transition-colors">
+                  <tr
+                    key={lead.id}
+                    ref={isHighlighted ? highlightedRowRef : null}
+                    className={`transition-colors ${
+                      isHighlighted
+                        ? "bg-amber-50 ring-2 ring-inset ring-amber-300"
+                        : "hover:bg-[#FAFAFA]"
+                    }`}
+                  >
                     <td className="px-4 py-3 text-[#888888] whitespace-nowrap">
                       {new Date(lead.created_at).toLocaleDateString("en-GB", {
                         day: "2-digit", month: "short", year: "numeric",
@@ -319,8 +350,8 @@ export default function LeadsManager({ initialRows }: { initialRows: Lead[] }) {
                     </td>
                     <td className="px-4 py-3 text-[#555555]">{sourceLabel(lead.source)}</td>
                     <td className="px-4 py-3 text-xs">
-                      {lead.properties
-                        ? <span className="text-[#555555]">{lead.properties.property_code ?? lead.properties.title}</span>
+                      {lead.property_title
+                        ? <span className="text-[#555555]">{lead.property_code ?? lead.property_title}</span>
                         : <span className="text-[#AAAAAA]">General</span>}
                     </td>
                     <td className="px-4 py-3">

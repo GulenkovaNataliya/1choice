@@ -5,13 +5,19 @@ export const metadata = {
   title: "Leads | Admin",
 };
 
-export default async function AdminLeadsPage() {
+export default async function AdminLeadsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string>>;
+}) {
   const supabase = await createSupabaseServerClient();
+  const params = await searchParams;
+  const selectedId = typeof params.id === "string" ? params.id : null;
 
   const { data: leads, error } = await supabase
     .from("leads")
     .select(
-      "id,created_at,name,email,phone,source,page_url,property_id,summary,chat_log,status,internal_note,properties(title,property_code)"
+      "id,created_at,lead_type,name,email,phone,source,page_url,property_id,property_code,property_title,summary,full_chat,status,internal_note"
     )
     .order("created_at", { ascending: false });
 
@@ -27,7 +33,10 @@ export default async function AdminLeadsPage() {
           <p className="text-xs text-[#888888]">{error.message}</p>
         </div>
       ) : (
-        <LeadsManager initialRows={(leads ?? []) as unknown as Lead[]} />
+        <LeadsManager
+          initialRows={(leads ?? []) as unknown as Lead[]}
+          selectedId={selectedId}
+        />
       )}
     </div>
   );

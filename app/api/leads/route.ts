@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/adminClient";
+import { sendTelegramLeadNotification } from "@/lib/telegram/sendTelegramLeadNotification";
 
 /*
  * POST /api/leads
@@ -20,7 +21,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/adminClient";
  * DB column mapping:
  *   whatsapp → phone      (existing column reused)
  *   intent + notes + lead_type + consent → summary (text, \n-separated)
- *   chat_log array → chat_log (text, JSON.stringify)
+ *   chat_log array → full_chat (text, JSON.stringify)
  */
 
 const WHATSAPP_RE = /^\+[1-9]\d{7,14}$/;
@@ -82,13 +83,23 @@ export async function POST(request: NextRequest) {
       ? rawPropertyId
       : null;
 
+  const property_title =
+    typeof body.property_title === "string" && body.property_title.length > 0
+      ? body.property_title
+      : null;
+
+  const property_code =
+    typeof body.property_code === "string" && body.property_code.length > 0
+      ? body.property_code
+      : null;
+
   // lead_type: property if property context attached, else general
   const lead_type = property_id ? "property" : "general";
 
-  // ── chat_log ──────────────────────────────────────────────────────────────
+  // ── full_chat ─────────────────────────────────────────────────────────────
 
   const rawChatLog = body.chat_log;
-  const chat_log =
+  const full_chat =
     Array.isArray(rawChatLog) && rawChatLog.length > 0
       ? JSON.stringify(rawChatLog)
       : null;
@@ -112,22 +123,52 @@ export async function POST(request: NextRequest) {
 
   const admin = createSupabaseAdminClient();
 
-  const { error } = await admin.from("leads").insert({
-    name,
-    phone:       whatsapp,      // WhatsApp number stored in existing `phone` column
-    email:       email || null,
-    source,
-    page_url,
-    property_id,
-    summary,
-    chat_log,
-    status:      "new",
-  });
+  const { data: inserted, error } = await admin
+    .from("leads")
+    .insert({
+      name,
+      phone:          whatsapp,   // WhatsApp number stored in existing `phone` column
+      email:          email || null,
+      lead_type,
+      source,
+      page_url,
+      property_id,
+      property_title,
+      property_code,
+      summary,
+      full_chat,
+      status:         "new",
+    })
+    .select("id")
+    .single();
 
   if (error) {
     console.error("[POST /api/leads] insert error:", error.message);
     return NextResponse.json({ error: "Failed to save lead" }, { status: 500 });
   }
+
+  // ── Telegram notification (fire-and-forget, never breaks the response) ────
+  const siteUrl = process.env.SITE_URL ?? null;
+  const adminUrl =
+    siteUrl && inserted?.id
+      ? `${siteUrl}/admin/leads?id=${inserted.id}`
+      : null;
+
+  sendTelegramLeadNotification({
+    lead_type,
+    source,
+    name,
+    phone:          whatsapp,
+    email,
+    property_id,
+    property_title,
+    property_code,
+    page_url,
+    intent,
+    notes,
+    admin_url: adminUrl,
+    created_at: new Date().toISOString(),
+  }).catch((err) => console.error("[Telegram] unexpected error:", err));
 
   return NextResponse.json({ ok: true }, { status: 201 });
 }

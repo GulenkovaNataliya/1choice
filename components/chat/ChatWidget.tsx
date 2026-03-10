@@ -13,9 +13,21 @@ type Intent =
   | "viewing_request"
   | "general_question";
 
+type ChatMatch = {
+  id:            string;
+  title:         string;
+  slug:          string;
+  property_code: string | null;
+  location_text: string | null;
+  size:          number | null;
+  bedrooms:      number | null;
+  price:         number | null;
+};
+
 type Message = {
-  role: "user" | "bot";
-  text: string;
+  role:     "user" | "bot";
+  text:     string;
+  matches?: ChatMatch[];
 };
 
 type LeadForm = {
@@ -52,23 +64,36 @@ const QUICK_ACTIONS: QuickAction[] = [
 const REFUSAL_FALLBACK =
   "I can only assist with advisory within the verified 1Choice portfolio.";
 
+type BotResult = { text: string; triggerLeadForm: boolean; matches?: ChatMatch[] };
+const REFUSAL_RESULT: BotResult = { text: REFUSAL_FALLBACK, triggerLeadForm: false };
+
 async function fetchBotResponse(
   params: { intent?: string; message?: string },
-  pathname: string
-): Promise<string> {
+  pathname: string,
+  conversationStep: number,
+): Promise<BotResult> {
   try {
     const res = await fetch("/api/chat", {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ ...params, pathname }),
+      body:    JSON.stringify({ ...params, pathname, conversationStep }),
     });
     const json: unknown = await res.json().catch(() => ({}));
-    if (typeof json === "object" && json !== null && "text" in json && typeof (json as Record<string, unknown>).text === "string") {
-      return (json as { text: string }).text;
+    if (
+      typeof json === "object" && json !== null &&
+      "text" in json &&
+      typeof (json as Record<string, unknown>).text === "string"
+    ) {
+      const j = json as { text: string; triggerLeadForm?: unknown; matches?: unknown };
+      return {
+        text:            j.text,
+        triggerLeadForm: j.triggerLeadForm === true,
+        matches:         Array.isArray(j.matches) ? (j.matches as ChatMatch[]) : undefined,
+      };
     }
-    return REFUSAL_FALLBACK;
+    return REFUSAL_RESULT;
   } catch {
-    return REFUSAL_FALLBACK;
+    return REFUSAL_RESULT;
   }
 }
 
@@ -409,15 +434,15 @@ export default function ChatWidget() {
       setMsgs([{ role: "bot", text: WELCOME_MESSAGES.default }]);
     }
     setIsLoadingBot(true);
-    const text = await fetchBotResponse({ intent: chosen }, pathname);
+    const { text, triggerLeadForm, matches } = await fetchBotResponse({ intent: chosen }, pathname, msgs.length);
     setIsLoadingBot(false);
     setIntent(chosen);
     setMsgs((prev) => [
       ...prev,
       { role: "user", text: userLabel },
-      { role: "bot",  text },
+      { role: "bot",  text, matches },
     ]);
-    setShowForm(true);
+    if (triggerLeadForm) setShowForm(true);
   }
 
   // ── External programmatic-open via DOM event ─────────────────────────────
@@ -472,10 +497,10 @@ export default function ChatWidget() {
     setIntent(chosen);
     setMsgs((prev) => [...prev, { role: "user", text: label }]);
     setIsLoadingBot(true);
-    const text = await fetchBotResponse({ intent: chosen }, pathname);
+    const { text, triggerLeadForm, matches } = await fetchBotResponse({ intent: chosen }, pathname, msgs.length);
     setIsLoadingBot(false);
-    setMsgs((prev) => [...prev, { role: "bot", text }]);
-    setShowForm(true);
+    setMsgs((prev) => [...prev, { role: "bot", text, matches }]);
+    if (triggerLeadForm) setShowForm(true);
   }
 
   // ── Free-text send ────────────────────────────────────────────────────────
@@ -486,10 +511,14 @@ export default function ChatWidget() {
     setMsgs((prev) => [...prev, { role: "user", text }]);
     if (showForm) return;
     setIsLoadingBot(true);
-    const botText = await fetchBotResponse({ message: text }, pathname);
+    const { text: botText, triggerLeadForm, matches } = await fetchBotResponse(
+      { message: text },
+      pathname,
+      msgs.length,
+    );
     setIsLoadingBot(false);
-    setMsgs((prev) => [...prev, { role: "bot", text: botText }]);
-    setShowForm(true);
+    setMsgs((prev) => [...prev, { role: "bot", text: botText, matches }]);
+    if (triggerLeadForm) setShowForm(true);
   }
 
   // ── Validation ────────────────────────────────────────────────────────────
@@ -520,7 +549,9 @@ export default function ChatWidget() {
       source:           pageSource(pathname),
       intent:           intent ?? "general_question",
       page_url:         typeof window !== "undefined" ? window.location.href : null,
-      property_id:      propertyData?.property_id ?? null,
+      property_id:      propertyData?.property_id    ?? null,
+      property_title:   propertyData?.property_title ?? null,
+      property_code:    propertyData?.property_code  ?? null,
       chat_log:         msgs.map((m) => ({ role: m.role, text: m.text })),
     };
 
@@ -561,7 +592,12 @@ export default function ChatWidget() {
           className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-5 h-14 bg-[#1E1E1E] text-[#F4F4F4] shadow-lg hover:bg-[#3A2E4F] transition-colors"
           style={{ minWidth: "200px", maxWidth: "240px", borderRadius: "20px" }}
         >
-          <KeyIcon className="shrink-0 text-[#C1121F]" />
+          <img
+            src="/logo/logo-chat.png"
+            alt=""
+            aria-hidden="true"
+            className="shrink-0 h-[18px] w-auto"
+          />
           <span className="text-sm font-semibold leading-tight whitespace-nowrap">
             {launcherText}
           </span>
@@ -577,13 +613,18 @@ export default function ChatWidget() {
         >
           {/* ── Modal ── */}
           <div
-            className="w-[380px] max-h-[600px] flex flex-col bg-white shadow-2xl overflow-hidden"
+            className="w-full max-w-[380px] max-h-[min(600px,90vh)] flex flex-col bg-white shadow-2xl overflow-hidden"
             style={{ borderRadius: "18px" }}
           >
             {/* Header */}
             <div className="bg-[#1E1E1E] text-white px-5 py-4 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
-                <KeyIcon className="shrink-0 text-[#C1121F]" />
+                <img
+                  src="/logo/logo-chat.png"
+                  alt=""
+                  aria-hidden="true"
+                  className="shrink-0 h-[18px] w-auto"
+                />
                 <span className="text-sm font-semibold tracking-tight">
                   1Choice Advisory Assistant
                 </span>
@@ -603,19 +644,56 @@ export default function ChatWidget() {
             {/* Messages */}
             <div className="flex-1 overflow-y-auto bg-white px-4 py-4 space-y-2 min-h-0">
               {msgs.map((m, i) => (
-                <div
-                  key={i}
-                  className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
-                >
-                  <span
-                    className={`text-sm px-3 py-2 rounded-xl max-w-[82%] leading-relaxed ${
-                      m.role === "user"
-                        ? "bg-[#1E1E1E] text-white rounded-br-sm"
-                        : "bg-[#F2F2F2] text-[#1E1E1E] rounded-bl-sm"
-                    }`}
-                  >
-                    {m.text}
-                  </span>
+                <div key={i}>
+                  <div className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                    <span
+                      className={`text-sm px-3 py-2 rounded-xl max-w-[82%] leading-relaxed ${
+                        m.role === "user"
+                          ? "bg-[#1E1E1E] text-white rounded-br-sm"
+                          : "bg-[#F2F2F2] text-[#1E1E1E] rounded-bl-sm"
+                      }`}
+                    >
+                      {m.text}
+                    </span>
+                  </div>
+
+                  {/* Property match cards — only on bot messages with matches */}
+                  {m.role === "bot" && m.matches && m.matches.length > 0 && (
+                    <div className="flex flex-col gap-2 mt-2">
+                      {m.matches.map((p) => (
+                        <a
+                          key={p.id}
+                          href={`/properties/${p.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block border border-[#E0E0E0] rounded-xl px-3 py-2.5 hover:bg-[#F4F4F4] transition-colors"
+                        >
+                          <p className="text-sm font-semibold text-[#1E1E1E] leading-snug">
+                            {p.title}
+                          </p>
+                          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 mt-1">
+                            {p.location_text && (
+                              <span className="text-xs text-[#666666]">{p.location_text}</span>
+                            )}
+                            {p.bedrooms != null && (
+                              <span className="text-xs text-[#666666]">{p.bedrooms} bed</span>
+                            )}
+                            {p.size != null && (
+                              <span className="text-xs text-[#666666]">{p.size} m²</span>
+                            )}
+                            {p.price != null && (
+                              <span className="text-xs font-medium text-[#1E1E1E]">
+                                €{p.price.toLocaleString()}
+                              </span>
+                            )}
+                            {p.property_code && (
+                              <span className="text-xs text-[#AAAAAA]">{p.property_code}</span>
+                            )}
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
 

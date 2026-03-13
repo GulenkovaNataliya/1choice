@@ -1,6 +1,21 @@
 "use client";
 
 import { useRef, useState, type DragEvent, type ChangeEvent } from "react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  useSortable,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { getSupabase } from "@/lib/supabase/client";
 import { renderImageUrl } from "@/lib/storage/imageUrl";
 import { logActivity } from "@/lib/admin/logActivity";
@@ -30,6 +45,85 @@ function urlsToImages(urls: string[]): UploadedImage[] {
   }));
 }
 
+// ── Sortable image tile ────────────────────────────────────────────────────────
+
+type SortableImageProps = {
+  image: UploadedImage;
+  index: number;
+  onSetCover: () => void;
+  onRemove: () => void;
+};
+
+function SortableImage({ image, index, onSetCover, onRemove }: SortableImageProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: image.path });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="relative group rounded-lg overflow-hidden aspect-square bg-[#F4F4F4] touch-none"
+    >
+      {/* Drag handle — entire image is draggable */}
+      <div
+        {...attributes}
+        {...listeners}
+        className="absolute inset-0 cursor-grab active:cursor-grabbing"
+        aria-label="Drag to reorder"
+      />
+
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={image.url}
+        alt={`Photo ${index + 1}`}
+        className="w-full h-full object-cover pointer-events-none select-none"
+        draggable={false}
+      />
+
+      {/* Cover badge / Set cover button */}
+      {index === 0 ? (
+        <span className="absolute top-1.5 left-1.5 text-[10px] font-semibold bg-[#1E1E1E] text-white px-1.5 py-0.5 rounded pointer-events-none">
+          Cover
+        </span>
+      ) : (
+        <button
+          type="button"
+          onClick={onSetCover}
+          className="absolute top-1.5 left-1.5 text-[10px] font-semibold bg-black/50 text-white px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#1E1E1E]"
+          aria-label="Set as cover"
+        >
+          Set cover
+        </button>
+      )}
+
+      {/* Remove button */}
+      <button
+        type="button"
+        onClick={onRemove}
+        className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/60 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+        aria-label="Remove image"
+      >
+        ×
+      </button>
+    </div>
+  );
+}
+
+// ── Main component ─────────────────────────────────────────────────────────────
+
 export default function PropertyImageUpload({
   propertyCode,
   propertyId,
@@ -40,7 +134,6 @@ export default function PropertyImageUpload({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [images, setImages] = useState<UploadedImage[]>(() =>
-    // Prefer initialGalleryUrls; fall back to initialCoverUrl alone if gallery is empty
     initialGalleryUrls.length > 0
       ? urlsToImages(initialGalleryUrls)
       : initialCoverUrl
@@ -50,12 +143,36 @@ export default function PropertyImageUpload({
 
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [dragging, setDragging] = useState(false);
+  const [dropZoneDragging, setDropZoneDragging] = useState(false);
+
+  // dnd-kit requires a minimum pointer movement before activating drag,
+  // so that click handlers on buttons inside sortable items still fire normally.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
 
   function notifyParent(next: UploadedImage[]) {
     const galleryUrls = next.map((img) => renderImageUrl(img.path, "gallery") ?? img.url);
     onChange({ coverUrl: galleryUrls[0] ?? "", galleryUrls });
   }
+
+  // ── Drag-and-drop reorder ──────────────────────────────────────────────────
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    setImages((prev) => {
+      const oldIndex = prev.findIndex((img) => img.path === active.id);
+      const newIndex = prev.findIndex((img) => img.path === over.id);
+      if (oldIndex === -1 || newIndex === -1) return prev;
+      const next = arrayMove(prev, oldIndex, newIndex);
+      notifyParent(next);
+      return next;
+    });
+  }
+
+  // ── Upload ─────────────────────────────────────────────────────────────────
 
   async function uploadFiles(files: FileList | File[]) {
     const all = Array.from(files);
@@ -111,20 +228,22 @@ export default function PropertyImageUpload({
     if (e.target.files) uploadFiles(e.target.files);
   }
 
-  function handleDrop(e: DragEvent<HTMLDivElement>) {
+  function handleDropZoneDrop(e: DragEvent<HTMLDivElement>) {
     e.preventDefault();
-    setDragging(false);
+    setDropZoneDragging(false);
     if (e.dataTransfer.files) uploadFiles(e.dataTransfer.files);
   }
 
-  function handleDragOver(e: DragEvent<HTMLDivElement>) {
+  function handleDropZoneDragOver(e: DragEvent<HTMLDivElement>) {
     e.preventDefault();
-    setDragging(true);
+    setDropZoneDragging(true);
   }
 
-  function handleDragLeave() {
-    setDragging(false);
+  function handleDropZoneDragLeave() {
+    setDropZoneDragging(false);
   }
+
+  // ── Cover / remove ─────────────────────────────────────────────────────────
 
   function setCover(index: number) {
     if (index === 0) return;
@@ -153,16 +272,18 @@ export default function PropertyImageUpload({
     }
   }
 
+  // ── Render ─────────────────────────────────────────────────────────────────
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Drop zone */}
+      {/* Drop zone for file uploads */}
       <div
         onClick={() => inputRef.current?.click()}
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
+        onDrop={handleDropZoneDrop}
+        onDragOver={handleDropZoneDragOver}
+        onDragLeave={handleDropZoneDragLeave}
         className={`relative border-2 border-dashed rounded-lg px-6 py-10 text-center cursor-pointer transition-colors
-          ${dragging ? "border-[#1E1E1E] bg-[#F0F0F0]" : "border-[#D9D9D9] bg-white hover:border-[#AAAAAA]"}`}
+          ${dropZoneDragging ? "border-[#1E1E1E] bg-[#F0F0F0]" : "border-[#D9D9D9] bg-white hover:border-[#AAAAAA]"}`}
       >
         <input
           ref={inputRef}
@@ -193,48 +314,36 @@ export default function PropertyImageUpload({
         </p>
       )}
 
-      {/* Preview grid */}
+      {/* Sortable gallery grid */}
       {images.length > 0 && (
-        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-          {images.map((img, i) => (
-            <div key={`${img.path}-${i}`} className="relative group rounded-lg overflow-hidden aspect-square bg-[#F4F4F4]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={img.url}
-                alt={`Photo ${i + 1}`}
-                className="w-full h-full object-cover"
-              />
-              {i === 0 ? (
-                <span className="absolute top-1.5 left-1.5 text-[10px] font-semibold bg-[#1E1E1E] text-white px-1.5 py-0.5 rounded">
-                  Cover
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setCover(i)}
-                  className="absolute top-1.5 left-1.5 text-[10px] font-semibold bg-black/50 text-white px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#1E1E1E]"
-                  aria-label="Set as cover"
-                >
-                  Set cover
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => removeImage(i)}
-                className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/60 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                aria-label="Remove image"
-              >
-                ×
-              </button>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={images.map((img) => img.path)}
+            strategy={rectSortingStrategy}
+          >
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+              {images.map((img, i) => (
+                <SortableImage
+                  key={img.path}
+                  image={img}
+                  index={i}
+                  onSetCover={() => setCover(i)}
+                  onRemove={() => removeImage(i)}
+                />
+              ))}
             </div>
-          ))}
-        </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       {/* Summary */}
       {images.length > 0 && (
         <p className="text-xs text-[#AAAAAA]">
-          {images.length} photo{images.length !== 1 ? "s" : ""} — first image is the cover
+          {images.length} photo{images.length !== 1 ? "s" : ""} — drag to reorder · first image is the cover
         </p>
       )}
     </div>

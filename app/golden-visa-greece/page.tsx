@@ -33,24 +33,15 @@ export default async function GoldenVisaPage({
   const to = from + PAGE_SIZE - 1;
 
   const supabase = await createSupabaseServerClient();
-  const supabaseHost = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).host;
-
-  // TODO: once `published` and `vip` columns exist in the `properties` table, set this to true:
-  //   .eq("published", true)
-  //   .eq("vip", false)
-  const ENABLE_PUBLISHED_VIP_FILTERS = false;
-
   let query = supabase
     .from("properties")
     .select(
-      "id,title,slug,price,location,bedrooms,bathrooms,size,cover_image_path,is_golden_visa,created_at",
+      "id,property_code,title,slug,price_eur,location,bedrooms,bathrooms,size_sqm,cover_image_url,gallery_image_urls,is_golden_visa,featured,private_collection,created_at",
       { count: "exact" }
     )
-    .eq("is_golden_visa", true);
-
-  if (ENABLE_PUBLISHED_VIP_FILTERS) {
-    query = query.eq("published", true).eq("vip", false);
-  }
+    .eq("is_golden_visa", true)
+    .neq("private_collection", true) // exclude private inventory
+    .neq("vip", true);               // legacy dual-check during transition
 
   const { data, count } = await query
     .order("created_at", { ascending: false })
@@ -58,18 +49,20 @@ export default async function GoldenVisaPage({
 
   const properties = (data ?? []).map((p) => ({
     id: p.id,
+    property_code: p.property_code ?? null,
     slug: p.slug,
     title: p.title,
     area: titleCase(p.location ?? ""),
-    price_eur: p.price,
+    price_eur: p.price_eur ?? null,
     is_golden_visa: true,
     is_1choice_deal: false,
-    cover_image: p.cover_image_path
-      ? `https://${supabaseHost}/storage/v1/object/public/property-images/${p.cover_image_path}`
-      : null,
+    featured: p.featured ?? false,
+    private_collection: p.private_collection ?? false,
+    cover_image_url: p.cover_image_url ?? null,
+    gallery_image_urls: (p.gallery_image_urls as string[] | null) ?? [],
     bedrooms: p.bedrooms ?? undefined,
     bathrooms: p.bathrooms ?? undefined,
-    size_sqm: p.size ?? undefined,
+    size_sqm: p.size_sqm ?? undefined,
   }));
 
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));

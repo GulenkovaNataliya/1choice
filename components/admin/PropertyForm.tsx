@@ -12,6 +12,9 @@ import type { Area } from "@/lib/areas";
 type FormState = {
   title: string;
   slug: string;
+  category: string;
+  subtype: string;
+  transaction_type: string;
   price_eur: string;
   location_slug: string;
   location_text: string;
@@ -19,16 +22,47 @@ type FormState = {
   bedrooms: string;
   bathrooms: string;
   floor: string;
+  year_built: string;
+  year_renovated: string;
+  building_condition: string;
+  energy_class: string;
+  fireplace: boolean;
+  elevator: boolean;
+  security_door: boolean;
+  alarm_system: boolean;
+  video_doorphone: boolean;
+  smart_home: boolean;
+  satellite_tv: boolean;
+  internet_ready: boolean;
+  storage: boolean;
+  sea_view: boolean;
+  mountain_view: boolean;
+  garden: boolean;
+  pool: boolean;
+  frames_type: string;
+  double_glazing: boolean;
+  triple_glazing: boolean;
+  mosquito_screens: boolean;
+  thermal_insulation: boolean;
+  sound_insulation: boolean;
+  flooring_type: string;
+  living_rooms: string;
+  kitchens: string;
+  storage_rooms: string;
+  wc: string;
   summary: string;
   description: string;
+  agent_notes: string;
   is_golden_visa: boolean;
   featured: boolean;
-  vip: boolean;
+  private_collection: boolean;
   publish_1choice: boolean;
   publish_deals: boolean;
   status: "draft" | "published" | "archived";
   cover_image_url: string;
   gallery_image_urls: string[];
+  youtube_video_url: string;
+  virtual_tour_url: string;
   latitude: string;
   longitude: string;
   approximate_location: boolean;
@@ -39,6 +73,9 @@ type SaveStatus = "idle" | "saving" | "saved" | "error";
 const INITIAL: FormState = {
   title: "",
   slug: "",
+  category: "",
+  subtype: "",
+  transaction_type: "sale",
   price_eur: "",
   location_slug: "",
   location_text: "",
@@ -46,16 +83,47 @@ const INITIAL: FormState = {
   bedrooms: "",
   bathrooms: "",
   floor: "",
+  year_built: "",
+  year_renovated: "",
+  building_condition: "",
+  energy_class: "",
+  fireplace: false,
+  elevator: false,
+  security_door: false,
+  alarm_system: false,
+  video_doorphone: false,
+  smart_home: false,
+  satellite_tv: false,
+  internet_ready: false,
+  storage: false,
+  sea_view: false,
+  mountain_view: false,
+  garden: false,
+  pool: false,
+  frames_type: "",
+  double_glazing: false,
+  triple_glazing: false,
+  mosquito_screens: false,
+  thermal_insulation: false,
+  sound_insulation: false,
+  flooring_type: "",
+  living_rooms: "",
+  kitchens: "",
+  storage_rooms: "",
+  wc: "",
   summary: "",
   description: "",
+  agent_notes: "",
   is_golden_visa: false,
   featured: false,
-  vip: false,
+  private_collection: false,
   publish_1choice: true,
   publish_deals: false,
   status: "draft",
   cover_image_url: "",
   gallery_image_urls: [],
+  youtube_video_url: "",
+  virtual_tour_url: "",
   latitude: "",
   longitude: "",
   approximate_location: false,
@@ -76,6 +144,9 @@ function buildPayload(form: FormState, resolveSlug = false) {
   return {
     title: form.title,
     slug: resolveSlug ? (form.slug.trim() || toSlug(form.title)) : (form.slug || null),
+    category: form.category || null,
+    subtype: form.subtype || null,
+    transaction_type: form.transaction_type || null,
     price_eur: form.price_eur ? Number(form.price_eur) : null,
     location: form.location_slug || null,
     location_text: form.location_text || null,
@@ -83,16 +154,47 @@ function buildPayload(form: FormState, resolveSlug = false) {
     bedrooms: form.bedrooms ? Number(form.bedrooms) : null,
     bathrooms: form.bathrooms ? Number(form.bathrooms) : null,
     floor: form.floor ? Number(form.floor) : null,
+    year_built: form.year_built ? Number(form.year_built) : null,
+    year_renovated: form.year_renovated ? Number(form.year_renovated) : null,
+    building_condition: form.building_condition || null,
+    energy_class: form.energy_class || null,
+    fireplace: form.fireplace,
+    elevator: form.elevator,
+    security_door: form.security_door,
+    alarm_system: form.alarm_system,
+    video_doorphone: form.video_doorphone,
+    smart_home: form.smart_home,
+    satellite_tv: form.satellite_tv,
+    internet_ready: form.internet_ready,
+    storage: form.storage,
+    sea_view: form.sea_view,
+    mountain_view: form.mountain_view,
+    garden: form.garden,
+    pool: form.pool,
+    frames_type: form.frames_type || null,
+    double_glazing: form.double_glazing,
+    triple_glazing: form.triple_glazing,
+    mosquito_screens: form.mosquito_screens,
+    thermal_insulation: form.thermal_insulation,
+    sound_insulation: form.sound_insulation,
+    flooring_type: form.flooring_type || null,
+    living_rooms: form.living_rooms ? Number(form.living_rooms) : null,
+    kitchens: form.kitchens ? Number(form.kitchens) : null,
+    storage_rooms: form.storage_rooms ? Number(form.storage_rooms) : null,
+    wc: form.wc ? Number(form.wc) : null,
     summary: form.summary || null,
     description: form.description || null,
+    agent_notes: form.agent_notes || null,
     is_golden_visa: form.is_golden_visa,
     featured: form.featured,
-    vip: form.vip,
+    private_collection: form.private_collection,
     publish_1choice: form.publish_1choice,
     publish_deals: form.publish_deals,
     status: form.status,
     cover_image_url: form.cover_image_url || null,
     gallery_image_urls: form.gallery_image_urls,
+    youtube_video_url: form.youtube_video_url || null,
+    virtual_tour_url: form.virtual_tour_url || null,
     latitude: form.latitude ? Number(form.latitude) : null,
     longitude: form.longitude ? Number(form.longitude) : null,
     approximate_location: form.approximate_location,
@@ -178,10 +280,8 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
   const [error, setError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
 
-  // Tracks the JSON snapshot of the last successfully autosaved state
   const lastSavedRef = useRef<string>(JSON.stringify({ ...INITIAL, ...initialValues }));
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Capture the slug as it was when the edit page loaded — never changes
   const originalSlugRef = useRef<string>(initialValues?.slug?.trim() ?? "");
 
   function set<K extends keyof FormState>(field: K, value: FormState[K]) {
@@ -194,7 +294,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
     if (mode !== "edit" || snapshot.status !== "draft") return;
 
     const current = JSON.stringify(snapshot);
-    if (current === lastSavedRef.current) return; // nothing changed
+    if (current === lastSavedRef.current) return;
 
     setSaveStatus("saving");
     try {
@@ -216,7 +316,6 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
   }, [mode, propertyId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    // Autosave only in edit mode for drafts
     if (mode !== "edit" || form.status !== "draft") return;
 
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -237,7 +336,6 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
     setLoading(true);
     setError(null);
 
-    // Cancel any pending autosave
     if (timerRef.current) clearTimeout(timerRef.current);
 
     try {
@@ -249,7 +347,6 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
         const originalSlug = originalSlugRef.current;
         const slugChanged = originalSlug && newSlug !== originalSlug;
 
-        // Insert slug redirect before updating the property
         if (slugChanged) {
           try {
             await supabase.from("property_slug_redirects").insert({
@@ -257,7 +354,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
               property_id: propertyId,
             });
           } catch {
-            // Ignore — duplicate old_slug or any other error must not block the update
+            // Ignore — duplicate old_slug must not block the update
           }
         }
 
@@ -267,7 +364,6 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
           .eq("id", propertyId);
         dbError = error;
         if (!error) {
-          // Log status change separately when status was changed
           const originalStatus = initialValues?.status;
           if (originalStatus && form.status !== originalStatus) {
             logActivity(propertyId!, "property_status_changed", {
@@ -280,7 +376,6 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
             ? { slug_changed: true, from: originalSlug, to: newSlug, property_code: propertyCode }
             : { property_code: propertyCode };
           logActivity(propertyId!, "property_updated", meta);
-          // Move the baseline forward so future edits don't re-insert the same redirect
           if (slugChanged) originalSlugRef.current = newSlug;
         }
       } else {
@@ -333,8 +428,8 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
         </div>
       )}
 
-      {/* Basic Info */}
-      <Section title="Basic Info">
+      {/* ── Main Block ─────────────────────────────────────────────────────── */}
+      <Section title="Main Block">
         <Field label="Title">
           <input
             type="text"
@@ -352,6 +447,40 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
             onChange={(e) => set("slug", e.target.value)}
             className={inputCls}
             placeholder="e.g. luxury-villa-santorini"
+          />
+        </Field>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Category">
+            <select
+              value={form.category}
+              onChange={(e) => set("category", e.target.value)}
+              className={inputCls}
+            >
+              <option value="">— select —</option>
+              <option value="residential">Residential</option>
+              <option value="commercial">Commercial</option>
+              <option value="land">Land</option>
+              <option value="hotel">Hotel / Hospitality</option>
+            </select>
+          </Field>
+          <Field label="Transaction Type">
+            <select
+              value={form.transaction_type}
+              onChange={(e) => set("transaction_type", e.target.value)}
+              className={inputCls}
+            >
+              <option value="sale">Sale</option>
+              <option value="rent">Rent</option>
+            </select>
+          </Field>
+        </div>
+        <Field label="Subtype" hint="e.g. apartment, villa, studio, office">
+          <input
+            type="text"
+            value={form.subtype}
+            onChange={(e) => set("subtype", e.target.value)}
+            className={inputCls}
+            placeholder="e.g. villa"
           />
         </Field>
         <div className="grid grid-cols-2 gap-4">
@@ -402,8 +531,8 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
         </div>
       </Section>
 
-      {/* Characteristics */}
-      <Section title="Characteristics">
+      {/* ── Basic Characteristics ──────────────────────────────────────────── */}
+      <Section title="Basic Characteristics">
         <div className="grid grid-cols-2 gap-4">
           <Field label="Size (sqm)">
             <input
@@ -448,7 +577,172 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
         </div>
       </Section>
 
-      {/* Description */}
+      {/* ── Building Information ──────────────────────────────────────────── */}
+      <Section title="Building Information">
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Year Built" hint="optional">
+            <input
+              type="number"
+              value={form.year_built}
+              onChange={(e) => set("year_built", e.target.value)}
+              className={inputCls}
+              placeholder="2005"
+              min={1800}
+            />
+          </Field>
+          <Field label="Year Renovated" hint="optional">
+            <input
+              type="number"
+              value={form.year_renovated}
+              onChange={(e) => set("year_renovated", e.target.value)}
+              className={inputCls}
+              placeholder="2018"
+              min={1800}
+            />
+          </Field>
+          <Field label="Building Condition">
+            <select
+              value={form.building_condition}
+              onChange={(e) => set("building_condition", e.target.value)}
+              className={inputCls}
+            >
+              <option value="">— select —</option>
+              <option value="new">New</option>
+              <option value="excellent">Excellent</option>
+              <option value="good">Good</option>
+              <option value="needs_renovation">Needs Renovation</option>
+            </select>
+          </Field>
+          <Field label="Energy Class">
+            <select
+              value={form.energy_class}
+              onChange={(e) => set("energy_class", e.target.value)}
+              className={inputCls}
+            >
+              <option value="">— select —</option>
+              <option value="A+">A+</option>
+              <option value="A">A</option>
+              <option value="B+">B+</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+              <option value="D">D</option>
+              <option value="E">E</option>
+              <option value="F">F</option>
+              <option value="G">G</option>
+            </select>
+          </Field>
+        </div>
+      </Section>
+
+      {/* ── Comfort & Amenities ───────────────────────────────────────────── */}
+      <Section title="Comfort & Amenities">
+        <div className="grid grid-cols-2 gap-3">
+          <Checkbox label="Fireplace"       checked={form.fireplace}       onChange={(v) => set("fireplace", v)} />
+          <Checkbox label="Elevator"        checked={form.elevator}        onChange={(v) => set("elevator", v)} />
+          <Checkbox label="Security Door"   checked={form.security_door}   onChange={(v) => set("security_door", v)} />
+          <Checkbox label="Alarm System"    checked={form.alarm_system}    onChange={(v) => set("alarm_system", v)} />
+          <Checkbox label="Video Doorphone" checked={form.video_doorphone} onChange={(v) => set("video_doorphone", v)} />
+          <Checkbox label="Smart Home"      checked={form.smart_home}      onChange={(v) => set("smart_home", v)} />
+          <Checkbox label="Satellite TV"    checked={form.satellite_tv}    onChange={(v) => set("satellite_tv", v)} />
+          <Checkbox label="Internet Ready"  checked={form.internet_ready}  onChange={(v) => set("internet_ready", v)} />
+          <Checkbox label="Storage"         checked={form.storage}         onChange={(v) => set("storage", v)} />
+          <Checkbox label="Pool"            checked={form.pool}            onChange={(v) => set("pool", v)} />
+          <Checkbox label="Garden"          checked={form.garden}          onChange={(v) => set("garden", v)} />
+          <Checkbox label="Sea View"        checked={form.sea_view}        onChange={(v) => set("sea_view", v)} />
+          <Checkbox label="Mountain View"   checked={form.mountain_view}   onChange={(v) => set("mountain_view", v)} />
+        </div>
+      </Section>
+
+      {/* ── Layout & Rooms ────────────────────────────────────────────────── */}
+      <Section title="Layout & Rooms">
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Living Rooms">
+            <input
+              type="number"
+              value={form.living_rooms}
+              onChange={(e) => set("living_rooms", e.target.value)}
+              className={inputCls}
+              placeholder="1"
+              min={0}
+            />
+          </Field>
+          <Field label="Kitchens">
+            <input
+              type="number"
+              value={form.kitchens}
+              onChange={(e) => set("kitchens", e.target.value)}
+              className={inputCls}
+              placeholder="1"
+              min={0}
+            />
+          </Field>
+          <Field label="WC">
+            <input
+              type="number"
+              value={form.wc}
+              onChange={(e) => set("wc", e.target.value)}
+              className={inputCls}
+              placeholder="1"
+              min={0}
+            />
+          </Field>
+          <Field label="Storage Rooms">
+            <input
+              type="number"
+              value={form.storage_rooms}
+              onChange={(e) => set("storage_rooms", e.target.value)}
+              className={inputCls}
+              placeholder="0"
+              min={0}
+            />
+          </Field>
+        </div>
+      </Section>
+
+      {/* ── Windows & Construction ────────────────────────────────────────── */}
+      <Section title="Windows & Construction">
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Frames Type">
+            <select
+              value={form.frames_type}
+              onChange={(e) => set("frames_type", e.target.value)}
+              className={inputCls}
+            >
+              <option value="">— select —</option>
+              <option value="aluminum">Aluminum</option>
+              <option value="pvc">PVC</option>
+              <option value="wooden">Wooden</option>
+              <option value="synthetic">Synthetic</option>
+            </select>
+          </Field>
+          <Field label="Flooring Type">
+            <select
+              value={form.flooring_type}
+              onChange={(e) => set("flooring_type", e.target.value)}
+              className={inputCls}
+            >
+              <option value="">— select —</option>
+              <option value="marble">Marble</option>
+              <option value="tile">Tile</option>
+              <option value="wooden">Wooden</option>
+              <option value="parquet">Parquet</option>
+              <option value="laminate">Laminate</option>
+              <option value="granite">Granite</option>
+              <option value="stone">Stone</option>
+              <option value="cement">Cement</option>
+            </select>
+          </Field>
+        </div>
+        <div className="grid grid-cols-2 gap-3 pt-1">
+          <Checkbox label="Double Glazing" checked={form.double_glazing} onChange={(v) => set("double_glazing", v)} />
+          <Checkbox label="Triple Glazing" checked={form.triple_glazing} onChange={(v) => set("triple_glazing", v)} />
+          <Checkbox label="Mosquito Screens" checked={form.mosquito_screens} onChange={(v) => set("mosquito_screens", v)} />
+          <Checkbox label="Thermal Insulation" checked={form.thermal_insulation} onChange={(v) => set("thermal_insulation", v)} />
+          <Checkbox label="Sound Insulation" checked={form.sound_insulation} onChange={(v) => set("sound_insulation", v)} />
+        </div>
+      </Section>
+
+      {/* ── Description ───────────────────────────────────────────────────── */}
       <Section title="Description">
         <Field label="Summary" hint="5–7 lines">
           <textarea
@@ -462,41 +756,48 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
           <textarea
             value={form.description}
             onChange={(e) => set("description", e.target.value)}
-            className={`${textareaCls} min-h-[160px]`}
+            className={`${textareaCls} min-h-40`}
             placeholder="Detailed property description..."
           />
         </Field>
       </Section>
 
-      {/* Flags */}
-      <Section title="Flags">
-        <div className="grid grid-cols-2 gap-3">
-          <Checkbox label="Golden Visa" checked={form.is_golden_visa} onChange={(v) => set("is_golden_visa", v)} />
-          <Checkbox label="Featured" checked={form.featured} onChange={(v) => set("featured", v)} />
-          <Checkbox label="VIP" checked={form.vip} onChange={(v) => set("vip", v)} />
-        </div>
-      </Section>
-
-      {/* Publishing */}
-      <Section title="Publishing">
-        <div className="grid grid-cols-2 gap-3 mb-2">
-          <Checkbox label="Publish on 1Choice" checked={form.publish_1choice} onChange={(v) => set("publish_1choice", v)} />
-          <Checkbox label="Publish on 1ChoiceDeals" checked={form.publish_deals} onChange={(v) => set("publish_deals", v)} />
-        </div>
-        <Field label="Status">
-          <select
-            value={form.status}
-            onChange={(e) => set("status", e.target.value as FormState["status"])}
+      {/* ── Media ─────────────────────────────────────────────────────────── */}
+      <Section title="Media">
+        <PropertyImageUpload
+          propertyCode={propertyCode}
+          propertyId={mode === "edit" ? propertyId : undefined}
+          initialCoverUrl={form.cover_image_url || null}
+          initialGalleryUrls={form.gallery_image_urls}
+          onChange={({ coverUrl, galleryUrls }) => {
+            setForm((prev) => ({
+              ...prev,
+              cover_image_url: coverUrl,
+              gallery_image_urls: galleryUrls,
+            }));
+          }}
+        />
+        <Field label="YouTube Video URL" hint="optional">
+          <input
+            type="url"
+            value={form.youtube_video_url}
+            onChange={(e) => set("youtube_video_url", e.target.value)}
             className={inputCls}
-          >
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-            <option value="archived">Archived</option>
-          </select>
+            placeholder="https://www.youtube.com/watch?v=..."
+          />
+        </Field>
+        <Field label="Virtual Tour URL" hint="optional">
+          <input
+            type="url"
+            value={form.virtual_tour_url}
+            onChange={(e) => set("virtual_tour_url", e.target.value)}
+            className={inputCls}
+            placeholder="https://..."
+          />
         </Field>
       </Section>
 
-      {/* Map */}
+      {/* ── Location / Map ────────────────────────────────────────────────── */}
       <Section title="Map">
         <div className="grid grid-cols-2 gap-4">
           <Field label="Latitude" hint="optional">
@@ -527,24 +828,47 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
         />
       </Section>
 
-      {/* Media */}
-      <Section title="Media">
-        <PropertyImageUpload
-          propertyCode={propertyCode}
-          propertyId={mode === "edit" ? propertyId : undefined}
-          initialCoverUrl={form.cover_image_url || null}
-          initialGalleryUrls={form.gallery_image_urls}
-          onChange={({ coverUrl, galleryUrls }) => {
-            setForm((prev) => ({
-              ...prev,
-              cover_image_url: coverUrl,
-              gallery_image_urls: galleryUrls,
-            }));
-          }}
-        />
+      {/* ── Premium Control ───────────────────────────────────────────────── */}
+      <Section title="Premium Control">
+        <div className="grid grid-cols-2 gap-3">
+          <Checkbox label="Golden Visa" checked={form.is_golden_visa} onChange={(v) => set("is_golden_visa", v)} />
+          <Checkbox label="Featured" checked={form.featured} onChange={(v) => set("featured", v)} />
+          <Checkbox label="Private Collection" checked={form.private_collection} onChange={(v) => set("private_collection", v)} />
+        </div>
       </Section>
 
-      {/* Actions */}
+      {/* ── Publishing ────────────────────────────────────────────────────── */}
+      <Section title="Publishing">
+        <div className="grid grid-cols-2 gap-3 mb-2">
+          <Checkbox label="Publish on 1Choice" checked={form.publish_1choice} onChange={(v) => set("publish_1choice", v)} />
+          <Checkbox label="Publish on 1ChoiceDeals" checked={form.publish_deals} onChange={(v) => set("publish_deals", v)} />
+        </div>
+        <Field label="Status">
+          <select
+            value={form.status}
+            onChange={(e) => set("status", e.target.value as FormState["status"])}
+            className={inputCls}
+          >
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+            <option value="archived">Archived</option>
+          </select>
+        </Field>
+      </Section>
+
+      {/* ── Additional Information ────────────────────────────────────────── */}
+      <Section title="Additional Information">
+        <Field label="Agent Notes" hint="internal only — not shown publicly">
+          <textarea
+            value={form.agent_notes}
+            onChange={(e) => set("agent_notes", e.target.value)}
+            className={textareaCls}
+            placeholder="Notes visible only to the admin team..."
+          />
+        </Field>
+      </Section>
+
+      {/* ── Actions ───────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-end pt-2">
         <button
           type="submit"

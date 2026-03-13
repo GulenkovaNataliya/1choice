@@ -16,7 +16,7 @@ type ExportData = {
   gallery_image_urls: string[] | null;
   featured: boolean | null;
   is_golden_visa: boolean | null;
-  vip: boolean | null;
+  private_collection: boolean | null;
   status: string | null;
   publish_1choice: boolean | null;
   publish_deals: boolean | null;
@@ -36,7 +36,7 @@ function buildExportJson(d: ExportData): object {
     flags: {
       featured: d.featured ?? false,
       is_golden_visa: d.is_golden_visa ?? false,
-      vip: d.vip ?? false,
+      private_collection: d.private_collection ?? false,
     },
     publishing: {
       status: d.status ?? "draft",
@@ -61,7 +61,7 @@ export default function DealsExportModal({ propertyId, onClose }: Props) {
       const { data: row } = await getSupabase()
         .from("properties")
         .select(
-          "id,property_code,title,slug,description,price_eur,location_text,cover_image_url,gallery_image_urls,featured,is_golden_visa,vip,status,publish_1choice,publish_deals"
+          "id,property_code,title,slug,description,price_eur,location_text,cover_image_url,gallery_image_urls,featured,is_golden_visa,private_collection,status,publish_1choice,publish_deals"
         )
         .eq("id", propertyId)
         .single();
@@ -132,7 +132,7 @@ export default function DealsExportModal({ propertyId, onClose }: Props) {
                     ["Gallery",     `${galleryCount} image${galleryCount !== 1 ? "s" : ""}`],
                     ["Featured",    data.featured     ? "Yes" : "No"],
                     ["Golden Visa", data.is_golden_visa ? "Yes" : "No"],
-                    ["VIP",         data.vip          ? "Yes" : "No"],
+                    ["Private",     data.private_collection ? "Yes" : "No"],
                     ["1Choice",     data.publish_1choice ? "Yes" : "No"],
                     ["Deals",       data.publish_deals   ? "Yes" : "No"],
                     ["Status",      <span className="capitalize">{data.status ?? "—"}</span>],

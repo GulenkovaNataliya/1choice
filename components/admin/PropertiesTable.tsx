@@ -15,7 +15,7 @@ export type AdminProperty = {
   status: string | null;
   publish_1choice: boolean | null;
   publish_deals: boolean | null;
-  vip: boolean | null;
+  private_collection: boolean | null;
   featured: boolean | null;
   is_golden_visa: boolean | null;
   created_at: string;
@@ -108,18 +108,18 @@ function PropertyRow({
   // Optimistic state for all toggleable flags
   const [pub1choice, setPub1choice] = useState(property.publish_1choice ?? false);
   const [pubDeals, setPubDeals] = useState(property.publish_deals ?? false);
-  const [vip, setVip] = useState(property.vip ?? false);
+  const [privateCollection, setPrivateCollection] = useState(property.private_collection ?? false);
   const [featured, setFeatured] = useState(property.featured ?? false);
   const [goldenVisa, setGoldenVisa] = useState(property.is_golden_visa ?? false);
   const [savingField, setSavingField] = useState<string | null>(null);
   const [toggleError, setToggleError] = useState<string | null>(null);
 
-  type FlagField = "publish_1choice" | "publish_deals" | "vip" | "featured" | "is_golden_visa";
+  type FlagField = "publish_1choice" | "publish_deals" | "private_collection" | "featured" | "is_golden_visa";
 
   const flagActionMap: Record<FlagField, ActivityAction> = {
     publish_1choice: "property_toggle_publish_1choice",
     publish_deals:   "property_toggle_publish_deals",
-    vip:             "property_toggle_vip",
+    private_collection: "property_toggle_private_collection",
     featured:        "property_toggle_featured",
     is_golden_visa:  "property_toggle_golden_visa",
   };
@@ -128,7 +128,7 @@ function PropertyRow({
     const stateMap: Record<FlagField, [boolean, (v: boolean) => void]> = {
       publish_1choice: [pub1choice, setPub1choice],
       publish_deals: [pubDeals, setPubDeals],
-      vip: [vip, setVip],
+      private_collection: [privateCollection, setPrivateCollection],
       featured: [featured, setFeatured],
       is_golden_visa: [goldenVisa, setGoldenVisa],
     };
@@ -204,13 +204,14 @@ function PropertyRow({
     }
 
     const { id: _id, property_code: _code, slug: _slug, status: _status,
-      publish_1choice: _p1, publish_deals: _pd, vip: _vip,
+      publish_1choice: _p1, publish_deals: _pd, vip: _vip, private_collection: _pc,
       featured: _feat, is_golden_visa: _gv, created_at: _ca, ...rest } = source;
 
     const { data: inserted } = await supabase
       .from("properties")
       .insert({ ...rest, property_code: newCode, slug: null, status: "draft",
-        publish_1choice: false, publish_deals: false, vip: false, featured: false, is_golden_visa: false })
+        publish_1choice: false, publish_deals: false, vip: false, private_collection: false,
+        featured: false, is_golden_visa: false })
       .select("id").single();
 
     setBusy(false);
@@ -258,10 +259,10 @@ function PropertyRow({
       </td>
       <td className="px-4 py-3">
         <Toggle
-          on={vip}
-          disabled={savingField === "vip"}
-          onChange={() => toggleFlag("vip")}
-          label="Toggle VIP"
+          on={privateCollection}
+          disabled={savingField === "private_collection"}
+          onChange={() => toggleFlag("private_collection")}
+          label="Toggle Private Collection"
         />
       </td>
       <td className="px-4 py-3">
@@ -503,7 +504,7 @@ export default function PropertiesTable({ rows }: { rows: AdminProperty[] }) {
                 <th className="px-4 py-3 text-xs font-semibold text-[#888888] uppercase tracking-wider">Status</th>
                 <th className="px-4 py-3 text-xs font-semibold text-[#888888] uppercase tracking-wider">1Choice</th>
                 <th className="px-4 py-3 text-xs font-semibold text-[#888888] uppercase tracking-wider">Deals</th>
-                <th className="px-4 py-3 text-xs font-semibold text-[#888888] uppercase tracking-wider">VIP</th>
+                <th className="px-4 py-3 text-xs font-semibold text-[#888888] uppercase tracking-wider">Private</th>
                 <th className="px-4 py-3 text-xs font-semibold text-[#888888] uppercase tracking-wider">Featured</th>
                 <th className="px-4 py-3 text-xs font-semibold text-[#888888] uppercase tracking-wider">Golden Visa</th>
                 <th className="px-4 py-3 text-xs font-semibold text-[#888888] uppercase tracking-wider">Created</th>

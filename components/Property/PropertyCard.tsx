@@ -1,26 +1,38 @@
 "use client";
 
 import Link from "next/link";
+import { CARD_FEATURES, shouldRenderFeature, formatFeatureValue } from "@/lib/propertyFeatures";
 
-// Accepts both mockFeatured items (id: string) and MockProperty items (id: number)
+// ── Types ─────────────────────────────────────────────────────────────────────
+
 type CardProperty = {
   id: string | number;
+  property_code: string | null;
   slug: string;
   title: string;
   area: string;
   price_eur: number | null;
   is_golden_visa: boolean;
   is_1choice_deal: boolean;
-  cover_image: string | null;
-  bedrooms?: number;
-  bathrooms?: number;
-  size_sqm?: number;
+  featured: boolean;
+  cover_image_url: string | null;
+  gallery_image_urls: string[];
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  size_sqm?: number | null;
+  floor?: number | null;
+  year_built?: number | null;
+  sea_view?: boolean | null;
+  pool?: boolean | null;
+  elevator?: boolean | null;
 };
 
 type Props = {
   property: CardProperty;
   testId?: string;
 };
+
+// ── UI helpers ─────────────────────────────────────────────────────────────────
 
 function Badge({ label }: { label: string }) {
   return (
@@ -47,19 +59,34 @@ function formatPrice(price: number) {
   return "€" + price.toLocaleString("en-EU");
 }
 
+// ── Component ─────────────────────────────────────────────────────────────────
+
 export default function PropertyCard({ property, testId }: Props) {
   const {
-    id, slug, title, area, price_eur,
-    is_golden_visa, is_1choice_deal, cover_image,
-    bedrooms, bathrooms, size_sqm,
+    id, slug, title, area, price_eur, property_code,
+    is_golden_visa, is_1choice_deal, featured,
+    cover_image_url, gallery_image_urls,
   } = property;
 
-  // Build specs line — only include truthy values (hides 0-bed land/commercial)
-  const specs = [
-    bedrooms  ? `${bedrooms} bd`  : null,
-    bathrooms ? `${bathrooms} ba` : null,
-    size_sqm  ? `${size_sqm} sqm` : null,
+  // Image: cover_image_url → gallery[0] → null (placeholder)
+  const displayImage = cover_image_url ?? gallery_image_urls[0] ?? null;
+
+  // Badges
+  const badges = [
+    is_golden_visa   && "Golden Visa",
+    is_1choice_deal  && "1ChoiceDeal",
+    featured         && "Featured",
   ].filter(Boolean) as string[];
+
+  // Feature icons — card subset only, skip premium group (handled by badges)
+  const cardFeatures = CARD_FEATURES.filter(f => f.group !== "premium");
+  const visibleFeatures = cardFeatures
+    .map(f => ({
+      feature: f,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      formatted: formatFeatureValue(f, (property as any)[f.field]),
+    }))
+    .filter(({ formatted }) => formatted !== null);
 
   return (
     <Link
@@ -95,11 +122,12 @@ export default function PropertyCard({ property, testId }: Props) {
           flexShrink: 0,
         }}
       >
-        {cover_image ? (
+        {displayImage ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={cover_image}
+            src={displayImage}
             alt={title}
+            loading="lazy"
             style={{
               position: "absolute", inset: 0,
               width: "100%", height: "100%",
@@ -119,15 +147,14 @@ export default function PropertyCard({ property, testId }: Props) {
         )}
 
         {/* Badges — top-left, only when applicable */}
-        {(is_golden_visa || is_1choice_deal) && (
+        {badges.length > 0 && (
           <div
             style={{
               position: "absolute", top: 10, left: 10,
               display: "flex", flexWrap: "wrap", gap: 6,
             }}
           >
-            {is_golden_visa  && <Badge label="Golden Visa" />}
-            {is_1choice_deal && <Badge label="1ChoiceDeal" />}
+            {badges.map(label => <Badge key={label} label={label} />)}
           </div>
         )}
       </div>
@@ -142,6 +169,13 @@ export default function PropertyCard({ property, testId }: Props) {
           flexGrow: 1,
         }}
       >
+        {/* Property code */}
+        {property_code && (
+          <div style={{ fontSize: 11, color: "#AAAAAA", fontFamily: "monospace" }}>
+            {property_code}
+          </div>
+        )}
+
         {/* Title — max 2 lines */}
         <div
           style={{
@@ -161,10 +195,21 @@ export default function PropertyCard({ property, testId }: Props) {
         {/* Location */}
         <div style={{ fontSize: 13, color: "#404040" }}>{area}</div>
 
-        {/* Key specs — hidden when data absent (e.g. mockFeatured items) */}
-        {specs.length > 0 && (
-          <div style={{ fontSize: 13, color: "#888888", marginTop: 2 }}>
-            {specs.join(" · ")}
+        {/* Feature icons row — hidden when no renderable features */}
+        {visibleFeatures.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 12px", marginTop: 4 }}>
+            {visibleFeatures.map(({ feature, formatted }) => {
+              const Icon = feature.icon;
+              return (
+                <span
+                  key={feature.field}
+                  style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#666666" }}
+                >
+                  <Icon size={13} strokeWidth={1.8} />
+                  {formatted}
+                </span>
+              );
+            })}
           </div>
         )}
 

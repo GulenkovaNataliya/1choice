@@ -11,9 +11,11 @@ export async function generatePropertyCode(): Promise<string> {
     .limit(1)
     .single();
 
-  if (!data?.property_code) return "code0001";
+  const MIN = 1030;
+
+  if (!data?.property_code) return "code" + String(MIN + 1).padStart(4, "0");
 
   const match = String(data.property_code).match(/(\d+)$/);
   const n = match ? parseInt(match[1], 10) : 0;
-  return "code" + String(n + 1).padStart(4, "0");
+  return "code" + String(Math.max(n, MIN) + 1).padStart(4, "0");
 }

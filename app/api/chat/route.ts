@@ -178,10 +178,10 @@ const INJECTION_PATTERNS: RegExp[] = [
   /DAN\s+mode/i,
   // Private data / admin access requests
   /give\s+(me\s+)?(the\s+)?(private\s+)?(link|token|key|password|secret)/i,
-  /show\s+(hidden|private|vip|restricted|internal|database)\s+(properties|listings|data|keys?)/i,
+  /show\s+(hidden|private|restricted|internal|database)\s+(properties|listings|data|keys?)/i,
   /access\s+(the\s+)?(database|admin\s+panel|supabase|backend|internal)/i,
   /list\s+(all\s+)?(properties|users|leads|tokens|admin\s+emails)/i,
-  /reveal\s+(admin|private|vip|token|secret)/i,
+  /reveal\s+(admin|private|token|secret)/i,
   // XSS / script injection
   /<script[\s\S]*?>/i,
   /javascript\s*:/i,

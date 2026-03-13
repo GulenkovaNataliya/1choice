@@ -6,14 +6,14 @@ import { logActivity } from "@/lib/admin/logActivity";
 type Props = {
   propertyId: string;
   propertyCode: string | null;
-  isVip: boolean;
+  isPrivateCollection: boolean;
   initialToken: string | null;
 };
 
 export default function PrivateLinkManager({
   propertyId,
   propertyCode,
-  isVip,
+  isPrivateCollection,
   initialToken,
 }: Props) {
   const [token, setToken] = useState<string | null>(initialToken);
@@ -77,20 +77,20 @@ export default function PrivateLinkManager({
   }
 
   // ── Not VIP ────────────────────────────────────────────────────────────────
-  if (!isVip) {
+  if (!isPrivateCollection) {
     return (
       <div className="bg-white rounded-xl border border-[#E8E8E8] p-6">
         <h2 className="text-xs font-semibold text-[#888888] uppercase tracking-widest mb-3">
           Private Link
         </h2>
         <p className="text-sm text-[#AAAAAA]">
-          Available only for VIP properties. Enable the VIP flag to generate a private link.
+          Available only for Private Collection properties. Enable the Private Collection flag to generate a private link.
         </p>
       </div>
     );
   }
 
-  // ── VIP: no token yet ──────────────────────────────────────────────────────
+  // ── Private Collection: no token yet ──────────────────────────────────────
   if (!token) {
     return (
       <div className="bg-white rounded-xl border border-[#E8E8E8] p-6">
@@ -116,7 +116,7 @@ export default function PrivateLinkManager({
     );
   }
 
-  // ── VIP: token exists ──────────────────────────────────────────────────────
+  // ── Private Collection: token exists ──────────────────────────────────────
   return (
     <div className="bg-white rounded-xl border border-[#E8E8E8] p-6">
       <h2 className="text-xs font-semibold text-[#888888] uppercase tracking-widest mb-4">

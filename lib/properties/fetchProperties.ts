@@ -2,16 +2,27 @@ import { getSupabase } from "@/lib/supabase/client";
 
 export type PropertyRow = {
   id: string;
+  property_code: string | null;
   title: string;
   slug: string;
-  price: number;
-  location: string; // slug
+  price_eur: number | null;
+  location: string;
+  location_text: string | null;
   bedrooms: number | null;
   bathrooms: number | null;
-  size: number | null;
+  size_sqm: number | null;
+  floor: number | null;
+  year_built: number | null;
   featured: boolean | null;
+  private_collection: boolean | null;
+  is_golden_visa: boolean | null;
+  publish_deals: boolean | null;
+  sea_view: boolean | null;
+  pool: boolean | null;
+  elevator: boolean | null;
   created_at: string;
-  cover_image_path: string | null;
+  cover_image_url: string | null;
+  gallery_image_urls: string[] | null;
 };
 
 type FetchArgs = {
@@ -24,7 +35,7 @@ export async function fetchProperties(args: FetchArgs = {}): Promise<PropertyRow
   let q = supabase
     .from("properties")
     .select(
-      "id,title,slug,price,location,bedrooms,bathrooms,size,featured,created_at,cover_image_path"
+      "id,property_code,title,slug,price_eur,location,location_text,bedrooms,bathrooms,size_sqm,floor,year_built,featured,private_collection,is_golden_visa,publish_deals,sea_view,pool,elevator,created_at,cover_image_url,gallery_image_urls"
     )
     .order("featured", { ascending: false })
     .order("created_at", { ascending: false });

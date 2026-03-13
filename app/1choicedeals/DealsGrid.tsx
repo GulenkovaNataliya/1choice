@@ -5,7 +5,7 @@ import { mockFeatured } from "@/components/Property/mockFeatured";
 import PropertyCard from "@/components/Property/PropertyCard";
 
 const PAGE_SIZE = 8;
-const deals = mockFeatured.filter(p => p.is_1choice_deal && !p.is_vip);
+const deals = mockFeatured.filter(p => p.is_1choice_deal && !p.private_collection);
 
 export default function DealsGrid() {
   const [visible, setVisible] = useState(PAGE_SIZE);

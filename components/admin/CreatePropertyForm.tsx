@@ -17,11 +17,13 @@ async function generatePropertyCode(
     .limit(1)
     .single();
 
-  if (!data?.property_code) return "code0001";
+  const MIN = 1030;
+
+  if (!data?.property_code) return "code" + String(MIN + 1).padStart(4, "0");
 
   const match = String(data.property_code).match(/(\d+)$/);
   const n = match ? parseInt(match[1], 10) : 0;
-  return "code" + String(n + 1).padStart(4, "0");
+  return "code" + String(Math.max(n, MIN) + 1).padStart(4, "0");
 }
 
 // ── Form state ───────────────────────────────────────────────────────────────
@@ -33,7 +35,7 @@ type FormState = {
   location_text: string;
   is_golden_visa: boolean;
   featured: boolean;
-  vip: boolean;
+  private_collection: boolean;
   publish_1choice: boolean;
   publish_deals: boolean;
   summary: string;
@@ -52,7 +54,7 @@ const INITIAL: FormState = {
   location_text: "",
   is_golden_visa: false,
   featured: false,
-  vip: false,
+  private_collection: false,
   publish_1choice: false,
   publish_deals: false,
   summary: "",
@@ -161,7 +163,7 @@ export default function CreatePropertyForm() {
         cover_image_url: form.cover_image_url || null,
         is_golden_visa: form.is_golden_visa,
         featured: form.featured,
-        vip: form.vip,
+        private_collection: form.private_collection,
         publish_1choice: form.publish_1choice,
         publish_deals: form.publish_deals,
         status: "draft",
@@ -286,7 +288,7 @@ export default function CreatePropertyForm() {
           <textarea
             value={form.description}
             onChange={(e) => set("description", e.target.value)}
-            className={`${textareaCls} min-h-[160px]`}
+            className={`${textareaCls} min-h-40`}
             placeholder="Detailed property description..."
           />
         </Field>
@@ -306,9 +308,9 @@ export default function CreatePropertyForm() {
             onChange={(v) => set("featured", v)}
           />
           <CheckboxField
-            label="VIP"
-            checked={form.vip}
-            onChange={(v) => set("vip", v)}
+            label="Private Collection"
+            checked={form.private_collection}
+            onChange={(v) => set("private_collection", v)}
           />
           <CheckboxField
             label="Publish on 1Choice"

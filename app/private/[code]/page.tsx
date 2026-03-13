@@ -53,8 +53,8 @@ export default async function PrivateTokenPage({
 
   if (!property) notFound();
 
-  // 3. Must still be a VIP property — block if flag was removed after token was issued
-  if (property.vip !== true) notFound();
+  // 3. Must still be a private_collection property — dual-check during vip→private_collection transition
+  if (property.private_collection !== true && property.vip !== true) notFound();
 
   // 4. Resolve cover image URL
   const coverUrl = renderImageUrl(

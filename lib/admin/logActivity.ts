@@ -9,7 +9,7 @@ export type ActivityAction =
   | "property_duplicated"
   | "property_toggle_publish_1choice"
   | "property_toggle_publish_deals"
-  | "property_toggle_vip"
+  | "property_toggle_private_collection"
   | "property_toggle_featured"
   | "property_toggle_golden_visa"
   | "property_status_changed"

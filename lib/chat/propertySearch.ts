@@ -4,7 +4,8 @@
  * Only called from the /api/chat route handler — never shipped in the browser bundle.
  *
  * Visibility rules (same as /properties/[slug] page):
- *   status = 'published'  AND  publish_1choice = true  AND  vip IS NOT true
+ *   status = 'published'  AND  publish_1choice = true
+ *   AND  private_collection IS NOT true  AND  vip IS NOT true  (dual-check, transition period)
  */
 
 import { createSupabaseAdminClient } from "@/lib/supabase/adminClient";
@@ -133,7 +134,8 @@ type PropertyRow = {
   bedrooms:      number | null;
   price:         number | null;
   price_eur:     number | null;
-  vip:           boolean | null;
+  private_collection: boolean | null;
+  vip:                boolean | null; // legacy — kept for transition dual-check
 };
 
 // ── Search ────────────────────────────────────────────────────────────────────
@@ -147,7 +149,7 @@ export async function searchProperties(
   let q = admin
     .from("properties")
     .select(
-      "id,title,slug,property_code,location,location_text,size,bedrooms,price,price_eur,vip"
+      "id,title,slug,property_code,location,location_text,size,bedrooms,price,price_eur,private_collection,vip"
     )
     .eq("status", "published")
     .eq("publish_1choice", true)
@@ -176,8 +178,8 @@ export async function searchProperties(
 
   const rows = (data ?? []) as PropertyRow[];
 
-  // Post-filter: exclude VIP (neq in PostgREST excludes NULLs, so handle in JS)
-  const visible = rows.filter((r) => r.vip !== true);
+  // Post-filter: exclude private inventory (dual-check during vip→private_collection transition)
+  const visible = rows.filter((r) => r.private_collection !== true && r.vip !== true);
 
   // Post-filter: budget (uses price_eur if present, falls back to price)
   const priceFiltered = criteria.maxPrice

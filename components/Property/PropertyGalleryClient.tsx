@@ -2,12 +2,10 @@
 
 import { useState } from "react";
 
-const SLOT_COUNT = 5;
-const SLOT_BG = ["#E8E8E8", "#DDDDE4", "#E4E0DC", "#DCE4E0", "#E0DCE4"];
-
 type Props = {
   title: string;
   coverUrl: string | null;
+  galleryUrls?: string[];
   isFeatured?: boolean;
   isGoldenVisa?: boolean;
   is1ChoiceDeal?: boolean;
@@ -16,29 +14,38 @@ type Props = {
 export default function PropertyGalleryClient({
   title,
   coverUrl,
+  galleryUrls = [],
   isFeatured,
   isGoldenVisa,
   is1ChoiceDeal,
 }: Props) {
+  // Build ordered slots: cover first, then gallery images (deduplicate cover)
+  const slots: string[] = [];
+  if (coverUrl) slots.push(coverUrl);
+  for (const url of galleryUrls) {
+    if (url && url !== coverUrl) slots.push(url);
+  }
+
   const [active, setActive] = useState(0);
+  const activeUrl = slots[active] ?? null;
 
   return (
     <div>
       {/* Main image — 4:3 */}
       <div
         className="relative w-full rounded-xl overflow-hidden mb-3"
-        style={{ paddingTop: "75%", background: SLOT_BG[active] }}
+        style={{ paddingTop: "75%", background: "#E8E8E8" }}
       >
-        {coverUrl && active === 0 ? (
+        {activeUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={coverUrl}
-            alt={title}
+            src={activeUrl}
+            alt={`${title} — photo ${active + 1}`}
             className="absolute inset-0 w-full h-full object-cover"
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-[#AAAAAA] text-sm">
-            Photo {active + 1}
+            No photo available
           </div>
         )}
 
@@ -52,7 +59,7 @@ export default function PropertyGalleryClient({
             )}
             {is1ChoiceDeal && (
               <span className="bg-[#1E1E1E] text-[#C1121F] text-xs font-medium px-3 py-1 rounded-full">
-                1Choice
+                1ChoiceDeals
               </span>
             )}
             {isGoldenVisa && (
@@ -62,31 +69,34 @@ export default function PropertyGalleryClient({
             )}
           </div>
         )}
+
+        {/* Image counter */}
+        {slots.length > 1 && (
+          <div className="absolute bottom-3 right-3 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+            {active + 1} / {slots.length}
+          </div>
+        )}
       </div>
 
-      {/* Thumbnails */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {Array.from({ length: SLOT_COUNT }, (_, i) => (
-          <button
-            key={i}
-            type="button"
-            onClick={() => setActive(i)}
-            className={`flex-shrink-0 w-20 h-14 rounded-lg overflow-hidden border-2 transition-colors ${
-              active === i ? "border-[#3A2E4F]" : "border-transparent"
-            }`}
-            style={{ background: SLOT_BG[i] }}
-          >
-            {coverUrl && i === 0 ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={coverUrl} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <span className="flex items-center justify-center h-full text-xs text-[#AAAAAA]">
-                {i + 1}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
+      {/* Thumbnails — only when there are multiple images */}
+      {slots.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {slots.map((url, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setActive(i)}
+              className={`shrink-0 w-20 h-14 rounded-lg overflow-hidden border-2 transition-colors ${
+                active === i ? "border-[#3A2E4F]" : "border-transparent"
+              }`}
+              style={{ background: "#E8E8E8" }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={url} alt="" className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

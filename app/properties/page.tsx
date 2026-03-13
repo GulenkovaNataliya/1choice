@@ -58,9 +58,11 @@ export default async function PropertiesPage({
   let q = supabase
     .from("properties")
     .select(
-      "id,title,slug,price,location,bedrooms,bathrooms,size,featured,created_at,cover_image_path",
+      "id,property_code,title,slug,price_eur,location,location_text,bedrooms,bathrooms,size_sqm,floor,year_built,featured,private_collection,is_golden_visa,publish_deals,sea_view,pool,elevator,created_at,cover_image_url,gallery_image_urls",
       { count: "exact" }
     )
+    .neq("private_collection", true) // exclude private inventory
+    .neq("vip", true)                // legacy dual-check during transition
     .order("featured", { ascending: false })
     .order("created_at", { ascending: false })
     .range(from, to);

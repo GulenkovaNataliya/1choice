@@ -12,7 +12,7 @@ export default async function AdminPropertiesPage() {
   const { data: properties, error } = await supabase
     .from("properties")
     .select(
-      "id,property_code,title,slug,status,publish_1choice,publish_deals,vip,featured,is_golden_visa,created_at"
+      "id,property_code,title,slug,status,publish_1choice,publish_deals,private_collection,featured,is_golden_visa,created_at"
     )
     .order("created_at", { ascending: false });
 

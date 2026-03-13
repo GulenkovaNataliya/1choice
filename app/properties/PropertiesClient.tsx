@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { ReadonlyURLSearchParams } from "next/navigation";
 import type { PropertyRow } from "@/lib/properties/fetchProperties";
-import { publicImageUrl } from "@/lib/storage/publicImageUrl";
 import PropertyCard from "@/components/Property/PropertyCard";
 import HorizontalFilter, { type FilterState } from "@/components/Home/HorizontalFilter";
 import type { Area } from "@/lib/areas";
@@ -180,8 +179,8 @@ function applySort(properties: PropertyRow[], sort: SortKey): PropertyRow[] {
   if (sort === "curated") return properties;
   const arr = [...properties];
   switch (sort) {
-    case "price_asc":  return arr.sort((a, b) => a.price - b.price);
-    case "price_desc": return arr.sort((a, b) => b.price - a.price);
+    case "price_asc":  return arr.sort((a, b) => (a.price_eur ?? 0) - (b.price_eur ?? 0));
+    case "price_desc": return arr.sort((a, b) => (b.price_eur ?? 0) - (a.price_eur ?? 0));
     case "newest":     return arr.sort((a, b) => b.created_at.localeCompare(a.created_at));
     default:           return properties;
   }
@@ -192,10 +191,10 @@ function applySort(properties: PropertyRow[], sort: SortKey): PropertyRow[] {
 function applyFilters(properties: PropertyRow[], params: ReadonlyURLSearchParams): PropertyRow[] {
   return properties.filter(p => {
     const priceMin = params.get("priceMin");
-    if (priceMin && p.price < Number(priceMin) * 1000) return false;
+    if (priceMin && (p.price_eur ?? 0) < Number(priceMin) * 1000) return false;
 
     const priceMax = params.get("priceMax");
-    if (priceMax && p.price > Number(priceMax) * 1000) return false;
+    if (priceMax && (p.price_eur ?? 0) > Number(priceMax) * 1000) return false;
 
     const bedrooms = params.get("bedrooms");
     if (bedrooms && (p.bedrooms === null || p.bedrooms < Number(bedrooms))) return false;
@@ -204,10 +203,10 @@ function applyFilters(properties: PropertyRow[], params: ReadonlyURLSearchParams
     if (baths && (p.bathrooms === null || p.bathrooms < Number(baths))) return false;
 
     const sizeMin = params.get("sizeMin");
-    if (sizeMin && (p.size === null || p.size < Number(sizeMin))) return false;
+    if (sizeMin && (p.size_sqm === null || p.size_sqm < Number(sizeMin))) return false;
 
     const sizeMax = params.get("sizeMax");
-    if (sizeMax && (p.size === null || p.size > Number(sizeMax))) return false;
+    if (sizeMax && (p.size_sqm === null || p.size_sqm > Number(sizeMax))) return false;
 
     return true;
   });
@@ -290,16 +289,25 @@ export default function PropertiesClient({
 
   const uiItems = filtered.map(p => ({
     id: p.id,
+    property_code: p.property_code ?? null,
     slug: p.slug,
     title: p.title,
     area: titleCase(p.location),
-    price_eur: p.price,
-    is_golden_visa: false,
-    is_1choice_deal: p.featured ?? false,
-    cover_image: p.cover_image_path ? publicImageUrl(p.cover_image_path) : null,
-    bedrooms: p.bedrooms ?? undefined,
-    bathrooms: p.bathrooms ?? undefined,
-    size_sqm: p.size ?? undefined,
+    price_eur: p.price_eur ?? null,
+    is_golden_visa: p.is_golden_visa ?? false,
+    is_1choice_deal: p.publish_deals ?? false,
+    featured: p.featured ?? false,
+    private_collection: p.private_collection ?? false,
+    cover_image_url: p.cover_image_url ?? null,
+    gallery_image_urls: p.gallery_image_urls ?? [],
+    bedrooms: p.bedrooms ?? null,
+    bathrooms: p.bathrooms ?? null,
+    size_sqm: p.size_sqm ?? null,
+    floor: p.floor ?? null,
+    year_built: p.year_built ?? null,
+    sea_view: p.sea_view ?? false,
+    pool: p.pool ?? false,
+    elevator: p.elevator ?? false,
   }));
 
   function removeFilter(keys: string[]) {

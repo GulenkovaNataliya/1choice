@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { CARD_FEATURES, shouldRenderFeature, formatFeatureValue } from "@/lib/propertyFeatures";
+import { renderImageUrl } from "@/lib/storage/imageUrl";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -12,6 +13,7 @@ type CardProperty = {
   title: string;
   area: string;
   price_eur: number | null;
+  transaction_type?: string | null;
   is_golden_visa: boolean;
   is_1choice_deal: boolean;
   featured: boolean;
@@ -25,6 +27,12 @@ type CardProperty = {
   sea_view?: boolean | null;
   pool?: boolean | null;
   elevator?: boolean | null;
+};
+
+const TRANSACTION_LABELS: Record<string, string> = {
+  sale:       "For Sale",
+  rent:       "For Rent",
+  investment: "Investment",
 };
 
 type Props = {
@@ -64,17 +72,23 @@ function formatPrice(price: number) {
 export default function PropertyCard({ property, testId }: Props) {
   const {
     id, slug, title, area, price_eur, property_code,
+    transaction_type,
     is_golden_visa, is_1choice_deal, featured,
     cover_image_url, gallery_image_urls,
   } = property;
 
-  // Image: cover_image_url → gallery[0] → null (placeholder)
-  const displayImage = cover_image_url ?? gallery_image_urls[0] ?? null;
+  const transactionLabel = transaction_type
+    ? (TRANSACTION_LABELS[transaction_type] ?? null)
+    : null;
+
+  // Image: cover_image_url → gallery[0] → null (placeholder), then apply catalog preset
+  const rawImage = cover_image_url ?? gallery_image_urls[0] ?? null;
+  const displayImage = renderImageUrl(rawImage, "catalog");
 
   // Badges
   const badges = [
     is_golden_visa   && "Golden Visa",
-    is_1choice_deal  && "1ChoiceDeal",
+    is_1choice_deal  && "1ChoiceDeals",
     featured         && "Featured",
   ].filter(Boolean) as string[];
 
@@ -194,6 +208,11 @@ export default function PropertyCard({ property, testId }: Props) {
 
         {/* Location */}
         <div style={{ fontSize: 13, color: "#404040" }}>{area}</div>
+
+        {/* Transaction type */}
+        {transactionLabel && (
+          <div style={{ fontSize: 11, color: "#888888" }}>{transactionLabel}</div>
+        )}
 
         {/* Feature icons row — hidden when no renderable features */}
         {visibleFeatures.length > 0 && (

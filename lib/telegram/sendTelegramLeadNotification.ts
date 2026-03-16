@@ -17,6 +17,9 @@ export interface TelegramLeadData {
   property_id: string | null;
   property_title?: string | null;
   property_code?: string | null;
+  property_slug?: string | null;
+  property_location?: string | null;
+  entry_intent?: string | null;
   page_url: string | null;
   intent: string | null;
   notes: string | null;
@@ -66,6 +69,14 @@ function formatMessage(data: TelegramLeadData): string {
     lines.push(`🏡 *Property:* ${escape(propLabel)}`);
   } else if (data.property_id) {
     lines.push(`🏡 *Property ID:* ${escape(data.property_id)}`);
+  }
+
+  if (data.property_location) {
+    lines.push(`📍 *Location:* ${escape(data.property_location)}`);
+  }
+
+  if (data.entry_intent && data.entry_intent !== data.intent) {
+    lines.push(`🚪 *Entry Intent:* ${escape(data.entry_intent)}`);
   }
 
   if (data.intent) {

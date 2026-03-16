@@ -204,13 +204,13 @@ function PropertyRow({
     }
 
     const { id: _id, property_code: _code, slug: _slug, status: _status,
-      publish_1choice: _p1, publish_deals: _pd, vip: _vip, private_collection: _pc,
+      publish_1choice: _p1, publish_deals: _pd, private_collection: _pc,
       featured: _feat, is_golden_visa: _gv, created_at: _ca, ...rest } = source;
 
     const { data: inserted } = await supabase
       .from("properties")
       .insert({ ...rest, property_code: newCode, slug: null, status: "draft",
-        publish_1choice: false, publish_deals: false, vip: false, private_collection: false,
+        publish_1choice: false, publish_deals: false, private_collection: false,
         featured: false, is_golden_visa: false })
       .select("id").single();
 

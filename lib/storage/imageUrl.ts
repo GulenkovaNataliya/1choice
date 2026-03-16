@@ -13,12 +13,13 @@
  *   - External URL    (not Supabase) — returned unchanged
  */
 
-export type ImagePreset = "gallery" | "catalog" | "admin";
+export type ImagePreset = "gallery" | "catalog" | "admin" | "thumb";
 
 const PARAMS: Record<ImagePreset, string> = {
   gallery: "width=1200&quality=80",
   catalog: "width=600&quality=75",
   admin:   "width=300",
+  thumb:   "width=160&quality=70",
 };
 
 const DEFAULT_BUCKET = "property-images";

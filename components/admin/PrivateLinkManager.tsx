@@ -76,7 +76,7 @@ export default function PrivateLinkManager({
     }
   }
 
-  // ── Not VIP ────────────────────────────────────────────────────────────────
+  // ── Not Private Collection ──────────────────────────────────────────────────
   if (!isPrivateCollection) {
     return (
       <div className="bg-white rounded-xl border border-[#E8E8E8] p-6">

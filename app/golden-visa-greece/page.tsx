@@ -40,8 +40,7 @@ export default async function GoldenVisaPage({
       { count: "exact" }
     )
     .eq("is_golden_visa", true)
-    .neq("private_collection", true) // exclude private inventory
-    .neq("vip", true);               // legacy dual-check during transition
+    .neq("private_collection", true); // exclude private inventory
 
   const { data, count } = await query
     .order("created_at", { ascending: false })

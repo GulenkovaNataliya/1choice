@@ -48,8 +48,8 @@ const FEATURE_FROM_URL: Record<string, string> = {
 
 const CONDITION_FROM_URL: Record<string, string> = {
   renovated: "Renovated",
-  needsrenovation: "Needs renovation",
-  underconstruction: "Under construction",
+  needsrenovation: "Needs Renovation",
+  underconstruction: "Under Construction",
 };
 
 function parseParamsToFilter(params: ReadonlyURLSearchParams): Partial<FilterState> {
@@ -169,7 +169,7 @@ function buildChips(params: ReadonlyURLSearchParams): Chip[] {
 type SortKey = "curated" | "price_asc" | "price_desc" | "newest";
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: "curated",    label: "Curated" },
+  { value: "curated",    label: "Featured First" },
   { value: "price_asc",  label: "Price: Low to High" },
   { value: "price_desc", label: "Price: High to Low" },
   { value: "newest",     label: "Newest" },
@@ -179,8 +179,20 @@ function applySort(properties: PropertyRow[], sort: SortKey): PropertyRow[] {
   if (sort === "curated") return properties;
   const arr = [...properties];
   switch (sort) {
-    case "price_asc":  return arr.sort((a, b) => (a.price_eur ?? 0) - (b.price_eur ?? 0));
-    case "price_desc": return arr.sort((a, b) => (b.price_eur ?? 0) - (a.price_eur ?? 0));
+    case "price_asc":
+      return arr.sort((a, b) => {
+        if (a.price_eur === null && b.price_eur === null) return 0;
+        if (a.price_eur === null) return 1;
+        if (b.price_eur === null) return -1;
+        return a.price_eur - b.price_eur;
+      });
+    case "price_desc":
+      return arr.sort((a, b) => {
+        if (a.price_eur === null && b.price_eur === null) return 0;
+        if (a.price_eur === null) return 1;
+        if (b.price_eur === null) return -1;
+        return b.price_eur - a.price_eur;
+      });
     case "newest":     return arr.sort((a, b) => b.created_at.localeCompare(a.created_at));
     default:           return properties;
   }
@@ -276,8 +288,9 @@ export default function PropertiesClient({
 
   const selectedLocation = params.get("location");
 
-  const baseParams = new URLSearchParams();
-  if (selectedLocation) baseParams.set("location", selectedLocation);
+  // Build pagination params from all active URL params — preserve every filter
+  const baseParams = new URLSearchParams(params.toString());
+  baseParams.delete("page");
 
   const prevPage = Math.max(1, currentPage - 1);
   const prevParams = new URLSearchParams(baseParams);
@@ -294,6 +307,7 @@ export default function PropertiesClient({
     title: p.title,
     area: titleCase(p.location),
     price_eur: p.price_eur ?? null,
+    transaction_type: p.transaction_type ?? null,
     is_golden_visa: p.is_golden_visa ?? false,
     is_1choice_deal: p.publish_deals ?? false,
     featured: p.featured ?? false,
@@ -391,10 +405,6 @@ export default function PropertiesClient({
               </div>
             </>
           )}
-
-          <div style={{ fontSize: 12, opacity: 0.7 }}>
-            page={currentPage} totalPages={totalPages} total={total} hasNext={String(hasNext)}
-          </div>
 
           {totalPages > 1 && (
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 16, marginTop: 48 }}>

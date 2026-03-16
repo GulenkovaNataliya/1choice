@@ -62,7 +62,6 @@ export default async function PropertiesPage({
       { count: "exact" }
     )
     .neq("private_collection", true) // exclude private inventory
-    .neq("vip", true)                // legacy dual-check during transition
     .order("featured", { ascending: false })
     .order("created_at", { ascending: false })
     .range(from, to);

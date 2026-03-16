@@ -26,7 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .select("slug, updated_at")
     .eq("status", "published")
     .eq("publish_1choice", true)
-    .eq("vip", false)
+    .or("private_collection.is.null,private_collection.eq.false")
     .not("slug", "is", null);
 
   const propertyEntries: MetadataRoute.Sitemap = (properties ?? []).map((p) => ({

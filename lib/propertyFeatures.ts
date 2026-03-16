@@ -130,6 +130,15 @@ export const PROPERTY_FEATURES: PropertyFeature[] = [
     group: "building",
   },
   {
+    field: "year_renovated",
+    label: "Year Renovated",
+    icon: CalendarDays,
+    valueType: "number",
+    showOnCard: false,
+    showOnDetail: true,
+    group: "building",
+  },
+  {
     field: "energy_class",
     label: "Energy Class",
     icon: Zap,

@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Private Collection | 1Choice",
   description:
-    "Exclusive VIP and off-market properties, available by private invitation only.",
+    "Exclusive off-market properties from our Private Collection, available by private invitation only.",
 };
 
 export default function PrivatePage() {

@@ -6,6 +6,8 @@ export type ChatPropertyData = {
   property_id: string;
   property_code: string | null;
   property_title: string;
+  property_slug: string;
+  property_location: string | null;
 };
 
 type ChatPropertyContextValue = {

@@ -345,7 +345,10 @@ export async function POST(request: NextRequest) {
   const rawMessage       = typeof body.message          === "string" ? body.message          : null;
   const intent           = typeof body.intent           === "string" ? body.intent           : null;
   const pathname         = typeof body.pathname         === "string" ? body.pathname         : null;
-  const conversationStep = typeof body.conversationStep === "number" ? body.conversationStep : 0;
+  const conversationStep =
+    typeof body.conversationStep === "number"
+      ? Math.max(0, Math.min(body.conversationStep, 10))
+      : 0;
 
   // ── Message length cap ──────────────────────────────────────────────────────
   if (rawMessage !== null && rawMessage.length > MAX_MESSAGE_LENGTH) {

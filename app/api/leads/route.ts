@@ -93,6 +93,21 @@ export async function POST(request: NextRequest) {
       ? body.property_code
       : null;
 
+  const property_slug =
+    typeof body.property_slug === "string" && body.property_slug.length > 0
+      ? body.property_slug
+      : null;
+
+  const property_location =
+    typeof body.property_location === "string" && body.property_location.length > 0
+      ? body.property_location
+      : null;
+
+  const entry_intent =
+    typeof body.entry_intent === "string" && body.entry_intent.length > 0
+      ? body.entry_intent
+      : null;
+
   // lead_type: property if property context attached, else general
   const lead_type = property_id ? "property" : "general";
 
@@ -114,8 +129,11 @@ export async function POST(request: NextRequest) {
 
   const summaryParts: string[] = [];
   summaryParts.push(`Type: ${lead_type}`);
-  if (intent) summaryParts.push(`Intent: ${intent}`);
-  if (notes)  summaryParts.push(`Notes: ${notes}`);
+  if (entry_intent && entry_intent !== intent) summaryParts.push(`Entry Intent: ${entry_intent}`);
+  if (intent)            summaryParts.push(`Intent: ${intent}`);
+  if (property_location) summaryParts.push(`Location: ${property_location}`);
+  if (property_slug)     summaryParts.push(`Property URL: /properties/${property_slug}`);
+  if (notes)             summaryParts.push(`Notes: ${notes}`);
   summaryParts.push("Consent: WhatsApp ✓");
   const summary = summaryParts.join("\n");
 
@@ -127,17 +145,20 @@ export async function POST(request: NextRequest) {
     .from("leads")
     .insert({
       name,
-      phone:          whatsapp,   // WhatsApp number stored in existing `phone` column
-      email:          email || null,
+      phone:             whatsapp,   // WhatsApp number stored in existing `phone` column
+      email:             email || null,
       lead_type,
       source,
       page_url,
       property_id,
       property_title,
       property_code,
+      property_slug,
+      property_location,
+      entry_intent,
       summary,
       full_chat,
-      status:         "new",
+      status:            "new",
     })
     .select("id")
     .single();
@@ -158,11 +179,14 @@ export async function POST(request: NextRequest) {
     lead_type,
     source,
     name,
-    phone:          whatsapp,
+    phone:             whatsapp,
     email,
     property_id,
     property_title,
     property_code,
+    property_slug,
+    property_location,
+    entry_intent,
     page_url,
     intent,
     notes,

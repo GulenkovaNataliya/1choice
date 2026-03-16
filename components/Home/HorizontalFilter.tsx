@@ -41,7 +41,7 @@ const TRANSACTIONS   = ["Buy", "Rent", "Antiparochi"];
 const PROPERTY_TYPES = ["Apartment", "Maisonette", "House", "Villa", "Land", "Commercial", "Investment"];
 const BEDROOMS_OPTS  = ["1+", "2+", "3+", "4+", "5+"];
 const BATHROOMS_OPTS = ["1+", "2+", "3+", "4+"];
-const CONDITIONS     = ["Renovated", "Needs renovation", "Under construction"];
+const CONDITIONS     = ["Renovated", "Needs Renovation", "Under Construction"];
 const FEATURES       = ["Parking", "Pool", "Sea View", "Garden", "Furnished", "Investment"];
 
 const ROW1_KEYS: Row1Key[] = ["transaction", "type", "location", "price", "bedrooms"];
@@ -110,8 +110,8 @@ const FEATURE_SLUG: Record<string, string> = {
 
 const CONDITION_SLUG: Record<string, string> = {
   "Renovated": "renovated",
-  "Needs renovation": "needsrenovation",
-  "Under construction": "underconstruction",
+  "Needs Renovation": "needsrenovation",
+  "Under Construction": "underconstruction",
 };
 
 function buildParams(f: FilterState): URLSearchParams {
@@ -167,8 +167,7 @@ const STYLES = `
     color:#3A2E4F;padding:0 20px;font-size:14px;cursor:pointer;flex-shrink:0;
     transition:border-color .15s,color .15s}
   .fc:hover{border-color:#C1121F;color:#C1121F}
-  .fp-more{color:#C1121F!important}
-  .fp-more.fp-on{background:#3A2E4F!important;color:#F4F4F4!important}
+  .fp-more.fp-on{background:#3A2E4F!important;color:#D9D9D9!important}
   .fp-inp::placeholder{color:#404040}
   .chip{height:34px;border-radius:17px;border:1px solid #D9D9D9;background:#FFFFFF;
     color:#3A2E4F;font-size:13px;cursor:pointer;padding:0 14px;flex-shrink:0;
@@ -622,12 +621,6 @@ export default function HorizontalFilter({ initialFilter, onSearch, areas = [] }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initKey]);
 
-  // DEBUG — remove after verification
-  useEffect(() => {
-    const moreCls = `fp fp-more${showMore ? " fp-on" : ""}`;
-    console.log("[Filter] More className:", moreCls);
-    console.log("[Filter] Search className: fs  (border-radius: 16px, background: #D9D9D9)");
-  }, [showMore]);
 
   function togglePanel(key: PanelKey) {
     setOpenPanel(prev => prev === key ? null : key);
@@ -643,9 +636,9 @@ export default function HorizontalFilter({ initialFilter, onSearch, areas = [] }
   }
 
   const handleApply = useCallback(() => {
+    if (onSearch) onSearch(buildParams(filter));
     setDrawerOpen(false);
-    console.log("Filter:", filter);
-  }, [filter]);
+  }, [filter, onSearch]);
 
   const handleClear = useCallback(() => {
     setFilter(INITIAL);

@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { renderImageUrl } from "@/lib/storage/imageUrl";
 
 type Props = {
   title: string;
@@ -28,6 +30,21 @@ export default function PropertyGalleryClient({
 
   const [active, setActive] = useState(0);
   const activeUrl = slots[active] ?? null;
+  const total = slots.length;
+
+  const prev = useCallback(() => setActive((i) => (i - 1 + total) % total), [total]);
+  const next = useCallback(() => setActive((i) => (i + 1) % total), [total]);
+
+  // Keyboard arrow navigation
+  useEffect(() => {
+    if (total <= 1) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "ArrowLeft")  prev();
+      if (e.key === "ArrowRight") next();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [total, prev, next]);
 
   return (
     <div>
@@ -42,6 +59,8 @@ export default function PropertyGalleryClient({
             src={activeUrl}
             alt={`${title} — photo ${active + 1}`}
             className="absolute inset-0 w-full h-full object-cover"
+            loading={active === 0 ? "eager" : "lazy"}
+            fetchPriority={active === 0 ? "high" : undefined}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-[#AAAAAA] text-sm">
@@ -70,29 +89,58 @@ export default function PropertyGalleryClient({
           </div>
         )}
 
+        {/* Prev / Next arrows — only when there are multiple images */}
+        {total > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={prev}
+              aria-label="Previous photo"
+              className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-1.5 transition-colors"
+            >
+              <ChevronLeft size={20} strokeWidth={2} />
+            </button>
+            <button
+              type="button"
+              onClick={next}
+              aria-label="Next photo"
+              className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-1.5 transition-colors"
+            >
+              <ChevronRight size={20} strokeWidth={2} />
+            </button>
+          </>
+        )}
+
         {/* Image counter */}
-        {slots.length > 1 && (
+        {total > 1 && (
           <div className="absolute bottom-3 right-3 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
-            {active + 1} / {slots.length}
+            {active + 1} / {total}
           </div>
         )}
       </div>
 
       {/* Thumbnails — only when there are multiple images */}
-      {slots.length > 1 && (
+      {total > 1 && (
         <div className="flex gap-2 overflow-x-auto pb-1">
           {slots.map((url, i) => (
             <button
               key={i}
               type="button"
               onClick={() => setActive(i)}
+              aria-label={`Photo ${i + 1}`}
+              aria-current={active === i ? "true" : undefined}
               className={`shrink-0 w-20 h-14 rounded-lg overflow-hidden border-2 transition-colors ${
-                active === i ? "border-[#3A2E4F]" : "border-transparent"
+                active === i ? "border-[#3A2E4F]" : "border-transparent hover:border-[#BBBBBB]"
               }`}
               style={{ background: "#E8E8E8" }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={url} alt="" className="w-full h-full object-cover" />
+              <img
+                src={renderImageUrl(url, "thumb") ?? url}
+                alt=""
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
             </button>
           ))}
         </div>

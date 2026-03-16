@@ -16,7 +16,7 @@ export default async function EditPropertyPage({ params }: { params: { id: strin
     supabase
       .from("properties")
       .select(
-        "id,property_code,title,slug,category,subtype,transaction_type,price_eur,location,location_text,summary,description,size_sqm,bedrooms,bathrooms,floor,year_built,year_renovated,building_condition,energy_class,fireplace,elevator,security_door,alarm_system,video_doorphone,smart_home,satellite_tv,internet_ready,storage,sea_view,mountain_view,garden,pool,frames_type,double_glazing,triple_glazing,mosquito_screens,thermal_insulation,sound_insulation,flooring_type,living_rooms,kitchens,storage_rooms,wc,cover_image_url,gallery_image_urls,youtube_video_url,virtual_tour_url,latitude,longitude,approximate_location,is_golden_visa,featured,vip,private_collection,publish_1choice,publish_deals,status,agent_notes"
+        "id,property_code,title,slug,category,subtype,transaction_type,price_eur,location,location_text,summary,description,size_sqm,bedrooms,bathrooms,floor,year_built,year_renovated,building_condition,energy_class,fireplace,elevator,security_door,alarm_system,video_doorphone,smart_home,satellite_tv,internet_ready,storage,sea_view,mountain_view,garden,pool,frames_type,double_glazing,triple_glazing,mosquito_screens,thermal_insulation,sound_insulation,flooring_type,living_rooms,kitchens,storage_rooms,wc,cover_image_url,gallery_image_urls,youtube_video_url,virtual_tour_url,latitude,longitude,approximate_location,is_golden_visa,featured,private_collection,publish_1choice,publish_deals,status,agent_notes"
       )
       .eq("id", params.id)
       .single(),
@@ -120,7 +120,7 @@ export default async function EditPropertyPage({ params }: { params: { id: strin
         <PrivateLinkManager
           propertyId={property.id}
           propertyCode={property.property_code ?? null}
-          isPrivateCollection={property.private_collection === true || property.vip === true}
+          isPrivateCollection={property.private_collection === true}
           initialToken={initialToken}
         />
       </div>

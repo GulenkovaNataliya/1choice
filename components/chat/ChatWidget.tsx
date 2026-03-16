@@ -11,7 +11,9 @@ type Intent =
   | "investment_strategy"
   | "golden_visa"
   | "viewing_request"
-  | "general_question";
+  | "general_question"
+  | "property_viewing"
+  | "property_inquiry";
 
 type ChatMatch = {
   id:            string;
@@ -253,6 +255,10 @@ export default function ChatWidget() {
   const [submitting,   setSubmitting]   = useState(false);
   const [isLoadingBot, setIsLoadingBot] = useState(false);
 
+  // Captures the first CTA intent that opened the chat — never overwritten.
+  // intent state can change if the user picks a quick action; entryIntentRef preserves origin.
+  const entryIntentRef = useRef<Intent | null>(null);
+
   // ── STT state ─────────────────────────────────────────────────────────────
   // sttSupported: null = not yet checked (SSR safe), true/false after mount
   const [sttSupported, setSttSupported] = useState<boolean | null>(null);
@@ -429,9 +435,13 @@ export default function ChatWidget() {
   // ref pattern below. The CTA wiring is done in a later step.
   //
   async function openWithIntent(chosen: Intent, userLabel: string) {
+    // Record the original CTA intent only on first call — never overwrite.
+    if (entryIntentRef.current === null) {
+      entryIntentRef.current = chosen;
+    }
     setIsOpen(true);
     if (msgs.length === 0) {
-      setMsgs([{ role: "bot", text: WELCOME_MESSAGES.default }]);
+      setMsgs([buildGreeting()]);
     }
     setIsLoadingBot(true);
     const { text, triggerLeadForm, matches } = await fetchBotResponse({ intent: chosen }, pathname, msgs.length);
@@ -546,13 +556,16 @@ export default function ChatWidget() {
       email:            lead.email.trim() || null,
       notes:            lead.notes.trim() || null,
       consent_whatsapp: true,
-      source:           pageSource(pathname),
-      intent:           intent ?? "general_question",
-      page_url:         typeof window !== "undefined" ? window.location.href : null,
-      property_id:      propertyData?.property_id    ?? null,
-      property_title:   propertyData?.property_title ?? null,
-      property_code:    propertyData?.property_code  ?? null,
-      chat_log:         msgs.map((m) => ({ role: m.role, text: m.text })),
+      source:            pageSource(pathname),
+      intent:            intent ?? "general_question",
+      entry_intent:      entryIntentRef.current ?? null,
+      page_url:          typeof window !== "undefined" ? window.location.href : null,
+      property_id:       propertyData?.property_id       ?? null,
+      property_title:    propertyData?.property_title    ?? null,
+      property_code:     propertyData?.property_code     ?? null,
+      property_slug:     propertyData?.property_slug     ?? null,
+      property_location: propertyData?.property_location ?? null,
+      chat_log:          msgs.map((m) => ({ role: m.role, text: m.text })),
     };
 
     try {

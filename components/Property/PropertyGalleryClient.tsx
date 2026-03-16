@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { renderImageUrl } from "@/lib/storage/imageUrl";
 
@@ -54,13 +55,13 @@ export default function PropertyGalleryClient({
         style={{ paddingTop: "75%", background: "#E8E8E8" }}
       >
         {activeUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={activeUrl}
             alt={`${title} — photo ${active + 1}`}
-            className="absolute inset-0 w-full h-full object-cover"
-            loading={active === 0 ? "eager" : "lazy"}
-            fetchPriority={active === 0 ? "high" : undefined}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 65vw"
+            priority={active === 0}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-[#AAAAAA] text-sm">

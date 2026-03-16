@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { CARD_FEATURES, shouldRenderFeature, formatFeatureValue } from "@/lib/propertyFeatures";
 import { renderImageUrl } from "@/lib/storage/imageUrl";
+import FavoriteButton from "@/components/Property/FavoriteButton";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -171,6 +172,9 @@ export default function PropertyCard({ property, testId }: Props) {
             {badges.map(label => <Badge key={label} label={label} />)}
           </div>
         )}
+
+        {/* Heart button — top-right; e.preventDefault+stopPropagation inside FavoriteButton */}
+        <FavoriteButton propertyId={String(id)} variant="card" />
       </div>
 
       {/* Content */}

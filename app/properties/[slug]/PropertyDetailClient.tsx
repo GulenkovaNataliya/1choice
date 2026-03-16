@@ -1,3 +1,5 @@
+"use client";
+
 import { Fragment } from "react";
 import Link from "next/link";
 import { MapPin, Tag, Home, LayoutGrid } from "lucide-react";
@@ -11,6 +13,7 @@ import {
   formatFeatureValue,
   type PropertyFeature,
 } from "@/lib/propertyFeatures";
+import FavoriteButton from "@/components/Property/FavoriteButton";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -98,6 +101,8 @@ type SimilarProperty = {
 type Props = {
   property: PropertyData;
   coverUrl: string | null;
+  locationProperties: SimilarProperty[];
+  locationPageUrl: string | null;
   similarProperties: SimilarProperty[];
 };
 
@@ -316,7 +321,7 @@ function LocationBlock({
 
 // ── Main component ───────────────────────────────────────────────────────────
 
-export default function PropertyDetailClient({ property, coverUrl, similarProperties }: Props) {
+export default function PropertyDetailClient({ property, coverUrl, locationProperties, locationPageUrl, similarProperties }: Props) {
   const {
     title, price_eur, location, location_text, property_code,
     is_golden_visa, publish_deals, featured,
@@ -394,6 +399,11 @@ export default function PropertyDetailClient({ property, coverUrl, similarProper
                     1ChoiceDeals
                   </span>
                 )}
+              </div>
+
+              {/* Save button */}
+              <div className="mt-1">
+                <FavoriteButton propertyId={property.id} variant="detail" />
               </div>
             </div>
 
@@ -628,10 +638,34 @@ export default function PropertyDetailClient({ property, coverUrl, similarProper
           mapsQuery={mapsQuery}
         />
 
-        {/* Similar Properties */}
-        {similarProperties.length > 0 && (
+        {/* More properties in same area */}
+        {locationProperties.length > 0 && (
           <section className="mt-16">
-            <h2 className="text-xl font-semibold text-[#1E1E1E] mb-6">Similar Properties</h2>
+            <div className="flex items-center justify-between gap-4 mb-6">
+              <h2 className="text-xl font-semibold text-[#1E1E1E]">
+                More properties in {areaLabel}
+              </h2>
+              {locationPageUrl && (
+                <Link
+                  href={locationPageUrl}
+                  className="text-sm text-[#3A2E4F] underline underline-offset-2 hover:opacity-70 transition-opacity whitespace-nowrap shrink-0"
+                >
+                  View all →
+                </Link>
+              )}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {locationProperties.map((p) => (
+                <PropertyCard key={p.id} property={p} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Similar properties — same category + price range */}
+        {similarProperties.length > 0 && (
+          <section className="mt-12">
+            <h2 className="text-xl font-semibold text-[#1E1E1E] mb-6">Similar properties</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {similarProperties.map((p) => (
                 <PropertyCard key={p.id} property={p} />

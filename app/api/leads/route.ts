@@ -1,6 +1,7 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse, after } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/adminClient";
 import { sendTelegramLeadNotification } from "@/lib/telegram/sendTelegramLeadNotification";
+import { sendLeadEmailNotification } from "@/lib/notifications/sendLeadEmailNotification";
 
 /*
  * POST /api/leads
@@ -156,6 +157,8 @@ export async function POST(request: NextRequest) {
       property_slug,
       property_location,
       entry_intent,
+      intent:            intent || null,
+      notes:             notes || null,
       summary,
       full_chat,
       status:            "new",
@@ -168,31 +171,58 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Failed to save lead" }, { status: 500 });
   }
 
-  // ── Telegram notification (fire-and-forget, never breaks the response) ────
+  // ── Notifications — run after response is returned ────────────────────────
+  // `after` keeps the serverless function alive until both promises settle,
+  // preventing silent drops on Vercel when the runtime recycles after the
+  // response is sent.
   const siteUrl = process.env.SITE_URL ?? null;
   const adminUrl =
     siteUrl && inserted?.id
       ? `${siteUrl}/admin/leads?id=${inserted.id}`
       : null;
 
-  sendTelegramLeadNotification({
-    lead_type,
-    source,
-    name,
-    phone:             whatsapp,
-    email,
-    property_id,
-    property_title,
-    property_code,
-    property_slug,
-    property_location,
-    entry_intent,
-    page_url,
-    intent,
-    notes,
-    admin_url: adminUrl,
-    created_at: new Date().toISOString(),
-  }).catch((err) => console.error("[Telegram] unexpected error:", err));
+  const createdAt = new Date().toISOString();
+
+  after(async () => {
+    await Promise.allSettled([
+      sendTelegramLeadNotification({
+        lead_type,
+        source,
+        name,
+        phone:             whatsapp,
+        email,
+        property_id,
+        property_title,
+        property_code,
+        property_slug,
+        property_location,
+        entry_intent,
+        page_url,
+        intent,
+        notes,
+        admin_url: adminUrl,
+        created_at: createdAt,
+      }).catch((err) => console.error("[Telegram] unexpected error:", err)),
+
+      sendLeadEmailNotification({
+        lead_type,
+        name,
+        phone:             whatsapp,
+        email,
+        source,
+        intent:            intent || null,
+        entry_intent:      entry_intent || null,
+        notes:             notes || null,
+        property_title,
+        property_code,
+        property_slug,
+        property_location,
+        page_url,
+        admin_url:         adminUrl,
+        created_at:        createdAt,
+      }).catch((err) => console.error("[Email] unexpected error:", err)),
+    ]);
+  });
 
   return NextResponse.json({ ok: true }, { status: 201 });
 }

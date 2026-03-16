@@ -79,6 +79,7 @@ async function fetchBotResponse(
       method:  "POST",
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({ ...params, pathname, conversationStep }),
+      signal:  AbortSignal.timeout(8_000),
     });
     const json: unknown = await res.json().catch(() => ({}));
     if (
@@ -95,6 +96,7 @@ async function fetchBotResponse(
     }
     return REFUSAL_RESULT;
   } catch {
+    // Covers network errors and AbortSignal timeout
     return REFUSAL_RESULT;
   }
 }
@@ -195,6 +197,8 @@ function pageSource(pathname: string): string {
   if (pathname === "/investment-ownership-guide") return "investment-guide";
   if (pathname === "/golden-visa-greece")         return "golden-visa";
   if (pathname === "/private")                    return "private";
+  if (pathname === "/saved")                      return "saved";
+  if (pathname === "/compare")                    return "compare";
   return "other";
 }
 
@@ -373,6 +377,8 @@ export default function ChatWidget() {
   const visible =
     pathname === "/" ||
     pathname.startsWith("/properties") ||
+    pathname === "/saved" ||
+    pathname === "/compare" ||
     pathname === "/investment-ownership-guide" ||
     pathname === "/private";
 
@@ -573,6 +579,7 @@ export default function ChatWidget() {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify(leadPayload),
+        signal:  AbortSignal.timeout(10_000),
       });
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
@@ -580,8 +587,13 @@ export default function ChatWidget() {
         setSubmitting(false);
         return;
       }
-    } catch {
-      setErrors({ whatsapp: "Network error — please try again" });
+    } catch (err) {
+      const isTimeout = err instanceof Error && err.name === "TimeoutError";
+      setErrors({
+        whatsapp: isTimeout
+          ? "Request timed out — please try again"
+          : "Network error — please try again",
+      });
       setSubmitting(false);
       return;
     }
@@ -609,7 +621,7 @@ export default function ChatWidget() {
             src="/logo/logo-chat.png"
             alt=""
             aria-hidden="true"
-            className="shrink-0 h-[18px] w-auto"
+            className="shrink-0 h-4.5 w-auto"
           />
           <span className="text-sm font-semibold leading-tight whitespace-nowrap">
             {launcherText}
@@ -626,7 +638,7 @@ export default function ChatWidget() {
         >
           {/* ── Modal ── */}
           <div
-            className="w-full max-w-[380px] max-h-[min(600px,90vh)] flex flex-col bg-white shadow-2xl overflow-hidden"
+            className="w-full max-w-95 max-h-[min(600px,90vh)] flex flex-col bg-white shadow-2xl overflow-hidden"
             style={{ borderRadius: "18px" }}
           >
             {/* Header */}
@@ -636,7 +648,7 @@ export default function ChatWidget() {
                   src="/logo/logo-chat.png"
                   alt=""
                   aria-hidden="true"
-                  className="shrink-0 h-[18px] w-auto"
+                  className="shrink-0 h-4.5 w-auto"
                 />
                 <span className="text-sm font-semibold tracking-tight">
                   1Choice Advisory Assistant

@@ -4,22 +4,23 @@ import PropertiesClient from "./PropertiesClient";
 import type { PropertyRow } from "@/lib/properties/fetchProperties";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { fetchActiveAreas } from "@/lib/areas";
+import PopularAreaLinks from "@/components/Locations/PopularAreaLinks";
+import { listingFreshnessCutoff } from "@/lib/properties/publicListingFilters";
+import { LOCATION_SEO_CONFIG } from "@/lib/locations/locationSeoConfig";
 
 export async function generateMetadata({
   searchParams,
 }: {
   searchParams: Promise<{ location?: string; page?: string }>;
 }): Promise<Metadata> {
-  const { location, page: pageParam } = await searchParams;
+  const { location } = await searchParams;
 
-  const p = new URLSearchParams();
-  if (location) p.set("location", location);
-
-  const page = Number(pageParam ?? "1");
-  if (page > 1) p.set("page", String(page));
-
-  const query = p.toString();
-  const canonical = query ? `/properties?${query}` : "/properties";
+  // If filtering by a known location SEO slug, canonical is the dedicated location page
+  // (avoids competing with /properties/location/[slug] for the same query)
+  const canonical =
+    location && location in LOCATION_SEO_CONFIG
+      ? `/properties/location/${location}`
+      : "/properties";
 
   return {
     title: "Properties for Sale in Greece | 1Choice",
@@ -62,6 +63,7 @@ export default async function PropertiesPage({
       { count: "exact" }
     )
     .neq("private_collection", true) // exclude private inventory
+    .gte("updated_at", listingFreshnessCutoff()) // hide listings not updated in 90 days
     .order("featured", { ascending: false })
     .order("created_at", { ascending: false })
     .range(from, to);
@@ -76,16 +78,19 @@ export default async function PropertiesPage({
   const hasPrev = page > 1;
 
   return (
-    <Suspense>
-      <PropertiesClient
-        initialProperties={properties}
-        currentPage={page}
-        totalPages={totalPages}
-        total={total}
-        hasNext={hasNext}
-        hasPrev={hasPrev}
-        areas={areas}
-      />
-    </Suspense>
+    <>
+      <Suspense>
+        <PropertiesClient
+          initialProperties={properties}
+          currentPage={page}
+          totalPages={totalPages}
+          total={total}
+          hasNext={hasNext}
+          hasPrev={hasPrev}
+          areas={areas}
+        />
+      </Suspense>
+      <PopularAreaLinks title="Popular areas" />
+    </>
   );
 }

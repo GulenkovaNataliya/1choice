@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getSupabase } from "@/lib/supabase/client";
@@ -19,6 +19,10 @@ export type AdminProperty = {
   featured: boolean | null;
   is_golden_visa: boolean | null;
   created_at: string;
+  updated_at: string | null;
+  location: string | null;
+  location_text: string | null;
+  price_eur: number | null;
 };
 
 // ── Shared UI ─────────────────────────────────────────────────────────────────
@@ -222,6 +226,8 @@ function PropertyRow({
     }
   }
 
+  const dateLabel = property.updated_at ?? property.created_at;
+
   return (
     <tr className={`hover:bg-[#FAFAFA] transition-colors ${isArchived ? "opacity-60" : ""}`}>
       {/* Checkbox */}
@@ -281,8 +287,8 @@ function PropertyRow({
           label="Toggle Golden Visa"
         />
       </td>
-      <td className="px-4 py-3 text-[#888888] whitespace-nowrap">
-        {new Date(property.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+      <td className="px-4 py-3 text-[#888888] whitespace-nowrap text-xs">
+        {new Date(dateLabel).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
       </td>
       <td className="px-4 py-3">
         <div className="flex flex-col gap-1.5">
@@ -384,6 +390,112 @@ function BulkBar({
   );
 }
 
+// ── Filter controls ───────────────────────────────────────────────────────────
+
+type StatusFilter = "all" | "published" | "draft" | "archived";
+type SortKey = "updated_desc" | "updated_asc" | "price_desc" | "price_asc";
+
+const STATUS_TABS: { value: StatusFilter; label: string }[] = [
+  { value: "all",       label: "All"       },
+  { value: "published", label: "Published" },
+  { value: "draft",     label: "Draft"     },
+  { value: "archived",  label: "Archived"  },
+];
+
+function FilterBar({
+  search,
+  onSearch,
+  status,
+  onStatus,
+  flags,
+  onFlag,
+  sort,
+  onSort,
+  total,
+  shown,
+}: {
+  search: string;
+  onSearch: (v: string) => void;
+  status: StatusFilter;
+  onStatus: (v: StatusFilter) => void;
+  flags: { featured: boolean; deals: boolean; private: boolean };
+  onFlag: (k: keyof typeof flags) => void;
+  sort: SortKey;
+  onSort: (v: SortKey) => void;
+  total: number;
+  shown: number;
+}) {
+  return (
+    <div className="bg-white rounded-lg shadow-sm px-4 py-3 mb-3 flex flex-col gap-3">
+      {/* Row 1: search + sort */}
+      <div className="flex items-center gap-3">
+        <input
+          type="search"
+          placeholder="Search by code, title or location…"
+          value={search}
+          onChange={(e) => onSearch(e.target.value)}
+          className="flex-1 min-w-0 text-sm border border-[#E0E0E0] rounded px-3 py-1.5 focus:outline-none focus:border-[#1E1E1E] placeholder-[#AAAAAA]"
+        />
+        <select
+          value={sort}
+          onChange={(e) => onSort(e.target.value as SortKey)}
+          className="text-sm border border-[#E0E0E0] rounded px-3 py-1.5 focus:outline-none focus:border-[#1E1E1E] bg-white text-[#1E1E1E] cursor-pointer"
+        >
+          <option value="updated_desc">Updated: newest first</option>
+          <option value="updated_asc">Updated: oldest first</option>
+          <option value="price_desc">Price: high to low</option>
+          <option value="price_asc">Price: low to high</option>
+        </select>
+      </div>
+
+      {/* Row 2: status tabs + flag pills + count */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {/* Status tabs */}
+        <div className="flex items-center gap-1 mr-2">
+          {STATUS_TABS.map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => onStatus(tab.value)}
+              className={`px-3 py-1 text-xs font-semibold rounded transition-colors ${
+                status === tab.value
+                  ? "bg-[#1E1E1E] text-white"
+                  : "text-[#555555] hover:bg-[#F4F4F4]"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <span className="text-[#D9D9D9] text-xs select-none">|</span>
+
+        {/* Flag pills */}
+        {(["featured", "deals", "private"] as const).map((key) => {
+          const labels = { featured: "Featured", deals: "Deals", private: "Private" };
+          return (
+            <button
+              key={key}
+              onClick={() => onFlag(key)}
+              className={`px-3 py-1 text-xs font-semibold rounded border transition-colors ${
+                flags[key]
+                  ? "bg-[#1E1E1E] text-white border-[#1E1E1E]"
+                  : "text-[#555555] border-[#E0E0E0] hover:border-[#1E1E1E]"
+              }`}
+            >
+              {labels[key]}
+            </button>
+          );
+        })}
+
+        {/* Result count */}
+        <span className="ml-auto text-xs text-[#AAAAAA]">
+          {shown === total ? `${total} properties` : `${shown} of ${total}`}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 // ── Table ─────────────────────────────────────────────────────────────────────
 
 const COL_COUNT = 11; // checkbox + 9 data cols + actions
@@ -394,19 +506,66 @@ export default function PropertiesTable({ rows }: { rows: AdminProperty[] }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
 
+  // ── Filter / sort state ────────────────────────────────────────────────────
+  const [search,     setSearch]     = useState("");
+  const [status,     setStatus]     = useState<StatusFilter>("all");
+  const [flags,      setFlags]      = useState({ featured: false, deals: false, private: false });
+  const [sort,       setSort]       = useState<SortKey>("updated_desc");
+
+  function toggleFlag(key: keyof typeof flags) {
+    setFlags((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  // ── Derived filtered + sorted rows ────────────────────────────────────────
+  const filtered = useMemo(() => {
+    let result = rows;
+
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      result = result.filter((p) =>
+        (p.property_code ?? "").toLowerCase().includes(q) ||
+        p.title.toLowerCase().includes(q) ||
+        (p.location ?? "").toLowerCase().includes(q) ||
+        (p.location_text ?? "").toLowerCase().includes(q)
+      );
+    }
+
+    if (status !== "all") {
+      result = result.filter((p) => p.status === status);
+    }
+
+    if (flags.featured) result = result.filter((p) => p.featured);
+    if (flags.deals)    result = result.filter((p) => p.publish_deals);
+    if (flags.private)  result = result.filter((p) => p.private_collection);
+
+    const sorted = [...result];
+    sorted.sort((a, b) => {
+      switch (sort) {
+        case "updated_desc":
+          return new Date(b.updated_at ?? b.created_at).getTime() - new Date(a.updated_at ?? a.created_at).getTime();
+        case "updated_asc":
+          return new Date(a.updated_at ?? a.created_at).getTime() - new Date(b.updated_at ?? b.created_at).getTime();
+        case "price_desc":
+          return (b.price_eur ?? 0) - (a.price_eur ?? 0);
+        case "price_asc":
+          return (a.price_eur ?? 0) - (b.price_eur ?? 0);
+      }
+    });
+    return sorted;
+  }, [rows, search, status, flags, sort]);
+
   function refresh() {
     setSelected(new Set());
     router.refresh();
   }
 
-  // ── Selection helpers ──────────────────────────────────────────────────────
+  // ── Selection helpers (operate on filtered rows) ──────────────────────────
 
-  const allIds = rows.map((r) => r.id);
-  const allSelected = allIds.length > 0 && allIds.every((id) => selected.has(id));
-  const someSelected = selected.size > 0;
+  const filteredIds = filtered.map((r) => r.id);
+  const allSelected = filteredIds.length > 0 && filteredIds.every((id) => selected.has(id));
 
   function toggleAll() {
-    setSelected(allSelected ? new Set() : new Set(allIds));
+    setSelected(allSelected ? new Set() : new Set(filteredIds));
   }
 
   function toggleOne(id: string) {
@@ -475,6 +634,19 @@ export default function PropertiesTable({ rows }: { rows: AdminProperty[] }) {
         <DealsExportModal propertyId={exportId} onClose={() => setExportId(null)} />
       )}
 
+      <FilterBar
+        search={search}
+        onSearch={setSearch}
+        status={status}
+        onStatus={setStatus}
+        flags={flags}
+        onFlag={toggleFlag}
+        sort={sort}
+        onSort={setSort}
+        total={rows.length}
+        shown={filtered.length}
+      />
+
       <BulkBar
         count={selected.size}
         busy={bulkBusy}
@@ -507,25 +679,31 @@ export default function PropertiesTable({ rows }: { rows: AdminProperty[] }) {
                 <th className="px-4 py-3 text-xs font-semibold text-[#888888] uppercase tracking-wider">Private</th>
                 <th className="px-4 py-3 text-xs font-semibold text-[#888888] uppercase tracking-wider">Featured</th>
                 <th className="px-4 py-3 text-xs font-semibold text-[#888888] uppercase tracking-wider">Golden Visa</th>
-                <th className="px-4 py-3 text-xs font-semibold text-[#888888] uppercase tracking-wider">Created</th>
+                <th className="px-4 py-3 text-xs font-semibold text-[#888888] uppercase tracking-wider">Updated</th>
                 <th className="px-4 py-3 text-xs font-semibold text-[#888888] uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F0F0F0]">
-              {rows.length === 0 ? (
+              {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={COL_COUNT} className="px-4 py-12 text-center">
-                    <p className="text-sm text-[#888888] mb-3">No properties yet.</p>
-                    <Link
-                      href="/admin/properties/new"
-                      className="inline-block px-4 py-2 bg-[#1E1E1E] text-white text-xs font-semibold rounded hover:bg-[#333333] transition-colors"
-                    >
-                      Add first property
-                    </Link>
+                    {rows.length === 0 ? (
+                      <>
+                        <p className="text-sm text-[#888888] mb-3">No properties yet.</p>
+                        <Link
+                          href="/admin/properties/new"
+                          className="inline-block px-4 py-2 bg-[#1E1E1E] text-white text-xs font-semibold rounded hover:bg-[#333333] transition-colors"
+                        >
+                          Add first property
+                        </Link>
+                      </>
+                    ) : (
+                      <p className="text-sm text-[#888888]">No properties match the current filters.</p>
+                    )}
                   </td>
                 </tr>
               ) : (
-                rows.map((p) => (
+                filtered.map((p) => (
                   <PropertyRow
                     key={p.id}
                     property={p}

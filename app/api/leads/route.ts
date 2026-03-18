@@ -27,7 +27,53 @@ import { sendLeadEmailNotification } from "@/lib/notifications/sendLeadEmailNoti
 
 const WHATSAPP_RE = /^\+[1-9]\d{7,14}$/;
 
+// ── In-memory rate limiter ────────────────────────────────────────────────────
+//
+// Per-IP, resets on serverless cold start — acceptable for MVP.
+// Upgrade to Upstash Redis for production-scale multi-instance deployments.
+//
+type RateBucket = { count: number; resetAt: number };
+const rateLimitMap = new Map<string, RateBucket>();
+const RATE_LIMIT  = 5;             // submissions per window
+const RATE_WINDOW = 15 * 60_000;  // 15 minutes in ms
+
+function getClientIp(request: NextRequest): string {
+  return (
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    request.headers.get("x-real-ip") ??
+    "unknown"
+  );
+}
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  let bucket = rateLimitMap.get(ip);
+  if (!bucket || now > bucket.resetAt) {
+    bucket = { count: 0, resetAt: now + RATE_WINDOW };
+    rateLimitMap.set(ip, bucket);
+  }
+  bucket.count += 1;
+  return bucket.count <= RATE_LIMIT;
+}
+
+// Prune expired entries periodically to prevent memory growth within warm instances
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, bucket] of rateLimitMap.entries()) {
+    if (now > bucket.resetAt) rateLimitMap.delete(ip);
+  }
+}, 15 * 60_000);
+
 export async function POST(request: NextRequest) {
+  // ── Rate limit ──────────────────────────────────────────────────────────────
+  const ip = getClientIp(request);
+  if (!checkRateLimit(ip)) {
+    return NextResponse.json(
+      { error: "Too many submissions. Please try again later." },
+      { status: 429 }
+    );
+  }
+
   let body: Record<string, unknown>;
   try {
     body = await request.json();

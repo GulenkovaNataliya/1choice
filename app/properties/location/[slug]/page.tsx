@@ -105,7 +105,7 @@ export default async function LocationPage({
     .order("featured", { ascending: false })
     .order("created_at", { ascending: false });
 
-  const properties = (data ?? []).map((p) => mapRow(p as DbRow));
+  const properties = (data ?? []).map((p) => mapRow(p as unknown as DbRow));
 
   return (
     <main className="min-h-screen bg-white">

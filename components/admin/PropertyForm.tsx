@@ -66,6 +66,7 @@ type FormState = {
   latitude: string;
   longitude: string;
   approximate_location: boolean;
+  address: string;
 };
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -127,6 +128,7 @@ const INITIAL: FormState = {
   latitude: "",
   longitude: "",
   approximate_location: false,
+  address: "",
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -283,6 +285,33 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
   const lastSavedRef = useRef<string>(JSON.stringify({ ...INITIAL, ...initialValues }));
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const originalSlugRef = useRef<string>(initialValues?.slug?.trim() ?? "");
+
+  // ── Geocoding state ──────────────────────────────────────────────────────────
+  type GeoStatus = "idle" | "loading" | "found" | "not_found" | "error";
+  const [geoStatus, setGeoStatus] = useState<GeoStatus>("idle");
+
+  async function lookupCoordinates() {
+    const q = form.address.trim();
+    if (!q) return;
+    setGeoStatus("loading");
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=gr`;
+      const res = await fetch(url, { headers: { "Accept-Language": "en" } });
+      const data: { lat: string; lon: string }[] = await res.json();
+      if (data.length > 0) {
+        setForm((prev) => ({
+          ...prev,
+          latitude:  parseFloat(data[0].lat).toFixed(6),
+          longitude: parseFloat(data[0].lon).toFixed(6),
+        }));
+        setGeoStatus("found");
+      } else {
+        setGeoStatus("not_found");
+      }
+    } catch {
+      setGeoStatus("error");
+    }
+  }
 
   function set<K extends keyof FormState>(field: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -799,6 +828,44 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
 
       {/* ── Location / Map ────────────────────────────────────────────────── */}
       <Section title="Map">
+        {/* Address lookup */}
+        <Field label="Address" hint="optional — used to look up coordinates">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={form.address}
+              onChange={(e) => { set("address", e.target.value); setGeoStatus("idle"); }}
+              className={inputCls}
+              placeholder="e.g. 10 Voukourestiou, Athens"
+            />
+            <button
+              type="button"
+              onClick={lookupCoordinates}
+              disabled={!form.address.trim() || geoStatus === "loading"}
+              className="shrink-0 px-4 py-2 bg-[#1E1E1E] text-white text-xs font-semibold rounded-lg hover:bg-[#333333] transition-colors disabled:opacity-40 disabled:cursor-default whitespace-nowrap"
+            >
+              {geoStatus === "loading" ? "Searching…" : "Get coordinates"}
+            </button>
+          </div>
+          {geoStatus === "found"     && <p className="text-xs text-green-600 mt-1">Coordinates updated.</p>}
+          {geoStatus === "not_found" && (
+            <p className="text-xs text-amber-600 mt-1">
+              Address not found.{" "}
+              <a
+                href={`https://www.google.com/maps/search/${encodeURIComponent(form.address)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-amber-800"
+              >
+                Open in Google Maps
+              </a>
+              {" "}to locate manually, then right-click the pin → "What&apos;s here?" to copy coordinates.
+            </p>
+          )}
+          {geoStatus === "error"     && <p className="text-xs text-red-600 mt-1">Lookup failed. Check connection or enter coordinates manually.</p>}
+        </Field>
+
+        {/* Coordinates */}
         <div className="grid grid-cols-2 gap-4">
           <Field label="Latitude" hint="optional">
             <input

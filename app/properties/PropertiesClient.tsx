@@ -208,6 +208,20 @@ const TRANSACTION_URL_TO_DB: Record<string, string> = {
   antiparochi: "antiparochi",
 };
 
+// URL condition slug → possible DB building_condition values
+const CONDITION_URL_TO_DB: Record<string, string[]> = {
+  renovated:          ["excellent"],
+  needsrenovation:    ["needs_renovation", "needsrenovation"],
+  underconstruction:  ["underconstruction", "under_construction"],
+};
+
+// URL feature slug → PropertyRow boolean field name
+const FEATURE_SLUG_TO_FIELD: Record<string, keyof PropertyRow> = {
+  pool:    "pool",
+  seaview: "sea_view",
+  garden:  "garden",
+};
+
 function applyFilters(properties: PropertyRow[], params: ReadonlyURLSearchParams): PropertyRow[] {
   return properties.filter(p => {
     const priceMin = params.get("priceMin");
@@ -242,6 +256,28 @@ function applyFilters(properties: PropertyRow[], params: ReadonlyURLSearchParams
     if (type) {
       const types = type.split(",").map(t => t.toLowerCase());
       if (!types.some(t => (p.subtype ?? "").toLowerCase() === t)) return false;
+    }
+
+    const yearMin = params.get("yearMin");
+    if (yearMin && (p.year_built === null || p.year_built < Number(yearMin))) return false;
+
+    const yearMax = params.get("yearMax");
+    if (yearMax && (p.year_built === null || p.year_built > Number(yearMax))) return false;
+
+    const condition = params.get("condition");
+    if (condition) {
+      const slugs = condition.split(",");
+      const allowed = slugs.flatMap(s => CONDITION_URL_TO_DB[s] ?? [s]);
+      if (!allowed.includes(p.building_condition ?? "")) return false;
+    }
+
+    const features = params.get("features");
+    if (features) {
+      const slugs = features.split(",");
+      for (const slug of slugs) {
+        const field = FEATURE_SLUG_TO_FIELD[slug];
+        if (field && p[field] !== true) return false;
+      }
     }
 
     return true;

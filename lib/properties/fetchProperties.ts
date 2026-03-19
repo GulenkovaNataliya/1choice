@@ -22,6 +22,8 @@ export type PropertyRow = {
   elevator: boolean | null;
   transaction_type: string | null;
   subtype: string | null;
+  garden: boolean | null;
+  building_condition: string | null;
   created_at: string;
   cover_image_url: string | null;
   gallery_image_urls: string[] | null;

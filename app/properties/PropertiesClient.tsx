@@ -200,6 +200,14 @@ function applySort(properties: PropertyRow[], sort: SortKey): PropertyRow[] {
 
 // ─── Filters ──────────────────────────────────────────────────────────────────
 
+// URL "buy" maps to DB "sale"; everything else matches as-is
+const TRANSACTION_URL_TO_DB: Record<string, string> = {
+  buy: "sale",
+  rent: "rent",
+  investment: "investment",
+  antiparochi: "antiparochi",
+};
+
 function applyFilters(properties: PropertyRow[], params: ReadonlyURLSearchParams): PropertyRow[] {
   return properties.filter(p => {
     const priceMin = params.get("priceMin");
@@ -219,6 +227,22 @@ function applyFilters(properties: PropertyRow[], params: ReadonlyURLSearchParams
 
     const sizeMax = params.get("sizeMax");
     if (sizeMax && (p.size_sqm === null || p.size_sqm > Number(sizeMax))) return false;
+
+    const transaction = params.get("transaction");
+    if (transaction) {
+      const dbVal = TRANSACTION_URL_TO_DB[transaction] ?? transaction;
+      if (p.transaction_type !== dbVal) return false;
+    }
+
+    if (params.get("gv") === "1") {
+      if (p.is_golden_visa !== true) return false;
+    }
+
+    const type = params.get("type");
+    if (type) {
+      const types = type.split(",").map(t => t.toLowerCase());
+      if (!types.some(t => (p.subtype ?? "").toLowerCase() === t)) return false;
+    }
 
     return true;
   });
@@ -305,7 +329,7 @@ export default function PropertiesClient({
     property_code: p.property_code ?? null,
     slug: p.slug,
     title: p.title,
-    area: titleCase(p.location),
+    area: titleCase(p.location_text ?? p.location),
     price_eur: p.price_eur ?? null,
     transaction_type: p.transaction_type ?? null,
     is_golden_visa: p.is_golden_visa ?? false,

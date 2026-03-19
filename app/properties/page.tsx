@@ -59,10 +59,12 @@ export default async function PropertiesPage({
   let q = supabase
     .from("properties")
     .select(
-      "id,property_code,title,slug,price_eur,location,location_text,bedrooms,bathrooms,size_sqm,floor,year_built,featured,private_collection,is_golden_visa,publish_deals,sea_view,pool,elevator,created_at,cover_image_url,gallery_image_urls",
+      "id,property_code,title,slug,price_eur,location,location_text,transaction_type,subtype,bedrooms,bathrooms,size_sqm,floor,year_built,featured,private_collection,is_golden_visa,publish_deals,sea_view,pool,elevator,created_at,cover_image_url,gallery_image_urls",
       { count: "exact" }
     )
-    .neq("private_collection", true) // exclude private inventory
+    .eq("status", "published")         // only published listings
+    .eq("publish_1choice", true)        // only listings enabled for 1Choice
+    .neq("private_collection", true)    // exclude private inventory
     .gte("updated_at", listingFreshnessCutoff()) // hide listings not updated in 90 days
     .order("featured", { ascending: false })
     .order("created_at", { ascending: false })

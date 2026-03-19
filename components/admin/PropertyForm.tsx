@@ -238,21 +238,26 @@ function Checkbox({
   label,
   checked,
   onChange,
+  hint,
 }: {
   label: string;
   checked: boolean;
   onChange: (v: boolean) => void;
+  hint?: string;
 }) {
   return (
-    <label className="flex items-center gap-3 cursor-pointer select-none">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="w-4 h-4 rounded border-[#D9D9D9] accent-[#1E1E1E]"
-      />
-      <span className="text-sm text-[#1E1E1E]">{label}</span>
-    </label>
+    <div className="flex flex-col gap-0.5">
+      <label className="flex items-center gap-3 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          className="w-4 h-4 rounded border-[#D9D9D9] accent-[#1E1E1E] shrink-0"
+        />
+        <span className="text-sm text-[#1E1E1E]">{label}</span>
+      </label>
+      {hint && <p className="text-xs text-[#AAAAAA] pl-7 leading-snug">{hint}</p>}
+    </div>
   );
 }
 
@@ -289,6 +294,9 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
   // ── Geocoding state ──────────────────────────────────────────────────────────
   type GeoStatus = "idle" | "loading" | "found" | "not_found" | "error";
   const [geoStatus, setGeoStatus] = useState<GeoStatus>("idle");
+
+  // ── Advanced section toggle (slug) ────────────────────────────────────────
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   async function lookupCoordinates() {
     const q = form.address.trim();
@@ -437,18 +445,36 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
-      {/* Autosave status bar — edit + draft only */}
-      {mode === "edit" && isDraft && (
-        <div className="flex items-center justify-between bg-white border border-[#E8E8E8] rounded-lg px-4 py-2.5">
-          <span className="text-xs text-[#AAAAAA]">Autosave enabled (draft)</span>
+      {/* ── Top action bar ─────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between bg-white border border-[#E8E8E8] rounded-lg px-4 py-2.5 gap-3 flex-wrap">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="text-xs text-[#AAAAAA]">
+            Property Code: <span className="font-mono font-semibold text-[#1E1E1E]">{propertyCode}</span>
+          </span>
+          {mode === "edit" && isDraft && (
+            <span className="text-xs text-[#AAAAAA] hidden sm:inline">· Autosave enabled (draft)</span>
+          )}
           <SaveIndicator status={saveStatus} />
         </div>
-      )}
-
-      {/* Property Code */}
-      <div className="bg-white border border-[#E8E8E8] rounded-lg px-4 py-2.5">
-        <span className="text-xs text-[#AAAAAA]">Property Code: </span>
-        <span className="text-xs font-mono font-semibold text-[#1E1E1E]">{propertyCode}</span>
+        <div className="flex items-center gap-3 shrink-0">
+          {mode === "edit" && form.status === "published" && form.slug && (
+            <a
+              href={`/properties/${form.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-medium text-[#3A2E4F] underline underline-offset-2 hover:opacity-70 transition whitespace-nowrap"
+            >
+              View on site ↗
+            </a>
+          )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-4 py-1.5 bg-[#1E1E1E] text-white text-xs font-semibold rounded-lg hover:bg-[#333333] transition disabled:opacity-50 disabled:cursor-default whitespace-nowrap"
+          >
+            {loading ? "Saving…" : mode === "edit" ? "Update" : "Save"}
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -469,15 +495,28 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
             placeholder="e.g. Luxury Villa in Santorini"
           />
         </Field>
-        <Field label="Slug" hint="auto-generated from title if left empty">
-          <input
-            type="text"
-            value={form.slug}
-            onChange={(e) => set("slug", e.target.value)}
-            className={inputCls}
-            placeholder="e.g. luxury-villa-santorini"
-          />
-        </Field>
+        <div>
+          <button
+            type="button"
+            onClick={() => setShowAdvanced((v) => !v)}
+            className="text-xs text-[#AAAAAA] hover:text-[#1E1E1E] transition-colors flex items-center gap-1"
+          >
+            {showAdvanced ? "▾" : "▸"} Advanced
+          </button>
+          {showAdvanced && (
+            <div className="mt-2">
+              <Field label="Slug" hint="auto-generated from title if left empty — changing this will break existing links">
+                <input
+                  type="text"
+                  value={form.slug}
+                  onChange={(e) => set("slug", e.target.value)}
+                  className={inputCls}
+                  placeholder="e.g. luxury-villa-santorini"
+                />
+              </Field>
+            </div>
+          )}
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <Field label="Category">
             <select
@@ -828,6 +867,9 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
 
       {/* ── Location / Map ────────────────────────────────────────────────── */}
       <Section title="Map">
+        <p className="text-xs text-[#AAAAAA] -mt-1">
+          The Location field above controls area filtering in the catalogue. Address and coordinates here control the map pin shown on the property page.
+        </p>
         {/* Address lookup */}
         <Field label="Address" hint="optional — used to look up coordinates">
           <div className="flex gap-2">
@@ -892,23 +934,39 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
           label="Approximate location"
           checked={form.approximate_location}
           onChange={(v) => set("approximate_location", v)}
+          hint="Hides the exact pin on the public map — shows only the general area"
         />
       </Section>
 
       {/* ── Premium Control ───────────────────────────────────────────────── */}
       <Section title="Premium Control">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-3">
           <Checkbox label="Golden Visa" checked={form.is_golden_visa} onChange={(v) => set("is_golden_visa", v)} />
           <Checkbox label="Featured" checked={form.featured} onChange={(v) => set("featured", v)} />
-          <Checkbox label="Private Collection" checked={form.private_collection} onChange={(v) => set("private_collection", v)} />
+          <Checkbox
+            label="Private Collection"
+            checked={form.private_collection}
+            onChange={(v) => set("private_collection", v)}
+            hint="Hidden from public catalogue — accessible only via private link"
+          />
         </div>
       </Section>
 
       {/* ── Publishing ────────────────────────────────────────────────────── */}
       <Section title="Publishing">
-        <div className="grid grid-cols-2 gap-3 mb-2">
-          <Checkbox label="Publish on 1Choice" checked={form.publish_1choice} onChange={(v) => set("publish_1choice", v)} />
-          <Checkbox label="Publish on 1ChoiceDeals" checked={form.publish_deals} onChange={(v) => set("publish_deals", v)} />
+        <div className="flex flex-col gap-3 mb-2">
+          <Checkbox
+            label="Publish on 1Choice"
+            checked={form.publish_1choice}
+            onChange={(v) => set("publish_1choice", v)}
+            hint="Listing appears in the public catalogue when status is Published"
+          />
+          <Checkbox
+            label="Publish on 1ChoiceDeals"
+            checked={form.publish_deals}
+            onChange={(v) => set("publish_deals", v)}
+            hint="Shown in the Deals section with special visibility and export access"
+          />
         </div>
         <Field label="Status">
           <select

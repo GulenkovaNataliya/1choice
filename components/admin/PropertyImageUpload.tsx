@@ -102,7 +102,7 @@ function SortableImage({ image, index, onSetCover, onRemove }: SortableImageProp
         <button
           type="button"
           onClick={onSetCover}
-          className="absolute top-1.5 left-1.5 text-[10px] font-semibold bg-black/50 text-white px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#1E1E1E]"
+          className="absolute top-1.5 left-1.5 text-[10px] font-semibold bg-black/50 text-white px-1.5 py-0.5 rounded hover:bg-[#1E1E1E] transition-colors"
           aria-label="Set as cover"
         >
           Set cover

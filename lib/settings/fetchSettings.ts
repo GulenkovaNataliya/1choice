@@ -1,3 +1,4 @@
+import { unstable_noStore as noStore } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type SiteSettings = {
@@ -21,6 +22,7 @@ export const SETTINGS_FALLBACK: SiteSettings = {
 };
 
 export async function fetchSettings(): Promise<SiteSettings> {
+  noStore(); // always fetch fresh — settings can change in admin at any time
   try {
     const supabase = await createSupabaseServerClient();
     const { data } = await supabase

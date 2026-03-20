@@ -27,6 +27,8 @@ export type PropertyRow = {
   created_at: string;
   cover_image_url: string | null;
   gallery_image_urls: string[] | null;
+  custom_badge: string | null;
+  custom_badge_color: string | null;
 };
 
 type FetchArgs = {
@@ -39,7 +41,7 @@ export async function fetchProperties(args: FetchArgs = {}): Promise<PropertyRow
   let q = supabase
     .from("properties")
     .select(
-      "id,property_code,title,slug,price_eur,location,location_text,bedrooms,bathrooms,size_sqm,floor,year_built,featured,private_collection,is_golden_visa,publish_deals,sea_view,pool,elevator,transaction_type,created_at,cover_image_url,gallery_image_urls"
+      "id,property_code,title,slug,price_eur,location,location_text,bedrooms,bathrooms,size_sqm,floor,year_built,featured,private_collection,is_golden_visa,publish_deals,sea_view,pool,elevator,transaction_type,created_at,cover_image_url,gallery_image_urls,custom_badge,custom_badge_color"
     )
     .order("featured", { ascending: false })
     .order("created_at", { ascending: false });

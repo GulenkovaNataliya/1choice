@@ -175,16 +175,30 @@ export default function PropertyImageUpload({
   // ── Upload ─────────────────────────────────────────────────────────────────
 
   async function uploadFiles(files: FileList | File[]) {
+    const MAX_IMAGES = 20;
     const all = Array.from(files);
+    const valid   = all.filter((f) =>  ALLOWED_TYPES.includes(f.type));
     const rejected = all.filter((f) => !ALLOWED_TYPES.includes(f.type));
-    const list = all.filter((f) => ALLOWED_TYPES.includes(f.type));
 
+    const errors: string[] = [];
     if (rejected.length > 0) {
-      setError(
+      errors.push(
         `Unsupported format${rejected.length > 1 ? "s" : ""}: ${rejected.map((f) => f.name).join(", ")}. Use JPG, PNG, or WebP.`
       );
     }
 
+    const available = MAX_IMAGES - images.length;
+    const list = valid.slice(0, available);
+    if (valid.length > available) {
+      const skipped = valid.length - available;
+      errors.push(
+        available <= 0
+          ? "Maximum 20 images reached. No new images added."
+          : `Maximum 20 images allowed — ${skipped} image${skipped !== 1 ? "s" : ""} skipped.`
+      );
+    }
+
+    if (errors.length > 0) setError(errors.join(" "));
     if (list.length === 0) return;
 
     setUploading(true);

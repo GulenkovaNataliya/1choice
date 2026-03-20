@@ -64,13 +64,13 @@ export default function SettingsForm({ initialValues }: Props) {
         .upsert(
           {
             id: 1,
-            company_name:        form.company_name        || null,
-            registration_number: form.registration_number || null,
-            company_address:     form.company_address     || null,
-            contact_phone:       form.contact_phone       || null,
-            contact_email:       form.contact_email       || null,
-            office_hours:        form.office_hours        || null,
-            logo_url:            form.logo_url            || null,
+            company_name:        form.company_name?.trim()        || null,
+            registration_number: form.registration_number?.trim() || null,
+            company_address:     form.company_address?.trim()     || null,
+            contact_phone:       form.contact_phone?.trim()       || null,
+            contact_email:       form.contact_email?.trim()       || null,
+            office_hours:        form.office_hours?.trim()        || null,
+            logo_url:            form.logo_url?.trim()            || null,
             updated_at:          new Date().toISOString(),
           },
           { onConflict: "id" }

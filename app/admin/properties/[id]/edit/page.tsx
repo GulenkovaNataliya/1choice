@@ -4,6 +4,7 @@ import PrivateLinkManager from "@/components/admin/PrivateLinkManager";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/adminClient";
 import { fetchActiveAreas } from "@/lib/areas";
+import { fetchBadges } from "@/lib/badges";
 
 export const metadata = {
   title: "Edit Property | Admin",
@@ -12,15 +13,16 @@ export const metadata = {
 export default async function EditPropertyPage({ params }: { params: { id: string } }) {
   const supabase = await createSupabaseServerClient();
 
-  const [{ data: property, error }, areas] = await Promise.all([
+  const [{ data: property, error }, areas, badges] = await Promise.all([
     supabase
       .from("properties")
       .select(
-        "id,property_code,title,slug,category,subtype,transaction_type,price_eur,location,location_text,summary,description,size_sqm,bedrooms,bathrooms,floor,year_built,year_renovated,building_condition,energy_class,fireplace,elevator,security_door,alarm_system,video_doorphone,smart_home,satellite_tv,internet_ready,storage,sea_view,mountain_view,garden,pool,frames_type,double_glazing,triple_glazing,mosquito_screens,thermal_insulation,sound_insulation,flooring_type,living_rooms,kitchens,storage_rooms,wc,cover_image_url,gallery_image_urls,youtube_video_url,virtual_tour_url,latitude,longitude,approximate_location,is_golden_visa,featured,private_collection,publish_1choice,publish_deals,status,agent_notes"
+        "id,property_code,title,slug,category,subtype,transaction_type,price_eur,location,location_text,summary,description,size_sqm,bedrooms,bathrooms,floor,year_built,year_renovated,building_condition,energy_class,fireplace,elevator,security_door,alarm_system,video_doorphone,smart_home,satellite_tv,internet_ready,storage,sea_view,mountain_view,garden,pool,frames_type,double_glazing,triple_glazing,mosquito_screens,thermal_insulation,sound_insulation,flooring_type,living_rooms,kitchens,storage_rooms,wc,cover_image_url,gallery_image_urls,youtube_video_url,virtual_tour_url,latitude,longitude,approximate_location,is_golden_visa,featured,private_collection,publish_1choice,publish_deals,status,agent_notes,custom_badge,custom_badge_color"
       )
       .eq("id", params.id)
       .single(),
     fetchActiveAreas(),
+    fetchBadges(),
   ]);
 
   if (error || !property) notFound();
@@ -98,6 +100,8 @@ export default async function EditPropertyPage({ params }: { params: { id: strin
     virtual_tour_url: property.virtual_tour_url ?? "",
     agent_notes: property.agent_notes ?? "",
     private_collection: property.private_collection ?? false,
+    custom_badge: (property as { custom_badge?: string | null }).custom_badge ?? "",
+    custom_badge_color: (property as { custom_badge_color?: string | null }).custom_badge_color ?? "red",
   };
 
   return (
@@ -113,6 +117,7 @@ export default async function EditPropertyPage({ params }: { params: { id: strin
         propertyCode={property.property_code ?? ""}
         initialValues={initialValues}
         areas={areas}
+        badges={badges}
       />
 
       {/* Private link management — shown below the form, only for Private Collection */}

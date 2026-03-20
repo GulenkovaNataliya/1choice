@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CARD_FEATURES, shouldRenderFeature, formatFeatureValue } from "@/lib/propertyFeatures";
 import { renderImageUrl } from "@/lib/storage/imageUrl";
 import FavoriteButton from "@/components/Property/FavoriteButton";
+import { getBadgeStyle } from "@/lib/badgeColors";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -28,6 +29,8 @@ type CardProperty = {
   sea_view?: boolean | null;
   pool?: boolean | null;
   elevator?: boolean | null;
+  custom_badge?: string | null;
+  custom_badge_color?: string | null;
 };
 
 const TRANSACTION_LABELS: Record<string, string> = {
@@ -162,7 +165,7 @@ export default function PropertyCard({ property, testId }: Props) {
         )}
 
         {/* Badges — top-left, only when applicable */}
-        {badges.length > 0 && (
+        {(badges.length > 0 || property.custom_badge) && (
           <div
             style={{
               position: "absolute", top: 10, left: 10,
@@ -170,6 +173,25 @@ export default function PropertyCard({ property, testId }: Props) {
             }}
           >
             {badges.map(label => <Badge key={label} label={label} />)}
+            {property.custom_badge && (
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  height: 22,
+                  padding: "0 10px",
+                  borderRadius: 12,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  whiteSpace: "nowrap",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                  ...getBadgeStyle(property.custom_badge_color),
+                }}
+              >
+                {property.custom_badge}
+              </span>
+            )}
           </div>
         )}
 

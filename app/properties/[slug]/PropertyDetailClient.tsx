@@ -14,6 +14,7 @@ import {
   type PropertyFeature,
 } from "@/lib/propertyFeatures";
 import FavoriteButton from "@/components/Property/FavoriteButton";
+import { getBadgeStyle } from "@/lib/badgeColors";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -78,6 +79,9 @@ export type PropertyData = {
   latitude: number | null;
   longitude: number | null;
   approximate_location: boolean | null;
+  // Badge
+  custom_badge: string | null;
+  custom_badge_color: string | null;
 };
 
 type SimilarProperty = {
@@ -96,6 +100,8 @@ type SimilarProperty = {
   bedrooms?: number;
   bathrooms?: number;
   size_sqm?: number;
+  custom_badge?: string | null;
+  custom_badge_color?: string | null;
 };
 
 type Props = {
@@ -397,6 +403,14 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                 {publish_deals && (
                   <span className="bg-[#FFF0F0] text-[#C1121F] text-xs font-medium px-3 py-1 rounded-full">
                     1ChoiceDeals
+                  </span>
+                )}
+                {property.custom_badge && (
+                  <span
+                    className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full"
+                    style={getBadgeStyle(property.custom_badge_color)}
+                  >
+                    {property.custom_badge}
                   </span>
                 )}
               </div>

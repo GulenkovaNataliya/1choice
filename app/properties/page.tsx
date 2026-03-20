@@ -59,7 +59,7 @@ export default async function PropertiesPage({
   let q = supabase
     .from("properties")
     .select(
-      "id,property_code,title,slug,price_eur,location,location_text,transaction_type,subtype,bedrooms,bathrooms,size_sqm,floor,year_built,featured,private_collection,is_golden_visa,publish_deals,sea_view,pool,elevator,garden,building_condition,created_at,cover_image_url,gallery_image_urls",
+      "id,property_code,title,slug,price_eur,location,location_text,transaction_type,subtype,bedrooms,bathrooms,size_sqm,floor,year_built,featured,private_collection,is_golden_visa,publish_deals,sea_view,pool,elevator,garden,building_condition,created_at,cover_image_url,gallery_image_urls,custom_badge,custom_badge_color",
       { count: "exact" }
     )
     .eq("status", "published")         // only published listings

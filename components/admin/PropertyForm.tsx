@@ -6,6 +6,10 @@ import { getSupabase } from "@/lib/supabase/client";
 import { logActivity } from "@/lib/admin/logActivity";
 import PropertyImageUpload from "@/components/admin/PropertyImageUpload";
 import type { Area } from "@/lib/areas";
+import { createAreaQuick } from "@/app/admin/areas/actions";
+import type { Badge } from "@/lib/badges";
+import { BADGE_COLORS, getBadgeStyle } from "@/lib/badgeColors";
+import { createBadgeQuick } from "@/app/admin/badges/actions";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -67,6 +71,8 @@ type FormState = {
   longitude: string;
   approximate_location: boolean;
   address: string;
+  custom_badge: string;
+  custom_badge_color: string;
 };
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -129,6 +135,8 @@ const INITIAL: FormState = {
   longitude: "",
   approximate_location: false,
   address: "",
+  custom_badge: "",
+  custom_badge_color: "red",
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -200,6 +208,8 @@ function buildPayload(form: FormState, resolveSlug = false) {
     latitude: form.latitude ? Number(form.latitude) : null,
     longitude: form.longitude ? Number(form.longitude) : null,
     approximate_location: form.approximate_location,
+    custom_badge: form.custom_badge || null,
+    custom_badge_color: form.custom_badge ? (form.custom_badge_color || "red") : null,
   };
 }
 
@@ -274,18 +284,207 @@ function SaveIndicator({ status }: { status: SaveStatus }) {
   return <span className={`text-sm ${color} transition-colors`}>{label}</span>;
 }
 
+// ── Quick-create area modal ────────────────────────────────────────────────────
+
+function QuickAreaModal({
+  existingGroups,
+  onSuccess,
+  onClose,
+}: {
+  existingGroups: string[];
+  onSuccess: (area: Area) => void;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [group, setGroup] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const slug = toSlug(name);
+
+  async function handleCreate() {
+    if (!name.trim() || !group.trim()) return;
+    setSaving(true);
+    setErr(null);
+    const result = await createAreaQuick(name.trim(), slug, group.trim());
+    if ("error" in result) {
+      console.error("[QuickAreaModal]", result.error);
+      setErr(
+        result.error.toLowerCase().includes("duplicate") || result.error.toLowerCase().includes("unique")
+          ? "An area with this name or slug already exists."
+          : "Failed to create area. Please try again."
+      );
+      setSaving(false);
+      return;
+    }
+    onSuccess(result);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-white rounded-xl border border-[#E8E8E8] shadow-xl p-6 w-full max-w-sm mx-4 flex flex-col gap-4">
+        <h3 className="text-sm font-semibold text-[#1E1E1E]">Add new area</h3>
+
+        <Field label="Area Name">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className={inputCls}
+            placeholder="e.g. Glyfada"
+            autoFocus
+          />
+        </Field>
+
+        <Field label="Group / Region" hint="groups related areas together">
+          <input
+            type="text"
+            value={group}
+            onChange={(e) => setGroup(e.target.value)}
+            className={inputCls}
+            placeholder="e.g. Athens Riviera"
+            list="quick-area-groups"
+          />
+          <datalist id="quick-area-groups">
+            {existingGroups.map((g) => <option key={g} value={g} />)}
+          </datalist>
+        </Field>
+
+        {name.trim() && (
+          <p className="text-xs text-[#AAAAAA] -mt-2">
+            Slug: <span className="font-mono">{slug || "—"}</span>
+          </p>
+        )}
+
+        {err && (
+          <p className="text-xs text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-lg">{err}</p>
+        )}
+
+        <div className="flex gap-2 justify-end pt-1">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-1.5 border border-[#D9D9D9] text-xs font-medium text-[#1E1E1E] rounded-lg hover:bg-[#F5F5F5] transition"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleCreate}
+            disabled={!name.trim() || !group.trim() || saving}
+            className="px-4 py-1.5 bg-[#1E1E1E] text-white text-xs font-semibold rounded-lg hover:bg-[#333333] transition disabled:opacity-40 disabled:cursor-default"
+          >
+            {saving ? "Creating…" : "Create area"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Quick-create badge modal ───────────────────────────────────────────────────
+
+function QuickBadgeModal({
+  onSuccess,
+  onClose,
+}: {
+  onSuccess: (badge: Badge) => void;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const trimmed = name.trim();
+  const tooLong = trimmed.length > 22;
+
+  async function handleCreate() {
+    if (!trimmed || tooLong) return;
+    setSaving(true);
+    setErr(null);
+    const result = await createBadgeQuick(trimmed);
+    if ("error" in result) {
+      setErr(result.error);
+      setSaving(false);
+      return;
+    }
+    onSuccess(result);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-white rounded-xl border border-[#E8E8E8] shadow-xl p-6 w-full max-w-sm mx-4 flex flex-col gap-4">
+        <h3 className="text-sm font-semibold text-[#1E1E1E]">Add new badge</h3>
+
+        <Field label="Badge Name" hint="max 22 characters">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className={inputCls}
+            placeholder="e.g. New Listing"
+            autoFocus
+            maxLength={30}
+          />
+          {tooLong && (
+            <p className="text-xs text-red-600 mt-0.5">{trimmed.length}/22 — too long</p>
+          )}
+        </Field>
+
+        {trimmed && !tooLong && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-[#AAAAAA]">Preview:</span>
+            <span
+              className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+              style={getBadgeStyle("red")}
+            >
+              {trimmed}
+            </span>
+          </div>
+        )}
+
+        {err && (
+          <p className="text-xs text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-lg">{err}</p>
+        )}
+
+        <div className="flex gap-2 justify-end pt-1">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-1.5 border border-[#D9D9D9] text-xs font-medium text-[#1E1E1E] rounded-lg hover:bg-[#F5F5F5] transition"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleCreate}
+            disabled={!trimmed || tooLong || saving}
+            className="px-4 py-1.5 bg-[#1E1E1E] text-white text-xs font-semibold rounded-lg hover:bg-[#333333] transition disabled:opacity-40 disabled:cursor-default"
+          >
+            {saving ? "Creating…" : "Create badge"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 type Props =
-  | { mode?: "create"; propertyCode: string; propertyId?: never; initialValues?: never; areas?: Area[] }
-  | { mode: "edit"; propertyId: string; propertyCode: string; initialValues: Partial<FormState>; areas?: Area[] };
+  | { mode?: "create"; propertyCode: string; propertyId?: never; initialValues?: never; areas?: Area[]; badges?: Badge[] }
+  | { mode: "edit"; propertyId: string; propertyCode: string; initialValues: Partial<FormState>; areas?: Area[]; badges?: Badge[] };
 
-export default function PropertyForm({ mode = "create", propertyCode, propertyId, initialValues, areas = [] }: Props) {
+export default function PropertyForm({ mode = "create", propertyCode, propertyId, initialValues, areas = [], badges = [] }: Props) {
   const router = useRouter();
   const [form, setForm] = useState<FormState>({ ...INITIAL, ...initialValues });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [localAreas, setLocalAreas] = useState<Area[]>(areas);
+  const [showAreaModal, setShowAreaModal] = useState(false);
+  const [localBadges, setLocalBadges] = useState<Badge[]>(badges);
+  const [showBadgeModal, setShowBadgeModal] = useState(false);
 
   const lastSavedRef = useRef<string>(JSON.stringify({ ...INITIAL, ...initialValues }));
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -388,6 +587,22 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+
+    // ── Publish validation ───────────────────────────────────────────────────
+    if (form.status === "published") {
+      const errs: string[] = [];
+      if (!form.title.trim())              errs.push("Title is required.");
+      if (!form.price_eur)                 errs.push("Price is required.");
+      if (!form.category)                  errs.push("Category is required.");
+      if (!form.gallery_image_urls.length) errs.push("At least 1 photo is required to publish.");
+      if (!form.description.trim() && !form.summary.trim())
+                                           errs.push("Description or summary is required to publish.");
+      if (errs.length > 0) {
+        setError(errs.join(" "));
+        return;
+      }
+    }
+
     setLoading(true);
     setError(null);
     setSaveStatus("saving");
@@ -588,38 +803,47 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
             />
           </Field>
           <Field label="Location">
-            {areas.length > 0 ? (
-              <select
-                value={form.location_slug}
-                onChange={(e) => {
-                  const slug = e.target.value;
-                  const area = areas.find((a) => a.slug === slug);
-                  setForm((prev) => ({
-                    ...prev,
-                    location_slug: slug,
-                    location_text: area?.name ?? "",
-                  }));
-                }}
-                className={inputCls}
+            <div className="flex flex-col gap-1">
+              {localAreas.length > 0 ? (
+                <select
+                  value={form.location_slug}
+                  onChange={(e) => {
+                    const slug = e.target.value;
+                    const area = localAreas.find((a) => a.slug === slug);
+                    setForm((prev) => ({
+                      ...prev,
+                      location_slug: slug,
+                      location_text: area?.name ?? "",
+                    }));
+                  }}
+                  className={inputCls}
+                >
+                  <option value="">— select area —</option>
+                  {Array.from(new Set(localAreas.map((a) => a.group_name))).map((group) => (
+                    <optgroup key={group} label={group}>
+                      {localAreas.filter((a) => a.group_name === group).map((a) => (
+                        <option key={a.slug} value={a.slug}>{a.name}</option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={form.location_text}
+                  onChange={(e) => set("location_text", e.target.value)}
+                  className={inputCls}
+                  placeholder="e.g. Athens"
+                />
+              )}
+              <button
+                type="button"
+                onClick={() => setShowAreaModal(true)}
+                className="text-xs text-[#3A2E4F] hover:underline self-start"
               >
-                <option value="">— select area —</option>
-                {Array.from(new Set(areas.map((a) => a.group_name))).map((group) => (
-                  <optgroup key={group} label={group}>
-                    {areas.filter((a) => a.group_name === group).map((a) => (
-                      <option key={a.slug} value={a.slug}>{a.name}</option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-            ) : (
-              <input
-                type="text"
-                value={form.location_text}
-                onChange={(e) => set("location_text", e.target.value)}
-                className={inputCls}
-                placeholder="e.g. Athens"
-              />
-            )}
+                + Add new area
+              </button>
+            </div>
           </Field>
         </div>
       </Section>
@@ -870,7 +1094,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
             }));
           }}
         />
-        <p className="text-xs text-[#AAAAAA]">Recommended: 1200×800px · JPG or WebP · max 20 images</p>
+        <p className="text-xs text-[#AAAAAA]">Recommended: 1200×800px · JPG or WebP · max 20 images · at least 1 photo required to publish</p>
         <Field label="YouTube Video URL" hint="optional">
           <input
             type="url"
@@ -978,6 +1202,60 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
         </div>
       </Section>
 
+      {/* ── Custom Badge ──────────────────────────────────────────────────── */}
+      <Section title="Custom Badge">
+        <p className="text-xs text-[#AAAAAA] -mt-1">
+          Optional badge shown on the property card and detail page. Select from the dictionary or create a new one.
+        </p>
+        <Field label="Badge">
+          <div className="flex flex-col gap-1">
+            <select
+              value={form.custom_badge}
+              onChange={(e) => set("custom_badge", e.target.value)}
+              className={inputCls}
+            >
+              <option value="">— no badge —</option>
+              {localBadges.map((b) => (
+                <option key={b.id} value={b.name}>{b.name}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => setShowBadgeModal(true)}
+              className="text-xs text-[#3A2E4F] hover:underline self-start"
+            >
+              + Add new badge
+            </button>
+          </div>
+        </Field>
+
+        {form.custom_badge && (
+          <Field label="Badge Color">
+            <div className="flex gap-2 flex-wrap">
+              {BADGE_COLORS.map((c) => (
+                <button
+                  key={c.value}
+                  type="button"
+                  onClick={() => set("custom_badge_color", c.value)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 transition ${
+                    form.custom_badge_color === c.value
+                      ? "border-[#1E1E1E]"
+                      : "border-transparent hover:border-[#D9D9D9]"
+                  }`}
+                >
+                  <span
+                    className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+                    style={getBadgeStyle(c.value)}
+                  >
+                    {form.custom_badge}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </Field>
+        )}
+      </Section>
+
       {/* ── Publishing ────────────────────────────────────────────────────── */}
       <Section title="Publishing">
         <div className="flex flex-col gap-3 mb-2">
@@ -1029,6 +1307,35 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
           {loading ? "Saving…" : mode === "edit" ? "Update Property" : "Save Property"}
         </button>
       </div>
+
+      {/* ── Quick-create area modal ──────────────────────────────────────── */}
+      {showAreaModal && (
+        <QuickAreaModal
+          existingGroups={Array.from(new Set(localAreas.map((a) => a.group_name)))}
+          onSuccess={(area) => {
+            setLocalAreas((prev) =>
+              [...prev, area].sort(
+                (a, b) => a.group_name.localeCompare(b.group_name) || a.name.localeCompare(b.name)
+              )
+            );
+            setForm((prev) => ({ ...prev, location_slug: area.slug, location_text: area.name }));
+            setShowAreaModal(false);
+          }}
+          onClose={() => setShowAreaModal(false)}
+        />
+      )}
+
+      {/* ── Quick-create badge modal ──────────────────────────────────────── */}
+      {showBadgeModal && (
+        <QuickBadgeModal
+          onSuccess={(badge) => {
+            setLocalBadges((prev) => [...prev, badge].sort((a, b) => a.name.localeCompare(b.name)));
+            setForm((prev) => ({ ...prev, custom_badge: badge.name, custom_badge_color: prev.custom_badge_color || "red" }));
+            setShowBadgeModal(false);
+          }}
+          onClose={() => setShowBadgeModal(false)}
+        />
+      )}
 
     </form>
   );

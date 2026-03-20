@@ -1,19 +1,17 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/adminClient";
+import { fetchSettings } from "@/lib/settings/fetchSettings";
 import UsersManager, { type AdminUser } from "@/components/admin/UsersManager";
+import SettingsForm from "@/components/admin/SettingsForm";
 
 export const metadata = {
   title: "Settings | Admin",
 };
 
-const FUTURE_SECTIONS = [
-  { title: "Company Info",      description: "Business name, registration number, address." },
-  { title: "Contact Details",   description: "Phone, email, office hours." },
-  { title: "Branding / Assets", description: "Logo, favicon, brand colours." },
-  { title: "Integrations",      description: "Chat widget, analytics, third-party services." },
-];
-
 export default async function AdminSettingsPage() {
-  // Build the allowlist from the environment variable
+  // ── Fetch settings ────────────────────────────────────────────────────────
+  const settings = await fetchSettings();
+
+  // ── Fetch admin users ────────────────────────────────────────────────────
   const allowedEmails = new Set(
     (process.env.ADMIN_EMAILS ?? "")
       .split(",")
@@ -32,7 +30,6 @@ export default async function AdminSettingsPage() {
     const authUsers = data.users ?? [];
     const seenEmails = new Set<string>();
 
-    // Users that exist in both ADMIN_EMAILS and Supabase Auth
     for (const u of authUsers) {
       const email = (u.email ?? "").toLowerCase();
       if (!allowedEmails.has(email)) continue;
@@ -46,7 +43,6 @@ export default async function AdminSettingsPage() {
       });
     }
 
-    // Emails in ADMIN_EMAILS that have no Supabase account yet — show as Pending
     for (const email of allowedEmails) {
       if (!seenEmails.has(email)) {
         users.push({ id: null, email, created_at: null, status: "pending" });
@@ -64,19 +60,13 @@ export default async function AdminSettingsPage() {
 
       <div className="flex flex-col gap-6">
 
-        {/* Users — working section */}
+        {/* Site Settings — now editable */}
+        <SettingsForm initialValues={settings} />
+
+        {/* Users */}
         <div className="bg-white rounded-xl border border-[#E8E8E8] p-6">
           <UsersManager initialUsers={users} fetchError={fetchError} />
         </div>
-
-        {/* Future sections — placeholders */}
-        {FUTURE_SECTIONS.map((section) => (
-          <div key={section.title} className="bg-white border border-[#E8E8E8] rounded-lg p-6">
-            <h2 className="text-sm font-semibold text-[#1E1E1E] mb-1">{section.title}</h2>
-            <p className="text-xs text-[#AAAAAA] mb-4">{section.description}</p>
-            <p className="text-sm text-[#BBBBBB]">To be configured.</p>
-          </div>
-        ))}
 
       </div>
     </div>

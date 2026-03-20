@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { fetchSettings } from "@/lib/settings/fetchSettings";
 
 export const metadata: Metadata = {
   title: "Contact | 1Choice",
@@ -6,12 +7,14 @@ export const metadata: Metadata = {
   alternates: { canonical: "/contact" },
 };
 
-// ── Contact details — replace with real values when ready ──
-const EMAIL    = "contact@1choice.gr";
-const PHONE    = "+30 000 000 0000";
-const LOCATION = "Athens, Greece";
+export default async function ContactPage() {
+  const settings = await fetchSettings();
 
-export default function ContactPage() {
+  const email    = settings.contact_email    ?? "contact@1choice.gr";
+  const phone    = settings.contact_phone;
+  const address  = settings.company_address  ?? "Athens, Greece";
+  const officeHours = settings.office_hours;
+
   return (
     <main className="min-h-screen bg-[#F4F4F4]">
       {/* Hero */}
@@ -34,19 +37,21 @@ export default function ContactPage() {
           <ul className="flex flex-col gap-4">
             <li className="flex items-start gap-3">
               <span className="text-[#3A2E4F] font-medium w-24 flex-shrink-0">Email</span>
-              <a href={`mailto:${EMAIL}`} className="text-[#404040] hover:text-[#3A2E4F] transition">
-                {EMAIL}
+              <a href={`mailto:${email}`} className="text-[#404040] hover:text-[#3A2E4F] transition">
+                {email}
               </a>
             </li>
-            <li className="flex items-start gap-3">
-              <span className="text-[#3A2E4F] font-medium w-24 flex-shrink-0">Phone</span>
-              <a href={`tel:${PHONE.replace(/\s/g, "")}`} className="text-[#404040] hover:text-[#3A2E4F] transition">
-                {PHONE}
-              </a>
-            </li>
+            {phone && (
+              <li className="flex items-start gap-3">
+                <span className="text-[#3A2E4F] font-medium w-24 flex-shrink-0">Phone</span>
+                <a href={`tel:${phone.replace(/\s/g, "")}`} className="text-[#404040] hover:text-[#3A2E4F] transition">
+                  {phone}
+                </a>
+              </li>
+            )}
             <li className="flex items-start gap-3">
               <span className="text-[#3A2E4F] font-medium w-24 flex-shrink-0">Location</span>
-              <span className="text-[#404040]">{LOCATION}</span>
+              <span className="text-[#404040]">{address}</span>
             </li>
           </ul>
         </div>
@@ -54,20 +59,24 @@ export default function ContactPage() {
         {/* Business Hours */}
         <div>
           <h2 className="text-xl font-semibold text-[#1E1E1E] mb-6">Business Hours</h2>
-          <ul className="flex flex-col gap-3">
-            <li className="flex items-start gap-3">
-              <span className="text-[#3A2E4F] font-medium w-24 flex-shrink-0">Mon–Fri</span>
-              <span className="text-[#404040]">09:00–18:00</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-[#3A2E4F] font-medium w-24 flex-shrink-0">Saturday</span>
-              <span className="text-[#404040]">By appointment</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-[#3A2E4F] font-medium w-24 flex-shrink-0">Sunday</span>
-              <span className="text-[#404040]">Closed</span>
-            </li>
-          </ul>
+          {officeHours ? (
+            <p className="text-[#404040] text-sm leading-relaxed">{officeHours}</p>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              <li className="flex items-start gap-3">
+                <span className="text-[#3A2E4F] font-medium w-24 flex-shrink-0">Mon–Fri</span>
+                <span className="text-[#404040]">09:00–18:00</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-[#3A2E4F] font-medium w-24 flex-shrink-0">Saturday</span>
+                <span className="text-[#404040]">By appointment</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-[#3A2E4F] font-medium w-24 flex-shrink-0">Sunday</span>
+                <span className="text-[#404040]">Closed</span>
+              </li>
+            </ul>
+          )}
         </div>
 
         {/* Consultation CTA */}

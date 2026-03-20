@@ -20,8 +20,9 @@ const linkStyle: React.CSSProperties = {
   transition: "color 0.2s",
 };
 
-export default function Footer() {
+export default function Footer({ companyName }: { companyName?: string }) {
   const year = new Date().getFullYear();
+  const name = companyName || "1Choice Real Estate";
 
   return (
     <footer
@@ -45,7 +46,7 @@ export default function Footer() {
         }}
       >
         <span style={{ fontSize: 14, color: "#404040" }}>
-          © {year} 1Choice Real Estate
+          © {year} {name}
         </span>
 
         <nav

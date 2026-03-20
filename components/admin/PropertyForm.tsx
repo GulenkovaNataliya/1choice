@@ -290,6 +290,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
   const lastSavedRef = useRef<string>(JSON.stringify({ ...INITIAL, ...initialValues }));
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const originalSlugRef = useRef<string>(initialValues?.slug?.trim() ?? "");
+  const formRef = useRef<FormState>({ ...INITIAL, ...initialValues });
 
   // ── Geocoding state ──────────────────────────────────────────────────────────
   type GeoStatus = "idle" | "loading" | "found" | "not_found" | "error";
@@ -321,6 +322,9 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
     }
   }
 
+  // Keep formRef in sync for beforeunload
+  useEffect(() => { formRef.current = form; }, [form]);
+
   function set<K extends keyof FormState>(field: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
@@ -328,7 +332,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
   // ── Autosave ────────────────────────────────────────────────────────────────
 
   const autosave = useCallback(async (snapshot: FormState) => {
-    if (mode !== "edit" || snapshot.status !== "draft") return;
+    if (mode !== "edit") return;
 
     const current = JSON.stringify(snapshot);
     if (current === lastSavedRef.current) return;
@@ -341,30 +345,44 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
         .eq("id", propertyId);
 
       if (dbError) {
+        console.error("[PropertyForm] autosave error:", dbError);
         setSaveStatus("error");
       } else {
         lastSavedRef.current = current;
         setSaveStatus("saved");
         logActivity(propertyId!, "property_updated", { autosave: true, property_code: propertyCode });
       }
-    } catch {
+    } catch (err) {
+      console.error("[PropertyForm] autosave unexpected error:", err);
       setSaveStatus("error");
     }
   }, [mode, propertyId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (mode !== "edit" || form.status !== "draft") return;
+    if (mode !== "edit") return;
 
     if (timerRef.current) clearTimeout(timerRef.current);
 
     timerRef.current = setTimeout(() => {
       autosave(form);
-    }, 1000);
+    }, 1500);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [form]); // intentionally omit stable refs/callbacks — form changes are the trigger
+
+  // Unsaved changes protection (C)
+  useEffect(() => {
+    function handleBeforeUnload(e: BeforeUnloadEvent) {
+      if (JSON.stringify(formRef.current) !== lastSavedRef.current) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Manual submit ───────────────────────────────────────────────────────────
 
@@ -372,6 +390,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setSaveStatus("saving");
 
     if (timerRef.current) clearTimeout(timerRef.current);
 
@@ -426,14 +445,20 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
       }
 
       if (dbError) {
-        setError(dbError.message);
+        console.error("[PropertyForm] save error:", dbError);
+        setError("Failed to save property. Please try again.");
+        setSaveStatus("error");
         setLoading(false);
         return;
       }
 
+      lastSavedRef.current = JSON.stringify(form);
+      setSaveStatus("saved");
       router.push("/admin/properties");
     } catch (err) {
-      setError(String(err));
+      console.error("[PropertyForm] unexpected error:", err);
+      setError("An unexpected error occurred. Please check your connection and try again.");
+      setSaveStatus("error");
       setLoading(false);
     }
   }
@@ -451,8 +476,8 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
           <span className="text-xs text-[#AAAAAA]">
             Property Code: <span className="font-mono font-semibold text-[#1E1E1E]">{propertyCode}</span>
           </span>
-          {mode === "edit" && isDraft && (
-            <span className="text-xs text-[#AAAAAA] hidden sm:inline">· Autosave enabled (draft)</span>
+          {mode === "edit" && (
+            <span className="text-xs text-[#AAAAAA] hidden sm:inline">· Autosave enabled</span>
           )}
           <SaveIndicator status={saveStatus} />
         </div>
@@ -845,6 +870,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
             }));
           }}
         />
+        <p className="text-xs text-[#AAAAAA]">Recommended: 1200×800px · JPG or WebP · max 20 images</p>
         <Field label="YouTube Video URL" hint="optional">
           <input
             type="url"

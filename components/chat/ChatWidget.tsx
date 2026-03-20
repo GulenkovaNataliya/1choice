@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { useChatProperty } from "./ChatPropertyContext";
+import { detectLang, getFormStrings } from "@/lib/chat/chatI18n";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -61,25 +62,39 @@ const QUICK_ACTIONS: QuickAction[] = [
 // ── Server-side bot response fetch ───────────────────────────────────────────
 //
 // Advisory response text lives in /api/chat (server-side only, not in bundle).
-// This helper fetches the response; on network failure returns a safe fallback.
+// This helper fetches the response; on network failure returns a localized fallback.
 //
-const REFUSAL_FALLBACK =
-  "I can only assist with advisory within the verified 1Choice portfolio.";
-
 type BotResult = { text: string; triggerLeadForm: boolean; matches?: ChatMatch[] };
-const REFUSAL_RESULT: BotResult = { text: REFUSAL_FALLBACK, triggerLeadForm: false };
 
 async function fetchBotResponse(
   params: { intent?: string; message?: string },
   pathname: string,
   conversationStep: number,
+  sttLang: string,
+  chatHistory: Message[],
+  propertyContext: { title?: string | null; code?: string | null; location?: string | null },
+  fallbackText: string,
 ): Promise<BotResult> {
+  const fallback: BotResult = { text: fallbackText, triggerLeadForm: false };
   try {
+    const historyPayload = chatHistory.map((m) => ({
+      role: m.role === "bot" ? "assistant" : "user",
+      text: m.text,
+    }));
     const res = await fetch("/api/chat", {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ ...params, pathname, conversationStep }),
-      signal:  AbortSignal.timeout(8_000),
+      body:    JSON.stringify({
+        ...params,
+        pathname,
+        conversationStep,
+        sttLang,
+        chatHistory:      historyPayload,
+        propertyTitle:    propertyContext.title    ?? null,
+        propertyCode:     propertyContext.code     ?? null,
+        propertyLocation: propertyContext.location ?? null,
+      }),
+      signal: AbortSignal.timeout(12_000),
     });
     const json: unknown = await res.json().catch(() => ({}));
     if (
@@ -94,10 +109,10 @@ async function fetchBotResponse(
         matches:         Array.isArray(j.matches) ? (j.matches as ChatMatch[]) : undefined,
       };
     }
-    return REFUSAL_RESULT;
+    return fallback;
   } catch {
     // Covers network errors and AbortSignal timeout
-    return REFUSAL_RESULT;
+    return fallback;
   }
 }
 
@@ -134,13 +149,6 @@ const WELCOME_MESSAGES: Record<PageContext, string> = {
 // ── WhatsApp validation ───────────────────────────────────────────────────────
 
 const WHATSAPP_RE = /^\+[1-9]\d{7,14}$/;
-
-function validateWhatsApp(value: string): string | null {
-  if (!value.trim()) return "WhatsApp number is required";
-  if (!WHATSAPP_RE.test(value.trim()))
-    return "Include country code, no spaces (e.g. +306912345678)";
-  return null;
-}
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -247,6 +255,13 @@ export default function ChatWidget() {
   const pathname         = usePathname();
   const { propertyData } = useChatProperty();
 
+  // Property context forwarded to the AI — derived from page-level context provider
+  const propCtx = {
+    title:    propertyData?.property_title    ?? null,
+    code:     propertyData?.property_code     ?? null,
+    location: propertyData?.property_location ?? null,
+  };
+
   // ── Chat state ────────────────────────────────────────────────────────────
   const [isOpen,     setIsOpen]     = useState(false);
   const [msgs,       setMsgs]       = useState<Message[]>([]);
@@ -270,6 +285,9 @@ export default function ChatWidget() {
   const [sttMessage,   setSttMessage]   = useState<string | null>(null);
   // sttLang: initialised as en-US; corrected client-side in the detection effect
   const [sttLang,      setSttLang]      = useState<VoiceLangCode>("en-US");
+
+  // Localized lead form strings — re-derived whenever sttLang changes
+  const s = getFormStrings(detectLang(sttLang));
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
@@ -450,7 +468,9 @@ export default function ChatWidget() {
       setMsgs([buildGreeting()]);
     }
     setIsLoadingBot(true);
-    const { text, triggerLeadForm, matches } = await fetchBotResponse({ intent: chosen }, pathname, msgs.length);
+    const { text, triggerLeadForm, matches } = await fetchBotResponse(
+      { intent: chosen }, pathname, msgs.length, sttLang, msgs, propCtx, s.networkError,
+    );
     setIsLoadingBot(false);
     setIntent(chosen);
     setMsgs((prev) => [
@@ -513,7 +533,9 @@ export default function ChatWidget() {
     setIntent(chosen);
     setMsgs((prev) => [...prev, { role: "user", text: label }]);
     setIsLoadingBot(true);
-    const { text, triggerLeadForm, matches } = await fetchBotResponse({ intent: chosen }, pathname, msgs.length);
+    const { text, triggerLeadForm, matches } = await fetchBotResponse(
+      { intent: chosen }, pathname, msgs.length, sttLang, msgs, propCtx, s.networkError,
+    );
     setIsLoadingBot(false);
     setMsgs((prev) => [...prev, { role: "bot", text, matches }]);
     if (triggerLeadForm) setShowForm(true);
@@ -531,6 +553,10 @@ export default function ChatWidget() {
       { message: text },
       pathname,
       msgs.length,
+      sttLang,
+      msgs,
+      propCtx,
+      s.networkError,
     );
     setIsLoadingBot(false);
     setMsgs((prev) => [...prev, { role: "bot", text: botText, matches }]);
@@ -540,13 +566,16 @@ export default function ChatWidget() {
   // ── Validation ────────────────────────────────────────────────────────────
   function validate(): boolean {
     const errs: LeadErrors = {};
-    if (!lead.name.trim()) errs.name = "Name is required";
-    const waErr = validateWhatsApp(lead.whatsapp);
-    if (waErr) errs.whatsapp = waErr;
+    if (!lead.name.trim()) errs.name = s.nameRequired;
+    if (!lead.whatsapp.trim()) {
+      errs.whatsapp = s.whatsappRequired;
+    } else if (!WHATSAPP_RE.test(lead.whatsapp.trim())) {
+      errs.whatsapp = s.whatsappFormat;
+    }
     if (lead.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lead.email.trim()))
-      errs.email = "Enter a valid email address";
+      errs.email = s.emailInvalid;
     if (!lead.consent_whatsapp)
-      errs.consent_whatsapp = "Please confirm your consent to continue";
+      errs.consent_whatsapp = s.consentRequired;
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -583,16 +612,14 @@ export default function ChatWidget() {
       });
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
-        setErrors({ whatsapp: json.error ?? "Submission failed — please try again" });
+        setErrors({ whatsapp: json.error ?? s.submitError });
         setSubmitting(false);
         return;
       }
     } catch (err) {
       const isTimeout = err instanceof Error && err.name === "TimeoutError";
       setErrors({
-        whatsapp: isTimeout
-          ? "Request timed out — please try again"
-          : "Network error — please try again",
+        whatsapp: isTimeout ? s.timeoutError : s.networkError,
       });
       setSubmitting(false);
       return;
@@ -752,7 +779,7 @@ export default function ChatWidget() {
                   <div>
                     <input
                       type="text"
-                      placeholder="Your name *"
+                      placeholder={s.namePlaceholder}
                       value={lead.name}
                       onChange={(e) => setLead((l) => ({ ...l, name: e.target.value }))}
                       className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#1E1E1E] bg-white"
@@ -762,7 +789,7 @@ export default function ChatWidget() {
                   <div>
                     <input
                       type="tel"
-                      placeholder="WhatsApp number * (e.g. +306912345678)"
+                      placeholder={s.whatsappPlaceholder}
                       value={lead.whatsapp}
                       onChange={(e) => setLead((l) => ({ ...l, whatsapp: e.target.value }))}
                       className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#1E1E1E] bg-white"
@@ -772,7 +799,7 @@ export default function ChatWidget() {
                   <div>
                     <input
                       type="email"
-                      placeholder="Email (optional)"
+                      placeholder={s.emailPlaceholder}
                       value={lead.email}
                       onChange={(e) => setLead((l) => ({ ...l, email: e.target.value }))}
                       className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#1E1E1E] bg-white"
@@ -782,7 +809,7 @@ export default function ChatWidget() {
                   <div>
                     <input
                       type="text"
-                      placeholder="Notes or preferred time (optional)"
+                      placeholder={s.notesPlaceholder}
                       value={lead.notes}
                       onChange={(e) => setLead((l) => ({ ...l, notes: e.target.value }))}
                       className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#1E1E1E] bg-white"
@@ -797,7 +824,7 @@ export default function ChatWidget() {
                         className="mt-0.5 shrink-0 accent-[#1E1E1E]"
                       />
                       <span className="text-xs text-[#555555] leading-snug">
-                        I agree to be contacted via WhatsApp regarding my inquiry.
+                        {s.consentText}
                       </span>
                     </label>
                     {errors.consent_whatsapp && (
@@ -809,7 +836,7 @@ export default function ChatWidget() {
                     disabled={submitting}
                     className="w-full py-2 bg-[#1E1E1E] text-white text-sm font-semibold rounded-lg hover:bg-[#333333] transition-colors disabled:opacity-50"
                   >
-                    {submitting ? "Sending…" : "Send"}
+                    {submitting ? s.submittingLabel : s.submitLabel}
                   </button>
                 </div>
               )}
@@ -817,7 +844,7 @@ export default function ChatWidget() {
               {/* Success state */}
               {submitted && (
                 <div className="bg-[#F0FFF4] border border-[#86EFAC] rounded-xl p-4 mt-2 text-sm text-[#166534] leading-relaxed">
-                  Thank you. Your request has been forwarded. Our advisory team will contact you via WhatsApp.
+                  {s.successText}
                 </div>
               )}
 

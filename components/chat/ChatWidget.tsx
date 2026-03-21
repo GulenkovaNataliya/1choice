@@ -289,6 +289,10 @@ export default function ChatWidget() {
   // Localized lead form strings — re-derived whenever sttLang changes
   const s = getFormStrings(detectLang(sttLang));
 
+  // RTL layout for Arabic and Hebrew
+  const lang   = detectLang(sttLang);
+  const isRTL  = lang === "ar" || lang === "he";
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
   const sttTimerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -779,6 +783,7 @@ export default function ChatWidget() {
                   <div>
                     <input
                       type="text"
+                      dir={isRTL ? "rtl" : "ltr"}
                       placeholder={s.namePlaceholder}
                       value={lead.name}
                       onChange={(e) => setLead((l) => ({ ...l, name: e.target.value }))}
@@ -789,6 +794,7 @@ export default function ChatWidget() {
                   <div>
                     <input
                       type="tel"
+                      dir={isRTL ? "rtl" : "ltr"}
                       placeholder={s.whatsappPlaceholder}
                       value={lead.whatsapp}
                       onChange={(e) => setLead((l) => ({ ...l, whatsapp: e.target.value }))}
@@ -799,6 +805,7 @@ export default function ChatWidget() {
                   <div>
                     <input
                       type="email"
+                      dir={isRTL ? "rtl" : "ltr"}
                       placeholder={s.emailPlaceholder}
                       value={lead.email}
                       onChange={(e) => setLead((l) => ({ ...l, email: e.target.value }))}
@@ -809,6 +816,7 @@ export default function ChatWidget() {
                   <div>
                     <input
                       type="text"
+                      dir={isRTL ? "rtl" : "ltr"}
                       placeholder={s.notesPlaceholder}
                       value={lead.notes}
                       onChange={(e) => setLead((l) => ({ ...l, notes: e.target.value }))}

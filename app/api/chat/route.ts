@@ -37,7 +37,7 @@ type ChatMatch = ChatProperty;
 // ── Model ─────────────────────────────────────────────────────────────────────
 // Haiku 4.5 — fast, cost-effective, sufficient for real-time advisory chat.
 // Switch to claude-opus-4-6 for higher reasoning depth if needed.
-const AI_MODEL = "claude-haiku-4-5";
+const AI_MODEL = "claude-haiku-4-5-20251001";
 const AI_TIMEOUT_MS = 10_000;
 
 // ── Intent label map (for quick-action context) ───────────────────────────────
@@ -270,7 +270,11 @@ You MUST call the "respond" function with exactly these fields:
 
 // ── AI call ───────────────────────────────────────────────────────────────────
 
-type AiReply = { replyText: string; triggerLeadForm: boolean };
+type AiReply = {
+  replyText:       string;
+  triggerLeadForm: boolean;
+  usage:           { input_tokens: number; output_tokens: number };
+};
 
 async function callAi(opts: {
   systemPrompt:  string;

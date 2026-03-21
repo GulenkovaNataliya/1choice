@@ -390,6 +390,9 @@ export default function LeadsManager({
   const [savingStatusId, setSavingStatusId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sort, setSort] = useState<"urgency_desc" | "urgency_asc" | null>(null);
+  const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const highlightedRowRef = useRef<HTMLTableRowElement | null>(null);
 
   // Auto-open modal and scroll to highlighted row when selectedId is set
@@ -418,10 +421,26 @@ export default function LeadsManager({
     refresh();
   }
 
+  const term = search.trim().toLowerCase();
+  const searchedRows = term
+    ? initialRows.filter((l) =>
+        l.name.toLowerCase().includes(term) ||
+        (l.phone ?? "").toLowerCase().includes(term) ||
+        (l.email ?? "").toLowerCase().includes(term)
+      )
+    : initialRows;
+
+  const dateFilteredRows = searchedRows.filter((l) => {
+    const day = l.created_at.slice(0, 10); // "YYYY-MM-DD" (UTC)
+    if (dateFrom && day < dateFrom) return false;
+    if (dateTo   && day > dateTo)   return false;
+    return true;
+  });
+
   const filteredRows =
     statusFilter === "all"
-      ? initialRows
-      : initialRows.filter((l) => l.status === statusFilter);
+      ? dateFilteredRows
+      : dateFilteredRows.filter((l) => l.status === statusFilter);
 
   const sortedRows = sort
     ? [...filteredRows].sort((a, b) => {
@@ -447,6 +466,33 @@ export default function LeadsManager({
           onUpdated={refresh}
         />
       )}
+
+      {/* Search + date range */}
+      <div className="mb-3 flex flex-wrap items-center gap-3">
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by name, phone or email…"
+          className="flex-1 min-w-[200px] max-w-sm border border-[#D9D9D9] rounded-lg px-3 py-2 text-sm text-[#1E1E1E] bg-white focus:outline-none focus:border-[#1E1E1E] transition"
+        />
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-[#888888] whitespace-nowrap">From</span>
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="border border-[#D9D9D9] rounded-lg px-2 py-2 text-sm text-[#1E1E1E] bg-white focus:outline-none focus:border-[#1E1E1E] transition"
+          />
+          <span className="text-xs text-[#888888]">To</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="border border-[#D9D9D9] rounded-lg px-2 py-2 text-sm text-[#1E1E1E] bg-white focus:outline-none focus:border-[#1E1E1E] transition"
+          />
+        </div>
+      </div>
 
       {/* Status filter + sort controls */}
       <div className="mb-4 flex flex-wrap items-center gap-2">

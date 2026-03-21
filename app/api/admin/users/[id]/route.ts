@@ -11,14 +11,16 @@ function allowedSet(): Set<string> {
   );
 }
 
-async function verifyAdmin(): Promise<boolean> {
+/** Returns the current user's Supabase ID if they are an admin, otherwise null. */
+async function verifyAdmin(): Promise<string | null> {
   try {
     const supabase = await createSupabaseServerClient();
     const { data: { user } } = await supabase.auth.getUser();
     const email = user?.email?.toLowerCase() ?? "";
-    return !!email && allowedSet().has(email);
+    if (!email || !allowedSet().has(email)) return null;
+    return user?.id ?? null;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -65,14 +67,40 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await verifyAdmin())) {
+  const actorId = await verifyAdmin();
+  if (!actorId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { id } = await params;
 
+  // Guard 1: cannot delete own account
+  if (id === actorId) {
+    return NextResponse.json(
+      { error: "You cannot delete your own account." },
+      { status: 400 }
+    );
+  }
+
+  const admin = createSupabaseAdminClient();
+
+  // Guard 2: cannot delete the last active admin
+  const { data: usersData } = await admin.auth.admin.listUsers({ perPage: 1000 });
+  const allowed = allowedSet();
+  const activeAdmins = (usersData?.users ?? []).filter((u) => {
+    const email = (u.email ?? "").toLowerCase();
+    if (!allowed.has(email)) return false;
+    const isBanned = u.banned_until ? new Date(u.banned_until) > new Date() : false;
+    return !isBanned;
+  });
+  if (activeAdmins.length <= 1 && activeAdmins.some((u) => u.id === id)) {
+    return NextResponse.json(
+      { error: "Cannot delete the last active admin account." },
+      { status: 400 }
+    );
+  }
+
   try {
-    const admin = createSupabaseAdminClient();
     const { error } = await admin.auth.admin.deleteUser(id);
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
     return NextResponse.json({ ok: true });

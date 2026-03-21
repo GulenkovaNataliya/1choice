@@ -1,13 +1,36 @@
 "use client";
 
 import { useState } from "react";
-import { mockFeatured } from "@/components/Property/mockFeatured";
 import PropertyCard from "@/components/Property/PropertyCard";
 
-const PAGE_SIZE = 8;
-const deals = mockFeatured.filter(p => p.is_1choice_deal && !p.private_collection);
+type CardProperty = {
+  id: string | number;
+  property_code: string | null;
+  slug: string;
+  title: string;
+  area: string;
+  price_eur: number | null;
+  transaction_type?: string | null;
+  is_golden_visa: boolean;
+  is_1choice_deal: boolean;
+  featured: boolean;
+  cover_image_url: string | null;
+  gallery_image_urls: string[];
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  size_sqm?: number | null;
+  floor?: number | null;
+  year_built?: number | null;
+  sea_view?: boolean | null;
+  pool?: boolean | null;
+  elevator?: boolean | null;
+  custom_badge?: string | null;
+  custom_badge_color?: string | null;
+};
 
-export default function DealsGrid() {
+const PAGE_SIZE = 8;
+
+export default function DealsGrid({ deals }: { deals: CardProperty[] }) {
   const [visible, setVisible] = useState(PAGE_SIZE);
   const shown = deals.slice(0, visible);
   const hasMore = visible < deals.length;

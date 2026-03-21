@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { getSupabase } from "@/lib/supabase/client";
 import type { SiteSettings } from "@/lib/settings/fetchSettings";
 
@@ -210,6 +211,22 @@ export default function SettingsForm({ initialValues }: Props) {
         <p className="text-sm text-[#BBBBBB]">
           Third-party integrations (analytics, chat widget, SMTP) are scheduled for a future step.
         </p>
+      </Section>
+
+      {/* Account */}
+      <Section title="Account">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-[#1E1E1E]">Password</p>
+            <p className="text-xs text-[#888888] mt-0.5">Send a password reset link to your email address.</p>
+          </div>
+          <Link
+            href="/admin/forgot-password"
+            className="px-4 py-1.5 border border-[#D9D9D9] rounded-lg text-xs font-semibold text-[#1E1E1E] hover:border-[#1E1E1E] transition-colors whitespace-nowrap"
+          >
+            Change password
+          </Link>
+        </div>
       </Section>
 
     </form>

@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/adminClient";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { fetchSettings } from "@/lib/settings/fetchSettings";
 import UsersManager, { type AdminUser } from "@/components/admin/UsersManager";
 import SettingsForm from "@/components/admin/SettingsForm";
@@ -10,6 +11,11 @@ export const metadata = {
 export default async function AdminSettingsPage() {
   // ── Fetch settings ────────────────────────────────────────────────────────
   const settings = await fetchSettings();
+
+  // ── Current user ID (for self-delete protection in UsersManager) ─────────
+  const supabase = await createSupabaseServerClient();
+  const { data: { user: currentUser } } = await supabase.auth.getUser();
+  const currentUserId = currentUser?.id ?? null;
 
   // ── Fetch admin users ────────────────────────────────────────────────────
   const allowedEmails = new Set(
@@ -65,7 +71,7 @@ export default async function AdminSettingsPage() {
 
         {/* Users */}
         <div className="bg-white rounded-xl border border-[#E8E8E8] p-6">
-          <UsersManager initialUsers={users} fetchError={fetchError} />
+          <UsersManager initialUsers={users} fetchError={fetchError} currentUserId={currentUserId} />
         </div>
 
       </div>

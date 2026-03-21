@@ -134,9 +134,11 @@ function InviteModal({
 export default function UsersManager({
   initialUsers,
   fetchError,
+  currentUserId = null,
 }: {
   initialUsers: AdminUser[];
   fetchError: string | null;
+  currentUserId?: string | null;
 }) {
   const router = useRouter();
   const [showInvite, setShowInvite] = useState(false);
@@ -269,15 +271,19 @@ export default function UsersManager({
                               {isBusy ? "…" : "Enable"}
                             </button>
                           )}
-                          {user.id && (
-                            <button
-                              onClick={() => handleDelete(user)}
-                              disabled={isBusy}
-                              className="text-xs font-medium text-red-600 hover:text-red-800 underline underline-offset-2 transition-colors disabled:opacity-40 disabled:cursor-default"
-                            >
-                              {isBusy ? "…" : "Delete"}
-                            </button>
-                          )}
+                          {user.id && (() => {
+                            const isSelf = user.id === currentUserId;
+                            return (
+                              <button
+                                onClick={() => !isSelf && handleDelete(user)}
+                                disabled={isBusy || isSelf}
+                                title={isSelf ? "Cannot delete your own account" : undefined}
+                                className="text-xs font-medium text-red-600 hover:text-red-800 underline underline-offset-2 transition-colors disabled:opacity-40 disabled:cursor-default"
+                              >
+                                {isBusy ? "…" : "Delete"}
+                              </button>
+                            );
+                          })()}
                         </div>
                       </td>
                     </tr>

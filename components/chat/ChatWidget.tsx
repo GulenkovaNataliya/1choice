@@ -361,8 +361,14 @@ export default function ChatWidget() {
       stopRecording();
     };
 
-    recognition.onerror = () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recognition.onerror = (e: any) => {
       stopRecording();
+      const msg = e?.error === "not-allowed"
+        ? "Microphone access denied. Please allow access in your browser settings."
+        : "Voice input error. Please try again.";
+      setSttMessage(msg);
+      setTimeout(() => setSttMessage(null), 4000);
     };
 
     recognition.onend = () => {

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/adminClient";
 import { renderImageUrl } from "@/lib/storage/imageUrl";
 import PrivatePropertyDetail from "./PrivatePropertyDetail";
 
@@ -44,8 +45,11 @@ export default async function PrivateTokenPage({
 
   if (!tokenRow?.property_id) notFound();
 
-  // 2. Fetch the linked property
-  const { data: property } = await supabase
+  // 2. Fetch the linked property — admin client bypasses RLS so that
+  //    private_collection=true rows are readable. The access gate is the token
+  //    lookup above; RLS on properties must not block this fetch.
+  const admin = createSupabaseAdminClient();
+  const { data: property } = await admin
     .from("properties")
     .select("*")
     .eq("id", tokenRow.property_id)

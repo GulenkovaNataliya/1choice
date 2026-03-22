@@ -6,7 +6,7 @@ const BASE_URL = "https://1choice.gr";
 
 // ── Static public pages ───────────────────────────────────────────────────────
 // Excluded intentionally:
-//   /private          — gated, requires code
+//   /private/[token]  — gated by token, robots: noindex (via page metadata + robots.txt)
 //   /saved            — user-specific, robots: noindex
 //   /compare          — user-specific, robots: noindex
 //   /admin/*          — protected, never public
@@ -18,6 +18,7 @@ const STATIC_PAGES: MetadataRoute.Sitemap = [
   { url: `${BASE_URL}/investment-ownership-guide`, changeFrequency: "monthly", priority: 0.7 },
   { url: `${BASE_URL}/about`,                      changeFrequency: "monthly", priority: 0.6 },
   { url: `${BASE_URL}/contact`,                    changeFrequency: "monthly", priority: 0.6 },
+  { url: `${BASE_URL}/private`,                    changeFrequency: "monthly", priority: 0.5 },
   { url: `${BASE_URL}/legal`,                      changeFrequency: "monthly", priority: 0.4 },
 ];
 

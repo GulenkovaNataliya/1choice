@@ -152,7 +152,7 @@ export default async function PropertyDetailPage({
   // Both enforce: status=published, publish_1choice=true, private_collection=false
 
   const PROPERTY_FIELDS =
-    "id,property_code,title,slug,price_eur,location,location_text,bedrooms,bathrooms,size_sqm,cover_image_url,gallery_image_urls,is_golden_visa,publish_deals,featured,private_collection,category,created_at,custom_badge,custom_badge_color";
+    "id,property_code,title,slug,price_eur,location,location_text,bedrooms,bathrooms,size_sqm,cover_image_url,gallery_image_urls,is_golden_visa,publish_deals,featured,private_collection,category,transaction_type,created_at,custom_badge,custom_badge_color";
 
   const propLocation = (property.location  ?? null) as string | null;
   const propCategory = (property.category  ?? null) as string | null;
@@ -221,6 +221,7 @@ export default async function PropertyDetailPage({
       size_sqm:           (p.size_sqm           as number  | null) ?? undefined,
       custom_badge:       (p.custom_badge       as string  | null) ?? null,
       custom_badge_color: (p.custom_badge_color as string  | null) ?? null,
+      transaction_type:   (p.transaction_type   as string  | null) ?? null,
     };
   }
 

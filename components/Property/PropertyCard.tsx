@@ -34,9 +34,10 @@ type CardProperty = {
 };
 
 const TRANSACTION_LABELS: Record<string, string> = {
-  sale:       "For Sale",
-  rent:       "For Rent",
-  investment: "Investment",
+  sale:        "For Sale",
+  rent:        "For Rent",
+  investment:  "Investment",
+  antiparochi: "Antiparochi",
 };
 
 type Props = {

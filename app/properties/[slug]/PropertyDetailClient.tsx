@@ -127,9 +127,10 @@ function titleCase(s: string) {
 }
 
 const TRANSACTION_LABELS: Record<string, string> = {
-  sale:       "For Sale",
-  rent:       "For Rent",
-  investment: "Investment",
+  sale:        "For Sale",
+  rent:        "For Rent",
+  investment:  "Investment",
+  antiparochi: "Antiparochi",
 };
 
 function formatTransactionType(value: string | null): string | null {

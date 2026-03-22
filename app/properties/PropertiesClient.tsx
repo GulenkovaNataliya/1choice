@@ -382,6 +382,8 @@ export default function PropertiesClient({
     sea_view: p.sea_view ?? false,
     pool: p.pool ?? false,
     elevator: p.elevator ?? false,
+    custom_badge: p.custom_badge ?? null,
+    custom_badge_color: p.custom_badge_color ?? null,
   }));
 
   function removeFilter(keys: string[]) {

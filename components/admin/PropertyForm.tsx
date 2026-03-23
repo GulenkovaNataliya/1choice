@@ -71,6 +71,7 @@ type FormState = {
   longitude: string;
   approximate_location: boolean;
   address: string;
+  show_address: boolean;
   custom_badge: string;
   custom_badge_color: string;
 };
@@ -135,6 +136,7 @@ const INITIAL: FormState = {
   longitude: "",
   approximate_location: false,
   address: "",
+  show_address: false,
   custom_badge: "",
   custom_badge_color: "red",
 };
@@ -208,6 +210,8 @@ function buildPayload(form: FormState, resolveSlug = false) {
     latitude: form.latitude ? Number(form.latitude) : null,
     longitude: form.longitude ? Number(form.longitude) : null,
     approximate_location: form.approximate_location,
+    address: form.address.trim() || null,
+    show_address: form.show_address,
     custom_badge: form.custom_badge || null,
     custom_badge_color: form.custom_badge ? (form.custom_badge_color || "red") : null,
   };
@@ -1185,6 +1189,12 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
           checked={form.approximate_location}
           onChange={(v) => set("approximate_location", v)}
           hint="Hides the exact pin on the public map — shows only the general area"
+        />
+        <Checkbox
+          label="Show address to visitors"
+          checked={form.show_address}
+          onChange={(v) => set("show_address", v)}
+          hint="If disabled, the exact address stays hidden on the public page."
         />
       </Section>
 

@@ -79,6 +79,8 @@ export type PropertyData = {
   latitude: number | null;
   longitude: number | null;
   approximate_location: boolean | null;
+  address: string | null;
+  show_address: boolean | null;
   // Badge
   custom_badge: string | null;
   custom_badge_color: string | null;
@@ -629,6 +631,12 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                 {property.bathrooms   && <span>{property.bathrooms} bathrooms</span>}
                 {property.floor       && <span>Floor {property.floor}</span>}
                 <span>{areaLabel}</span>
+                {property.show_address && property.address
+                  ? <span>{property.address}</span>
+                  : property.address
+                    ? <span className="text-[#888888] text-xs italic">Exact address available upon request.</span>
+                    : null
+                }
               </div>
 
               {/* CTAs */}

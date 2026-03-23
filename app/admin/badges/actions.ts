@@ -1,6 +1,6 @@
 "use server";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/adminClient";
 import { revalidatePath } from "next/cache";
 import type { Badge } from "@/lib/badges";
 
@@ -22,27 +22,28 @@ export async function createBadgeQuick(
   if (!name) return { error: "Badge name is required." };
   if (name.length > 22) return { error: "Badge name must be 22 characters or fewer." };
 
-  const supabase = await createSupabaseServerClient();
+  const admin = createSupabaseAdminClient();
 
   // Case-insensitive duplicate check
-  const { data: existing } = await supabase
+  const { data: existing } = await admin
     .from("custom_badges")
     .select("id,name")
     .ilike("name", name)
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (existing) {
     return { error: `Badge "${existing.name}" already exists.` };
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from("custom_badges")
     .insert({ name })
     .select("id,name")
     .single();
 
   if (error || !data) {
+    console.error("[createBadgeQuick] insert error:", error);
     return { error: "Failed to create badge. Please try again." };
   }
 

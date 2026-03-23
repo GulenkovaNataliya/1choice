@@ -67,7 +67,7 @@ type SectionDef = {
 // ── Label maps ────────────────────────────────────────────────────────────────
 
 const TX_LABELS: Record<string, string> = {
-  sale: "For Sale", rent: "For Rent", investment: "Investment",
+  sale: "For Sale", rent: "For Rent", investment: "Investment", antiparochi: "Antiparochi",
 };
 
 const CONDITION_LABELS: Record<string, string> = {

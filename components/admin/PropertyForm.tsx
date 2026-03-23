@@ -392,10 +392,11 @@ function QuickBadgeModal({
   onSuccess,
   onClose,
 }: {
-  onSuccess: (badge: Badge) => void;
+  onSuccess: (badge: Badge, color: string) => void;
   onClose: () => void;
 }) {
   const [name, setName] = useState("");
+  const [color, setColor] = useState<string>("red");
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -412,7 +413,7 @@ function QuickBadgeModal({
       setSaving(false);
       return;
     }
-    onSuccess(result);
+    onSuccess(result, color);
   }
 
   return (
@@ -435,12 +436,34 @@ function QuickBadgeModal({
           )}
         </Field>
 
+        <Field label="Color">
+          <div className="flex gap-2 flex-wrap">
+            {BADGE_COLORS.map((c) => (
+              <button
+                key={c.value}
+                type="button"
+                onClick={() => setColor(c.value)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 transition ${
+                  color === c.value ? "border-[#1E1E1E]" : "border-transparent hover:border-[#D9D9D9]"
+                }`}
+              >
+                <span
+                  className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+                  style={getBadgeStyle(c.value)}
+                >
+                  {trimmed || c.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </Field>
+
         {trimmed && !tooLong && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-[#AAAAAA]">Preview:</span>
             <span
               className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
-              style={getBadgeStyle("red")}
+              style={getBadgeStyle(color)}
             >
               {trimmed}
             </span>
@@ -783,6 +806,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
             >
               <option value="sale">Sale</option>
               <option value="rent">Rent</option>
+              <option value="antiparochi">Antiparochi</option>
             </select>
           </Field>
         </div>
@@ -1338,9 +1362,9 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
       {/* ── Quick-create badge modal ──────────────────────────────────────── */}
       {showBadgeModal && (
         <QuickBadgeModal
-          onSuccess={(badge) => {
+          onSuccess={(badge, color) => {
             setLocalBadges((prev) => [...prev, badge].sort((a, b) => a.name.localeCompare(b.name)));
-            setForm((prev) => ({ ...prev, custom_badge: badge.name, custom_badge_color: prev.custom_badge_color || "red" }));
+            setForm((prev) => ({ ...prev, custom_badge: badge.name, custom_badge_color: color }));
             setShowBadgeModal(false);
           }}
           onClose={() => setShowBadgeModal(false)}

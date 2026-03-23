@@ -21,6 +21,7 @@ export type ActivityAction =
   | "properties_bulk_deleted"
   | "property_deals_export_opened"
   | "property_deals_export_copied"
+  | "property_deals_marked_published"
   | "private_link_generated"
   | "private_link_regenerated"
   | "private_link_deleted";

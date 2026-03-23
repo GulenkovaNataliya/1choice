@@ -23,6 +23,8 @@ export type AdminProperty = {
   location: string | null;
   location_text: string | null;
   price_eur: number | null;
+  deals_status: string | null;
+  last_exported_at: string | null;
 };
 
 // ── Shared UI ─────────────────────────────────────────────────────────────────
@@ -226,6 +228,16 @@ function PropertyRow({
     }
   }
 
+  // "Changes not exported" — only for deals properties that were exported at least once,
+  // and then updated afterwards.
+  const changesNotExported =
+    !!property.publish_deals &&
+    !!property.deals_status &&
+    property.deals_status !== "draft" &&
+    !!property.last_exported_at &&
+    !!property.updated_at &&
+    new Date(property.updated_at) > new Date(property.last_exported_at);
+
   const dateLabel = property.updated_at ?? property.created_at;
 
   return (
@@ -256,12 +268,27 @@ function PropertyRow({
         />
       </td>
       <td className="px-4 py-3">
-        <Toggle
-          on={pubDeals}
-          disabled={savingField === "publish_deals"}
-          onChange={() => toggleFlag("publish_deals")}
-          label="Toggle Publish Deals"
-        />
+        <div className="flex flex-col gap-1">
+          <Toggle
+            on={pubDeals}
+            disabled={savingField === "publish_deals"}
+            onChange={() => toggleFlag("publish_deals")}
+            label="Toggle Publish Deals"
+          />
+          {pubDeals && (() => {
+            const s = property.deals_status ?? "draft";
+            const styles: Record<string, string> = {
+              draft:    "text-[#AAAAAA]",
+              exported: "text-blue-600",
+              published:"text-green-700",
+            };
+            return (
+              <span className={`text-[10px] font-semibold capitalize ${styles[s] ?? styles.draft}`}>
+                {s}
+              </span>
+            );
+          })()}
+        </div>
       </td>
       <td className="px-4 py-3">
         <Toggle
@@ -294,6 +321,9 @@ function PropertyRow({
         <div className="flex flex-col gap-1.5">
           {toggleError && (
             <span className="text-xs text-red-600">{toggleError}</span>
+          )}
+          {changesNotExported && (
+            <span className="text-xs text-amber-600 font-medium">Changes not exported</span>
           )}
           <div className="flex items-center gap-3 whitespace-nowrap">
             <Link

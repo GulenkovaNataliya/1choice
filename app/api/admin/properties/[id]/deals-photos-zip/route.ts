@@ -109,7 +109,8 @@ export async function GET(
   const zipBuffer = await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
 
   const code = property.property_code ?? id.slice(0, 8);
-  return new NextResponse(zipBuffer, {
+  // NextResponse expects BodyInit — wrap Buffer in Uint8Array for compatibility
+  return new NextResponse(new Uint8Array(zipBuffer), {
     status: 200,
     headers: {
       "Content-Type": "application/zip",

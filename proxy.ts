@@ -46,7 +46,7 @@ function allowedEmails(): Set<string> {
  *   - Authenticated but not in ADMIN_EMAILS → /  (unauthorised; no admin login loop)
  *   - Authenticated admin on /admin/login → /admin  (already signed in; skip login)
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Always run session refresh first — this keeps auth cookies alive and
   // populates `user` from the validated JWT stored in the request cookie.
   const { response, user } = await updateSupabaseSession(request);

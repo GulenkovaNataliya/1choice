@@ -322,6 +322,7 @@ async function callAi(opts: {
     return {
       replyText:       input.replyText,
       triggerLeadForm: input.triggerLeadForm === true,
+      usage:           { input_tokens: response.usage.input_tokens, output_tokens: response.usage.output_tokens },
     };
   } catch (err) {
     console.error("[chat-ai] error:", err instanceof Error ? err.message : err);

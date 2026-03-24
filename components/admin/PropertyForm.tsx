@@ -30,6 +30,8 @@ type FormState = {
   year_renovated: string;
   building_condition: string;
   energy_class: string;
+  heating_type: string;
+  cooling_type: string;
   fireplace: boolean;
   elevator: boolean;
   security_door: boolean;
@@ -95,6 +97,8 @@ const INITIAL: FormState = {
   year_renovated: "",
   building_condition: "",
   energy_class: "",
+  heating_type: "",
+  cooling_type: "",
   fireplace: false,
   elevator: false,
   security_door: false,
@@ -192,6 +196,8 @@ function buildPayload(form: FormState, resolveSlug = false) {
     year_renovated: form.year_renovated ? Number(form.year_renovated) : null,
     building_condition: form.building_condition || null,
     energy_class: form.energy_class || null,
+    heating_type: form.heating_type || null,
+    cooling_type: form.cooling_type || null,
     fireplace: form.fireplace,
     elevator: form.elevator,
     security_door: form.security_door,
@@ -1121,6 +1127,44 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
           <Checkbox label="Mosquito Screens" checked={form.mosquito_screens} onChange={(v) => set("mosquito_screens", v)} />
           <Checkbox label="Thermal Insulation" checked={form.thermal_insulation} onChange={(v) => set("thermal_insulation", v)} />
           <Checkbox label="Sound Insulation" checked={form.sound_insulation} onChange={(v) => set("sound_insulation", v)} />
+        </div>
+      </Section>
+
+      {/* ── Heating / Cooling ────────────────────────────────────────────── */}
+      <Section title="Heating / Cooling">
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Heating Type">
+            <select
+              value={form.heating_type}
+              onChange={(e) => set("heating_type", e.target.value)}
+              className={inputCls}
+            >
+              <option value="">— select —</option>
+              <option value="central">Central</option>
+              <option value="autonomous">Autonomous</option>
+              <option value="underfloor">Underfloor</option>
+              <option value="heat_pump">Heat Pump</option>
+              <option value="air_conditioning">Air Conditioning</option>
+              <option value="electric">Electric</option>
+              <option value="natural_gas">Natural Gas</option>
+              <option value="oil">Oil</option>
+              <option value="none">None</option>
+            </select>
+          </Field>
+          <Field label="Cooling Type">
+            <select
+              value={form.cooling_type}
+              onChange={(e) => set("cooling_type", e.target.value)}
+              className={inputCls}
+            >
+              <option value="">— select —</option>
+              <option value="central_ac">Central A/C</option>
+              <option value="split_units">Split Units</option>
+              <option value="fan">Fan</option>
+              <option value="underfloor">Underfloor Cooling</option>
+              <option value="none">None</option>
+            </select>
+          </Field>
         </div>
       </Section>
 

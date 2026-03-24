@@ -48,11 +48,17 @@ export type PropertyData = {
   year_renovated: number | null;
   building_condition: string | null;
   energy_class: string | null;
+  heating_type: string | null;
+  custom_heating: string | null;
+  cooling_type: string | null;
+  custom_cooling: string | null;
   // Layout
   living_rooms: number | null;
   kitchens: number | null;
   storage_rooms: number | null;
   wc: number | null;
+  furnished: string | null;
+  custom_furnished: string | null;
   // Windows & Construction
   frames_type: string | null;
   flooring_type: string | null;
@@ -343,8 +349,15 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
   const areaLabel = titleCase(location_text ?? location ?? "");
   const mapsQuery = encodeURIComponent(`${areaLabel}, Greece`);
 
-  // Cast property to a plain record for dynamic DETAIL_FEATURES lookup
-  const featureRecord = property as Record<string, unknown>;
+  // Cast property to a plain record for dynamic DETAIL_FEATURES lookup.
+  // Apply custom_heating / custom_cooling override: if a free-text custom value exists,
+  // it takes priority over the dropdown value for public display.
+  const featureRecord: Record<string, unknown> = {
+    ...property,
+    heating_type: property.custom_heating?.trim() || property.heating_type,
+    cooling_type: property.custom_cooling?.trim() || property.cooling_type,
+    furnished: property.custom_furnished?.trim() || property.furnished,
+  };
 
   // Group-based feature sets — each only contains renderable fields
   const coreFeatures     = DETAIL_FEATURES.filter(f => f.group === "core"      && shouldRenderFeature(f, featureRecord[f.field]));
@@ -410,7 +423,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                 )}
                 {property.custom_badge && (
                   <span
-                    className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full"
+                    className="text-xs font-bold tracking-wider px-3 py-1 rounded-full"
                     style={getBadgeStyle(property.custom_badge_color)}
                   >
                     {property.custom_badge}

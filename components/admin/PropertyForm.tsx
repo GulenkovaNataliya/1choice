@@ -31,7 +31,9 @@ type FormState = {
   building_condition: string;
   energy_class: string;
   heating_type: string;
+  custom_heating: string;
   cooling_type: string;
+  custom_cooling: string;
   fireplace: boolean;
   elevator: boolean;
   security_door: boolean;
@@ -56,6 +58,8 @@ type FormState = {
   kitchens: string;
   storage_rooms: string;
   wc: string;
+  furnished: string;
+  custom_furnished: string;
   summary: string;
   description: string;
   agent_notes: string;
@@ -98,7 +102,9 @@ const INITIAL: FormState = {
   building_condition: "",
   energy_class: "",
   heating_type: "",
+  custom_heating: "",
   cooling_type: "",
+  custom_cooling: "",
   fireplace: false,
   elevator: false,
   security_door: false,
@@ -123,6 +129,8 @@ const INITIAL: FormState = {
   kitchens: "",
   storage_rooms: "",
   wc: "",
+  furnished: "",
+  custom_furnished: "",
   summary: "",
   description: "",
   agent_notes: "",
@@ -197,7 +205,9 @@ function buildPayload(form: FormState, resolveSlug = false) {
     building_condition: form.building_condition || null,
     energy_class: form.energy_class || null,
     heating_type: form.heating_type || null,
+    custom_heating: form.custom_heating.trim() || null,
     cooling_type: form.cooling_type || null,
+    custom_cooling: form.custom_cooling.trim() || null,
     fireplace: form.fireplace,
     elevator: form.elevator,
     security_door: form.security_door,
@@ -222,6 +232,8 @@ function buildPayload(form: FormState, resolveSlug = false) {
     kitchens: form.kitchens ? Number(form.kitchens) : null,
     storage_rooms: form.storage_rooms ? Number(form.storage_rooms) : null,
     wc: form.wc ? Number(form.wc) : null,
+    furnished: form.furnished || null,
+    custom_furnished: form.custom_furnished.trim() || null,
     summary: form.summary || null,
     description: form.description || null,
     agent_notes: form.agent_notes || null,
@@ -476,7 +488,7 @@ function QuickBadgeModal({
                 }`}
               >
                 <span
-                  className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+                  className="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded"
                   style={getBadgeStyle(c.value)}
                 >
                   {trimmed || c.label}
@@ -490,7 +502,7 @@ function QuickBadgeModal({
           <div className="flex items-center gap-2">
             <span className="text-xs text-[#AAAAAA]">Preview:</span>
             <span
-              className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+              className="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded"
               style={getBadgeStyle(color)}
             >
               {trimmed}
@@ -1087,6 +1099,35 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
         </div>
       </Section>
 
+      {/* ── Furnished ────────────────────────────────────────────────────── */}
+      <Section title="Furnished">
+        <div className="flex flex-col gap-2">
+          <Field label="Furnished">
+            <select
+              value={form.furnished}
+              onChange={(e) => set("furnished", e.target.value)}
+              className={inputCls}
+            >
+              <option value="">— select —</option>
+              <option value="Fully Furnished">Fully Furnished</option>
+              <option value="Partially Furnished">Partially Furnished</option>
+              <option value="Not Furnished">Not Furnished</option>
+              <option value="Kitchen Only">Kitchen Only</option>
+              <option value="With Appliances">With Appliances</option>
+            </select>
+          </Field>
+          <Field label="Custom Furnished" hint="Overrides dropdown on public page">
+            <input
+              type="text"
+              value={form.custom_furnished}
+              onChange={(e) => set("custom_furnished", e.target.value)}
+              className={inputCls}
+              placeholder="e.g. Fully furnished, luxury fittings"
+            />
+          </Field>
+        </div>
+      </Section>
+
       {/* ── Windows & Construction ────────────────────────────────────────── */}
       <Section title="Windows & Construction">
         <div className="grid grid-cols-2 gap-4">
@@ -1133,38 +1174,60 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
       {/* ── Heating / Cooling ────────────────────────────────────────────── */}
       <Section title="Heating / Cooling">
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Heating Type">
-            <select
-              value={form.heating_type}
-              onChange={(e) => set("heating_type", e.target.value)}
-              className={inputCls}
-            >
-              <option value="">— select —</option>
-              <option value="central">Central</option>
-              <option value="autonomous">Autonomous</option>
-              <option value="underfloor">Underfloor</option>
-              <option value="heat_pump">Heat Pump</option>
-              <option value="air_conditioning">Air Conditioning</option>
-              <option value="electric">Electric</option>
-              <option value="natural_gas">Natural Gas</option>
-              <option value="oil">Oil</option>
-              <option value="none">None</option>
-            </select>
-          </Field>
-          <Field label="Cooling Type">
-            <select
-              value={form.cooling_type}
-              onChange={(e) => set("cooling_type", e.target.value)}
-              className={inputCls}
-            >
-              <option value="">— select —</option>
-              <option value="central_ac">Central A/C</option>
-              <option value="split_units">Split Units</option>
-              <option value="fan">Fan</option>
-              <option value="underfloor">Underfloor Cooling</option>
-              <option value="none">None</option>
-            </select>
-          </Field>
+          <div className="flex flex-col gap-2">
+            <Field label="Heating Type">
+              <select
+                value={form.heating_type}
+                onChange={(e) => set("heating_type", e.target.value)}
+                className={inputCls}
+              >
+                <option value="">— select —</option>
+                <option value="central">Central</option>
+                <option value="autonomous">Autonomous</option>
+                <option value="underfloor">Underfloor</option>
+                <option value="heat_pump">Heat Pump</option>
+                <option value="air_conditioning">Air Conditioning</option>
+                <option value="electric">Electric</option>
+                <option value="natural_gas">Natural Gas</option>
+                <option value="oil">Oil</option>
+                <option value="none">None</option>
+              </select>
+            </Field>
+            <Field label="Custom Heating" hint="Overrides dropdown on public page">
+              <input
+                type="text"
+                value={form.custom_heating}
+                onChange={(e) => set("custom_heating", e.target.value)}
+                className={inputCls}
+                placeholder="e.g. Pellet stove + underfloor"
+              />
+            </Field>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Field label="Cooling Type">
+              <select
+                value={form.cooling_type}
+                onChange={(e) => set("cooling_type", e.target.value)}
+                className={inputCls}
+              >
+                <option value="">— select —</option>
+                <option value="central_ac">Central A/C</option>
+                <option value="split_units">Split Units</option>
+                <option value="fan">Fan</option>
+                <option value="underfloor">Underfloor Cooling</option>
+                <option value="none">None</option>
+              </select>
+            </Field>
+            <Field label="Custom Cooling" hint="Overrides dropdown on public page">
+              <input
+                type="text"
+                value={form.custom_cooling}
+                onChange={(e) => set("custom_cooling", e.target.value)}
+                className={inputCls}
+                placeholder="e.g. VRF system"
+              />
+            </Field>
+          </div>
         </div>
       </Section>
 
@@ -1359,7 +1422,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
                   }`}
                 >
                   <span
-                    className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+                    className="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded"
                     style={getBadgeStyle(c.value)}
                   >
                     {form.custom_badge}

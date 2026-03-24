@@ -186,6 +186,15 @@ export const PROPERTY_FEATURES: PropertyFeature[] = [
     showOnDetail: true,
     group: "layout",
   },
+  {
+    field: "furnished",
+    label: "Furnished",
+    icon: Sofa,
+    valueType: "string",
+    showOnCard: false,
+    showOnDetail: true,
+    group: "layout",
+  },
 
   // ── Building ──────────────────────────────────────────────────────────────
   {

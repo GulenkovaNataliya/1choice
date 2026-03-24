@@ -185,7 +185,6 @@ export default function PropertyCard({ property, testId }: Props) {
                   fontSize: 11,
                   fontWeight: 700,
                   whiteSpace: "nowrap",
-                  textTransform: "uppercase",
                   letterSpacing: "0.04em",
                   ...getBadgeStyle(property.custom_badge_color),
                 }}

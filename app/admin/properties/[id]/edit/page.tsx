@@ -18,7 +18,7 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
     supabase
       .from("properties")
       .select(
-        "id,property_code,title,slug,category,subtype,transaction_type,price_eur,location,location_text,summary,description,size_sqm,bedrooms,bathrooms,floor,year_built,year_renovated,building_condition,energy_class,heating_type,cooling_type,fireplace,elevator,security_door,alarm_system,video_doorphone,smart_home,satellite_tv,internet_ready,storage,sea_view,mountain_view,garden,pool,frames_type,double_glazing,triple_glazing,mosquito_screens,thermal_insulation,sound_insulation,flooring_type,living_rooms,kitchens,storage_rooms,wc,cover_image_url,gallery_image_urls,youtube_video_url,virtual_tour_url,latitude,longitude,approximate_location,address,show_address,is_golden_visa,featured,private_collection,publish_1choice,publish_deals,status,agent_notes,custom_badge,custom_badge_color"
+        "id,property_code,title,slug,category,subtype,transaction_type,price_eur,location,location_text,summary,description,size_sqm,bedrooms,bathrooms,floor,year_built,year_renovated,building_condition,energy_class,heating_type,custom_heating,cooling_type,custom_cooling,fireplace,elevator,security_door,alarm_system,video_doorphone,smart_home,satellite_tv,internet_ready,storage,sea_view,mountain_view,garden,pool,frames_type,double_glazing,triple_glazing,mosquito_screens,thermal_insulation,sound_insulation,flooring_type,living_rooms,kitchens,storage_rooms,wc,furnished,custom_furnished,cover_image_url,gallery_image_urls,youtube_video_url,virtual_tour_url,latitude,longitude,approximate_location,address,show_address,is_golden_visa,featured,private_collection,publish_1choice,publish_deals,status,agent_notes,custom_badge,custom_badge_color"
       )
       .eq("id", id)
       .single(),
@@ -61,7 +61,9 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
     building_condition: property.building_condition ?? "",
     energy_class: property.energy_class ?? "",
     heating_type: (property as { heating_type?: string | null }).heating_type ?? "",
+    custom_heating: (property as { custom_heating?: string | null }).custom_heating ?? "",
     cooling_type: (property as { cooling_type?: string | null }).cooling_type ?? "",
+    custom_cooling: (property as { custom_cooling?: string | null }).custom_cooling ?? "",
     fireplace: property.fireplace ?? false,
     elevator: property.elevator ?? false,
     security_door: property.security_door ?? false,
@@ -86,6 +88,8 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
     kitchens: property.kitchens != null ? String(property.kitchens) : "",
     storage_rooms: property.storage_rooms != null ? String(property.storage_rooms) : "",
     wc: property.wc != null ? String(property.wc) : "",
+    furnished: (property as { furnished?: string | null }).furnished ?? "",
+    custom_furnished: (property as { custom_furnished?: string | null }).custom_furnished ?? "",
     cover_image_url: property.cover_image_url ?? "",
     gallery_image_urls: (property.gallery_image_urls as string[] | null) ?? [],
     is_golden_visa: property.is_golden_visa ?? false,

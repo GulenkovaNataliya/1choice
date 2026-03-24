@@ -1203,7 +1203,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
             }));
           }}
         />
-        <p className="text-xs text-[#AAAAAA]">Recommended: 1200×800px · JPG or WebP · max 20 images · at least 1 photo required to publish</p>
+        <p className="text-xs text-[#AAAAAA]">Recommended: 1200×800px · JPG or WebP · at least 1 photo required to publish</p>
         <Field label="YouTube Video URL" hint="optional">
           <input
             type="url"

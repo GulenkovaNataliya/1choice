@@ -29,29 +29,31 @@ export default function FavoriteButton({ propertyId, variant = "card" }: Props) 
         onClick={handleClick}
         aria-label={saved ? "Remove from saved" : "Save property"}
         style={{
-          display: "inline-flex",
+          width: 44,
+          height: 44,
+          borderRadius: 10,
+          border: "none",
+          background: saved ? "#C1121F" : "rgba(255,255,255,0.88)",
+          backdropFilter: "blur(4px)",
+          WebkitBackdropFilter: "blur(4px)",
+          display: "flex",
           alignItems: "center",
-          gap: 6,
-          padding: "6px 14px",
-          borderRadius: 999,
-          border: saved ? "1.5px solid #C1121F" : "1.5px solid #D9D9D9",
-          background: saved ? "#FFF0F0" : "#FFFFFF",
-          color: saved ? "#C1121F" : "#888888",
-          fontSize: 13,
-          fontWeight: 500,
+          justifyContent: "center",
           cursor: "pointer",
-          transition: "all 0.15s",
-          // hidden until hydrated to prevent flash of wrong state
+          padding: 0,
+          transition: "transform 0.15s, background 0.15s",
           visibility: hydrated ? "visible" : "hidden",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
         }}
+        onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.08)"; }}
+        onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
       >
         <Heart
-          size={14}
-          fill={saved ? "#C1121F" : "none"}
-          color={saved ? "#C1121F" : "#888888"}
-          strokeWidth={1.8}
+          size={22}
+          fill={saved ? "#FFFFFF" : "none"}
+          color={saved ? "#FFFFFF" : "#C1121F"}
+          strokeWidth={2}
         />
-        {saved ? "Saved" : "Save"}
       </button>
     );
   }

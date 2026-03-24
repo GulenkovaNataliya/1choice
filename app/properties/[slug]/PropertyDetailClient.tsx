@@ -221,12 +221,14 @@ function LocationBlock({
   latitude,
   longitude,
   approximate_location,
+  show_address,
   areaLabel,
   mapsQuery,
 }: {
   latitude: number | null;
   longitude: number | null;
   approximate_location: boolean | null;
+  show_address: boolean | null;
   areaLabel: string;
   mapsQuery: string;
 }) {
@@ -236,8 +238,12 @@ function LocationBlock({
     typeof longitude === "number" &&
     isFinite(longitude);
 
+  // Exact map only when: coords exist, NOT flagged approximate, and NOT explicitly hidden via show_address=false
+  // show_address=null is treated as "not hidden" (not explicitly set either way).
+  const showExact = hasCoords && !approximate_location && show_address !== false;
+
   // ── Scenario 1: exact known coordinates ───────────────────────────────────
-  if (hasCoords && !approximate_location) {
+  if (showExact) {
     const lat = latitude as number;
     const lng = longitude as number;
     const d = 0.005; // ~500 m delta
@@ -270,8 +276,8 @@ function LocationBlock({
     );
   }
 
-  // ── Scenario 2: coordinates exist but flagged as approximate ──────────────
-  if (hasCoords && approximate_location) {
+  // ── Scenario 2: coordinates exist but privacy requires approximate display ─
+  if (hasCoords) {
     const lat = latitude as number;
     const lng = longitude as number;
     const d = 0.012; // larger bbox to convey imprecision (~1.2 km)
@@ -377,15 +383,20 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
     <main className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 pb-20">
 
-        {/* Gallery — full width */}
-        <PropertyGalleryClient
-          title={title}
-          coverUrl={coverUrl}
-          galleryUrls={Array.isArray(gallery_image_urls) ? gallery_image_urls : []}
-          isFeatured={featured ?? false}
-          isGoldenVisa={is_golden_visa ?? false}
-          is1ChoiceDeal={publish_deals ?? false}
-        />
+        {/* Gallery — full width, with favorite overlay top-right */}
+        <div className="relative">
+          <PropertyGalleryClient
+            title={title}
+            coverUrl={coverUrl}
+            galleryUrls={Array.isArray(gallery_image_urls) ? gallery_image_urls : []}
+            isFeatured={featured ?? false}
+            isGoldenVisa={is_golden_visa ?? false}
+            is1ChoiceDeal={publish_deals ?? false}
+          />
+          <div className="absolute top-3 right-3 z-10">
+            <FavoriteButton propertyId={property.id} variant="detail" />
+          </div>
+        </div>
 
         {/* 2-column layout */}
         <div className="flex flex-col md:flex-row gap-10 mt-10">
@@ -402,7 +413,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
               <h1 className="text-2xl md:text-3xl font-bold text-[#1E1E1E] leading-tight mb-2">
                 {title}
               </h1>
-              <p className="text-[#404040] text-sm mb-3">{areaLabel}</p>
+              <p className="text-[#3A2E4F] text-sm mb-3">{areaLabel}</p>
 
               {/* Inline badges */}
               <div className="flex flex-wrap gap-2">
@@ -431,10 +442,6 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                 )}
               </div>
 
-              {/* Save button */}
-              <div className="mt-1">
-                <FavoriteButton propertyId={property.id} variant="detail" />
-              </div>
             </div>
 
             {/* Price */}
@@ -444,14 +451,14 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
 
             {/* Summary */}
             {summary && (
-              <p className="text-[#404040] text-sm leading-relaxed font-medium">
+              <p className="text-[#404040] text-sm leading-relaxed font-medium whitespace-pre-line">
                 {summary}
               </p>
             )}
 
             {/* Description */}
             {description && (
-              <div className="text-[#404040] text-sm leading-relaxed">
+              <div className="text-[#404040] text-sm leading-relaxed whitespace-pre-line">
                 {description}
               </div>
             )}
@@ -670,6 +677,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
           latitude={property.latitude}
           longitude={property.longitude}
           approximate_location={property.approximate_location}
+          show_address={property.show_address}
           areaLabel={areaLabel}
           mapsQuery={mapsQuery}
         />

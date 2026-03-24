@@ -152,6 +152,26 @@ function toSlug(title: string): string {
     .replace(/-+/g, "-");
 }
 
+/**
+ * Returns a slug that does not already exist in the properties table.
+ * Fetches all slugs starting with `base` in one query, then finds the
+ * first free candidate: base → base-2 → base-3 … → base-99 → base-<ts>.
+ */
+async function findUniqueSlug(base: string): Promise<string> {
+  const supabase = getSupabase();
+  const { data } = await supabase
+    .from("properties")
+    .select("slug")
+    .like("slug", `${base}%`);
+  const taken = new Set((data ?? []).map((r: { slug: string | null }) => r.slug));
+  if (!taken.has(base)) return base;
+  for (let i = 2; i <= 99; i++) {
+    const candidate = `${base}-${i}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+  return `${base}-${Date.now()}`;
+}
+
 function buildPayload(form: FormState, resolveSlug = false) {
   return {
     title: form.title,
@@ -679,8 +699,14 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
           if (slugChanged) originalSlugRef.current = newSlug;
         }
       } else {
-        const insertPayload = { property_code: propertyCode, ...buildPayload(form, true) };
-        console.log("[PropertyForm] create — payload keys:", Object.keys(insertPayload).sort().join(", "));
+        const baseSlug = form.slug.trim() || toSlug(form.title);
+        const uniqueSlug = await findUniqueSlug(baseSlug);
+        const insertPayload = {
+          property_code: propertyCode,
+          ...buildPayload(form, false), // slug resolved below; skip internal resolution
+          slug: uniqueSlug,
+        };
+        console.log("[PropertyForm] create — slug:", uniqueSlug, "| payload keys:", Object.keys(insertPayload).sort().join(", "));
         const { data: created, error } = await supabase
           .from("properties")
           .insert(insertPayload)

@@ -5,7 +5,6 @@ import type { PropertyRow } from "@/lib/properties/fetchProperties";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { fetchActiveAreas } from "@/lib/areas";
 import PopularAreaLinks from "@/components/Locations/PopularAreaLinks";
-import { listingFreshnessCutoff } from "@/lib/properties/publicListingFilters";
 import { LOCATION_SEO_CONFIG } from "@/lib/locations/locationSeoConfig";
 
 export async function generateMetadata({
@@ -65,7 +64,6 @@ export default async function PropertiesPage({
     .eq("status", "published")         // only published listings
     .eq("publish_1choice", true)        // only listings enabled for 1Choice
     .neq("private_collection", true)    // exclude private inventory
-    .gte("updated_at", listingFreshnessCutoff()) // hide listings not updated in 90 days
     .order("featured", { ascending: false })
     .order("created_at", { ascending: false })
     .range(from, to);

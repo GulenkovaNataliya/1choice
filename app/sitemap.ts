@@ -44,7 +44,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // canonical for those is the plain /properties page.
   const { data: properties } = await supabase
     .from("properties")
-    .select("slug, updated_at")
+    .select("slug, created_at")
     .eq("status", "published")
     .eq("publish_1choice", true)
     .or("private_collection.is.null,private_collection.eq.false")
@@ -52,7 +52,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const propertyEntries: MetadataRoute.Sitemap = (properties ?? []).map((p) => ({
     url: `${BASE_URL}/properties/${p.slug}`,
-    lastModified: p.updated_at ? new Date(p.updated_at) : undefined,
+    lastModified: p.created_at ? new Date(p.created_at) : undefined,
     changeFrequency: "weekly" as const,
     priority: 0.8,
   }));

@@ -5,7 +5,6 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import PropertyCard from "@/components/Property/PropertyCard";
 import LocationCtaBar from "./LocationCtaBar";
 import { LOCATION_SEO_CONFIG, LOCATION_SLUGS } from "@/lib/locations/locationSeoConfig";
-import { listingFreshnessCutoff } from "@/lib/properties/publicListingFilters";
 
 // ── Static params — pre-render all known location slugs at build time ──────────
 
@@ -101,7 +100,6 @@ export default async function LocationPage({
     .eq("status", "published")
     .eq("publish_1choice", true)
     .neq("private_collection", true)
-    .gte("updated_at", listingFreshnessCutoff())
     .order("featured", { ascending: false })
     .order("created_at", { ascending: false });
 

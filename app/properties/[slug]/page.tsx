@@ -5,7 +5,6 @@ import SetChatContext from "@/components/chat/SetChatContext";
 import { renderImageUrl } from "@/lib/storage/imageUrl";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { LOCATION_SEO_CONFIG } from "@/lib/locations/locationSeoConfig";
-import { listingFreshnessCutoff } from "@/lib/properties/publicListingFilters";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -169,7 +168,6 @@ export default async function PropertyDetailPage({
       .eq("private_collection", false)
       .neq("slug", slug)
       .eq("location", propLocation)
-      .gte("updated_at", listingFreshnessCutoff())
       .order("featured", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(6);
@@ -189,7 +187,6 @@ export default async function PropertyDetailPage({
       .neq("slug", slug)
       .not("id", "in", `(${excludeIds.join(",")})`)
       .eq("category", propCategory)
-      .gte("updated_at", listingFreshnessCutoff())
       .order("featured", { ascending: false })
       .limit(4);
     const { data } =

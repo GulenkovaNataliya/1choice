@@ -9,7 +9,6 @@
  */
 
 import { createSupabaseAdminClient } from "@/lib/supabase/adminClient";
-import { listingFreshnessCutoff } from "@/lib/properties/publicListingFilters";
 
 // ── Public result type ─────────────────────────────────────────────────────────
 
@@ -154,7 +153,6 @@ export async function searchProperties(
     .eq("status", "published")
     .eq("publish_1choice", true)
     .or("private_collection.is.null,private_collection.eq.false")
-    .gte("updated_at", listingFreshnessCutoff())
     .order("featured", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(50);

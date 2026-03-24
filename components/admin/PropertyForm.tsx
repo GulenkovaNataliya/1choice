@@ -751,7 +751,11 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
 
       lastSavedRef.current = JSON.stringify(form);
       setSaveStatus("saved");
-      router.push("/admin/properties");
+      if (mode === "create") {
+        router.push("/admin/properties");
+      } else {
+        setLoading(false);
+      }
     } catch (err) {
       console.error("[PropertyForm] unexpected error:", err);
       setError("An unexpected error occurred. Please check your connection and try again.");

@@ -160,9 +160,11 @@ function buildPayload(form: FormState, resolveSlug = false) {
     subtype: form.subtype || null,
     transaction_type: form.transaction_type || null,
     price_eur: form.price_eur ? Number(form.price_eur) : null,
+    price:     form.price_eur ? Number(form.price_eur) : null, // legacy column kept in sync
     location: form.location_slug || null,
     location_text: form.location_text || null,
     size_sqm: form.size_sqm ? Number(form.size_sqm) : null,
+    size:     form.size_sqm  ? Number(form.size_sqm)  : null, // legacy column kept in sync
     bedrooms: form.bedrooms ? Number(form.bedrooms) : null,
     bathrooms: form.bathrooms ? Number(form.bathrooms) : null,
     floor: form.floor ? Number(form.floor) : null,
@@ -615,7 +617,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
-    // ── Publish validation ───────────────────────────────────────────────────
+    // ── Publish validation (draft saves skip this block entirely) ────────────
     if (form.status === "published") {
       const errs: string[] = [];
       if (!form.title.trim())              errs.push("Title is required.");
@@ -625,7 +627,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
       if (!form.description.trim() && !form.summary.trim())
                                            errs.push("Description or summary is required to publish.");
       if (errs.length > 0) {
-        setError(errs.join(" "));
+        setError("Cannot publish — please fix:\n• " + errs.join("\n• "));
         return;
       }
     }
@@ -754,7 +756,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg whitespace-pre-line">
           {error}
         </div>
       )}

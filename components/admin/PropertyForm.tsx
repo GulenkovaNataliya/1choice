@@ -677,9 +677,11 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
           if (slugChanged) originalSlugRef.current = newSlug;
         }
       } else {
+        const insertPayload = { property_code: propertyCode, ...buildPayload(form, true) };
+        console.log("[PropertyForm] create — payload keys:", Object.keys(insertPayload).sort().join(", "));
         const { data: created, error } = await supabase
           .from("properties")
-          .insert({ property_code: propertyCode, ...buildPayload(form, true) })
+          .insert(insertPayload)
           .select("id")
           .single();
         dbError = error;
@@ -687,8 +689,15 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
       }
 
       if (dbError) {
-        console.error("[PropertyForm] save error:", dbError);
-        setError("Failed to save property. Please try again.");
+        console.error("[PropertyForm] save error:", {
+          mode,
+          code: (dbError as { code?: string }).code,
+          message: dbError.message,
+          details: (dbError as { details?: string }).details,
+          hint: (dbError as { hint?: string }).hint,
+        });
+        const dbMsg = dbError.message ?? "";
+        setError(dbMsg ? `Failed to save property: ${dbMsg}` : "Failed to save property. Please try again.");
         setSaveStatus("error");
         setLoading(false);
         return;

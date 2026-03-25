@@ -264,10 +264,9 @@ LANGUAGE:
 - If the user writes in a specific language, ALWAYS respond in that same language
 - For intent selections (pre-defined actions without natural text), respond in: ${langName}
 - Supported languages: English, Russian, Greek, Arabic, Hebrew — use whichever fits the user's message
-${uiLang === "ar" || uiLang === "he" ? `
+${!["en", "ru", "el", "ar", "he"].includes(uiLang) ? `
 PROPERTY SEARCH NOTE:
-Structured database search for properties works only with English, Russian, or Greek input.
-If the user describes a property search request (location, size, type, price, amenities) in Arabic or Hebrew, politely tell them — in their language — that the search works better in English, and ask them to describe their requirements in English. Keep the message short.` : ""}${contextBlock}${matchesBlock}
+Structured database search works best with English input. If the user describes a property search request in an unsupported language, politely ask them to describe their requirements in English. Keep the message short.` : ""}${contextBlock}${matchesBlock}
 
 RESPONSE FORMAT:
 You MUST call the "respond" function with exactly these fields:

@@ -5,6 +5,7 @@ import {
   hasCriteria,
   searchProperties,
   type ChatProperty,
+  type SearchResult,
 } from "@/lib/chat/propertySearch";
 import { getAiClient } from "@/lib/chat/aiClient";
 import { detectLang, getFormStrings } from "@/lib/chat/chatI18n";
@@ -206,9 +207,10 @@ function buildSystemPrompt(opts: {
   propertyCode:     string | null;
   propertyLocation: string | null;
   propertyMatches:  ChatMatch[];
+  matchesExact:     boolean;
   pagePathname:     string | null;
 }): string {
-  const { uiLang, propertyTitle, propertyCode, propertyLocation, propertyMatches, pagePathname } = opts;
+  const { uiLang, propertyTitle, propertyCode, propertyLocation, propertyMatches, matchesExact, pagePathname } = opts;
 
   const langName =
     uiLang === "ru" ? "Russian" :
@@ -230,7 +232,9 @@ function buildSystemPrompt(opts: {
   // Search results block
   let matchesBlock = "";
   if (propertyMatches.length > 0) {
-    matchesBlock = "\nAVAILABLE PROPERTY MATCHES (from verified portfolio):";
+    matchesBlock = matchesExact
+      ? "\nAVAILABLE PROPERTY MATCHES (exact match for user's criteria):"
+      : "\nAVAILABLE PROPERTY MATCHES (no exact match — closest public alternatives from portfolio):";
     for (const p of propertyMatches) {
       matchesBlock += `\n- "${p.title}"`;
       if (p.location_text) matchesBlock += ` in ${p.location_text}`;
@@ -260,7 +264,10 @@ LANGUAGE:
 - If the user writes in a specific language, ALWAYS respond in that same language
 - For intent selections (pre-defined actions without natural text), respond in: ${langName}
 - Supported languages: English, Russian, Greek, Arabic, Hebrew — use whichever fits the user's message
-${contextBlock}${matchesBlock}
+${uiLang === "ar" || uiLang === "he" ? `
+PROPERTY SEARCH NOTE:
+Structured database search for properties works only with English, Russian, or Greek input.
+If the user describes a property search request (location, size, type, price, amenities) in Arabic or Hebrew, politely tell them — in their language — that the search works better in English, and ask them to describe their requirements in English. Keep the message short.` : ""}${contextBlock}${matchesBlock}
 
 RESPONSE FORMAT:
 You MUST call the "respond" function with exactly these fields:
@@ -325,7 +332,14 @@ async function callAi(opts: {
       usage:           { input_tokens: response.usage.input_tokens, output_tokens: response.usage.output_tokens },
     };
   } catch (err) {
-    console.error("[chat-ai] error:", err instanceof Error ? err.message : err);
+    // Log enough context to diagnose: missing API key → 401, quota → 429, timeout → message
+    const isObj = err !== null && typeof err === "object";
+    console.error("[chat-ai] error:", JSON.stringify({
+      message: isObj && "message" in err ? (err as { message: unknown }).message : String(err),
+      status:  isObj && "status"  in err ? (err as { status:  unknown }).status  : undefined,
+      type:    isObj && "error"   in err && err.error !== null && typeof err.error === "object" && "type" in (err.error as object)
+               ? (err as { error: { type: unknown } }).error.type : undefined,
+    }));
     return null;
   }
 }
@@ -422,10 +436,13 @@ export async function POST(request: NextRequest) {
   // Only returned to client when matches are found.
   //
   let propertyMatches: ChatMatch[] = [];
+  let matchesExact = true;
   try {
     const criteria = await parseCriteria(userText);
     if (hasCriteria(criteria)) {
-      propertyMatches = await searchProperties(criteria);
+      const sr: SearchResult = await searchProperties(criteria);
+      propertyMatches = sr.results;
+      matchesExact    = sr.isExact;
     }
   } catch {
     // Non-fatal — AI continues without matches
@@ -451,6 +468,7 @@ export async function POST(request: NextRequest) {
     propertyCode,
     propertyLocation,
     propertyMatches,
+    matchesExact,
     pagePathname: pathname,
   });
 

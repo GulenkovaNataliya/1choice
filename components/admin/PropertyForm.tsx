@@ -47,6 +47,7 @@ type FormState = {
   mountain_view: boolean;
   garden: boolean;
   pool: boolean;
+  parking: boolean;
   frames_type: string;
   double_glazing: boolean;
   triple_glazing: boolean;
@@ -118,6 +119,7 @@ const INITIAL: FormState = {
   mountain_view: false,
   garden: false,
   pool: false,
+  parking: false,
   frames_type: "",
   double_glazing: false,
   triple_glazing: false,
@@ -221,6 +223,7 @@ function buildPayload(form: FormState, resolveSlug = false) {
     mountain_view: form.mountain_view,
     garden: form.garden,
     pool: form.pool,
+    parking: form.parking,
     frames_type: form.frames_type || null,
     double_glazing: form.double_glazing,
     triple_glazing: form.triple_glazing,
@@ -1052,6 +1055,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
           <Checkbox label="Storage"         checked={form.storage}         onChange={(v) => set("storage", v)} />
           <Checkbox label="Pool"            checked={form.pool}            onChange={(v) => set("pool", v)} />
           <Checkbox label="Garden"          checked={form.garden}          onChange={(v) => set("garden", v)} />
+          <Checkbox label="Parking"         checked={form.parking}         onChange={(v) => set("parking", v)} />
           <Checkbox label="Sea View"        checked={form.sea_view}        onChange={(v) => set("sea_view", v)} />
           <Checkbox label="Mountain View"   checked={form.mountain_view}   onChange={(v) => set("mountain_view", v)} />
         </div>

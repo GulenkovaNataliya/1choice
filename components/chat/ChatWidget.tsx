@@ -238,16 +238,16 @@ const VOICE_LANGS = [
 
 type VoiceLangCode = typeof VOICE_LANGS[number]["code"];
 
-// Default: check localStorage → match navigator.language → fall back to en-US
+// Default: check localStorage → fall back to en-US.
+// navigator.language is intentionally NOT used: auto-detecting to Russian/Hebrew/etc.
+// based on the browser locale caused localized error strings to appear in the English
+// chat flow for users whose browser language differs from the page language.
+// Language is only changed from English when the user explicitly picks it via the
+// language selector inside the chat widget.
 function resolveDefaultLang(): VoiceLangCode {
   if (typeof window === "undefined") return "en-US";
   const saved = localStorage.getItem(STT_LANG_KEY) as VoiceLangCode | null;
   if (saved && VOICE_LANGS.some((l) => l.code === saved)) return saved;
-  const nav = navigator.language ?? "";
-  if (nav.startsWith("ar")) return "ar";
-  if (nav.startsWith("he")) return "he-IL";
-  if (nav.startsWith("ru")) return "ru-RU";
-  if (nav.startsWith("el")) return "el-GR";
   return "en-US";
 }
 

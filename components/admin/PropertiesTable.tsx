@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getSupabase } from "@/lib/supabase/client";
 import DealsExportModal from "@/components/admin/DealsExportModal";
+import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
 import { logActivity, type ActivityAction } from "@/lib/admin/logActivity";
 
 export type AdminProperty = {
@@ -100,12 +101,14 @@ function PropertyRow({
   onToggle,
   onRefresh,
   onExport,
+  onDeleteRequest,
 }: {
   property: AdminProperty;
   checked: boolean;
   onToggle: () => void;
   onRefresh: () => void;
   onExport: () => void;
+  onDeleteRequest: (id: string, title: string) => void;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -176,17 +179,6 @@ function PropertyRow({
     const supabase = getSupabase();
     const { error } = await supabase.from("properties").update({ status: "draft" }).eq("id", property.id);
     if (!error) logActivity(property.id, "property_restored", { previous_status: "archived", new_status: "draft", property_code: property.property_code });
-    setBusy(false);
-    onRefresh();
-  }
-
-  async function remove() {
-    const input = window.prompt("Type DELETE to permanently remove this property:");
-    if (input !== "DELETE") return;
-    setBusy(true);
-    const supabase = getSupabase();
-    await logActivity(property.id, "property_deleted", { title: property.title, property_code: property.property_code });
-    await supabase.from("properties").delete().eq("id", property.id);
     setBusy(false);
     onRefresh();
   }
@@ -354,9 +346,14 @@ function PropertyRow({
             {isArchived
               ? <ActionButton onClick={restore} disabled={busy} className="text-green-700 hover:text-green-900">Restore</ActionButton>
               : <ActionButton onClick={archive} disabled={busy} className="text-[#888888] hover:text-[#1E1E1E]">Archive</ActionButton>}
-            <ActionButton onClick={remove} disabled={busy} className="text-red-600 hover:text-red-800">
+            <button
+              type="button"
+              onClick={() => onDeleteRequest(property.id, property.title)}
+              disabled={busy}
+              className="rounded-lg border border-[#D9D9D9] px-3 py-2 text-xs text-[#C1121F] transition hover:bg-[#FFF7F7] disabled:opacity-40 disabled:cursor-default"
+            >
               Delete
-            </ActionButton>
+            </button>
           </div>
         </div>
       </td>
@@ -530,11 +527,71 @@ function FilterBar({
 
 const COL_COUNT = 11; // checkbox + 9 data cols + actions
 
+// Delete target: either a single row or a bulk selection.
+type DeleteTarget =
+  | { kind: "single"; id: string; title: string }
+  | { kind: "bulk"; ids: string[]; title: string };
+
 export default function PropertiesTable({ rows }: { rows: AdminProperty[] }) {
   const router = useRouter();
   const [exportId, setExportId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+
+  // ── Delete modal state ─────────────────────────────────────────────────────
+  const [deleteTarget,  setDeleteTarget]  = useState<DeleteTarget | null>(null);
+  const [deleteValue,   setDeleteValue]   = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  function openDeleteModal(id: string, title: string) {
+    setDeleteTarget({ kind: "single", id, title });
+    setDeleteValue("");
+  }
+
+  function openBulkDeleteModal() {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    setDeleteTarget({
+      kind:  "bulk",
+      ids,
+      title: `${ids.length} propert${ids.length === 1 ? "y" : "ies"}`,
+    });
+    setDeleteValue("");
+  }
+
+  function closeDeleteModal() {
+    if (deleteLoading) return;
+    setDeleteTarget(null);
+    setDeleteValue("");
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget || deleteValue.trim() !== "DELETE") return;
+    setDeleteLoading(true);
+    try {
+      const supabase = getSupabase();
+      if (deleteTarget.kind === "single") {
+        const { id } = deleteTarget;
+        const p = rows.find((r) => r.id === id);
+        await logActivity(id, "property_deleted", { title: p?.title ?? "", property_code: p?.property_code });
+        await supabase.from("properties").delete().eq("id", id);
+      } else {
+        const { ids } = deleteTarget;
+        await Promise.all(
+          ids.map((id) => {
+            const p = rows.find((r) => r.id === id);
+            return logActivity(id, "properties_bulk_deleted", { title: p?.title ?? "", count: ids.length, property_code: p?.property_code });
+          })
+        );
+        await supabase.from("properties").delete().in("id", ids);
+      }
+      setDeleteTarget(null);
+      setDeleteValue("");
+      refresh();
+    } finally {
+      setDeleteLoading(false);
+    }
+  }
 
   // ── Filter / sort state ────────────────────────────────────────────────────
   const [search,     setSearch]     = useState("");
@@ -638,22 +695,8 @@ export default function PropertiesTable({ rows }: { rows: AdminProperty[] }) {
     refresh();
   }
 
-  async function bulkDelete() {
-    const input = window.prompt(`Type DELETE to permanently remove ${selected.size} propert${selected.size === 1 ? "y" : "ies"}:`);
-    if (input !== "DELETE") return;
-    setBulkBusy(true);
-    const ids = [...selected];
-    const supabase = getSupabase();
-    // Log all before deleting
-    await Promise.all(
-      ids.map((id) => {
-        const p = rows.find((r) => r.id === id);
-        return logActivity(id, "properties_bulk_deleted", { title: p?.title ?? "", count: ids.length, property_code: p?.property_code });
-      })
-    );
-    await supabase.from("properties").delete().in("id", ids);
-    setBulkBusy(false);
-    refresh();
+  function bulkDelete() {
+    openBulkDeleteModal();
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -663,6 +706,16 @@ export default function PropertiesTable({ rows }: { rows: AdminProperty[] }) {
       {exportId && (
         <DealsExportModal propertyId={exportId} onClose={() => setExportId(null)} />
       )}
+
+      <DeleteConfirmModal
+        open={deleteTarget !== null}
+        propertyTitle={deleteTarget?.title ?? ""}
+        value={deleteValue}
+        loading={deleteLoading}
+        onChange={setDeleteValue}
+        onCancel={closeDeleteModal}
+        onConfirm={confirmDelete}
+      />
 
       <FilterBar
         search={search}
@@ -741,6 +794,7 @@ export default function PropertiesTable({ rows }: { rows: AdminProperty[] }) {
                     onToggle={() => toggleOne(p.id)}
                     onRefresh={refresh}
                     onExport={() => setExportId(p.id)}
+                    onDeleteRequest={openDeleteModal}
                   />
                 ))
               )}

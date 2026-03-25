@@ -27,6 +27,13 @@ import { sendLeadEmailNotification } from "@/lib/notifications/sendLeadEmailNoti
 
 const WHATSAPP_RE = /^\+[1-9]\d{7,14}$/;
 
+// ── Input length caps ─────────────────────────────────────────────────────────
+
+const MAX_NAME     = 120;
+const MAX_PHONE    = 40;
+const MAX_EMAIL    = 200;
+const MAX_NOTES    = 4000;
+
 // ── In-memory rate limiter ────────────────────────────────────────────────────
 //
 // Per-IP, resets on serverless cold start — acceptable for MVP.
@@ -34,8 +41,8 @@ const WHATSAPP_RE = /^\+[1-9]\d{7,14}$/;
 //
 type RateBucket = { count: number; resetAt: number };
 const rateLimitMap = new Map<string, RateBucket>();
-const RATE_LIMIT  = 5;             // submissions per window
-const RATE_WINDOW = 15 * 60_000;  // 15 minutes in ms
+const RATE_LIMIT  = 10;            // submissions per window
+const RATE_WINDOW = 60_000;        // 1-minute window
 
 function getClientIp(request: NextRequest): string {
   return (
@@ -62,7 +69,7 @@ setInterval(() => {
   for (const [ip, bucket] of rateLimitMap.entries()) {
     if (now > bucket.resetAt) rateLimitMap.delete(ip);
   }
-}, 15 * 60_000);
+}, 5 * 60_000);
 
 export async function POST(request: NextRequest) {
   // ── Rate limit ──────────────────────────────────────────────────────────────
@@ -109,6 +116,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // ── Field length caps ─────────────────────────────────────────────────────
+  if (name.length > MAX_NAME)         return NextResponse.json({ error: "Name too long" },  { status: 400 });
+  if (whatsapp.length > MAX_PHONE)    return NextResponse.json({ error: "Phone too long" }, { status: 400 });
+
   // ── Optional fields ───────────────────────────────────────────────────────
 
   const email  = typeof body.email  === "string" ? body.email.trim()  : null;
@@ -117,6 +128,9 @@ export async function POST(request: NextRequest) {
   const source = typeof body.source === "string" ? body.source        : "other";
 
   const page_url = typeof body.page_url === "string" ? body.page_url : null;
+
+  if (email  && email.length  > MAX_EMAIL) return NextResponse.json({ error: "Email too long" },   { status: 400 });
+  if (notes  && notes.length  > MAX_NOTES) return NextResponse.json({ error: "Notes too long" },   { status: 400 });
 
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "Invalid email address" }, { status: 422 });
@@ -213,11 +227,10 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) {
+    // Log only code + truncated message — details/hint may reflect inserted values
     console.error("[POST /api/leads] insert error:", JSON.stringify({
-      message: error.message,
       code:    error.code,
-      details: error.details,
-      hint:    error.hint,
+      message: error.message?.slice(0, 120),
     }));
     return NextResponse.json({ error: "Failed to save lead" }, { status: 500 });
   }

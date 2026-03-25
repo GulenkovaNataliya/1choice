@@ -124,14 +124,15 @@ const INJECTION_PATTERNS: RegExp[] = [
 
 // ── Input controls ─────────────────────────────────────────────────────────────
 
-const MAX_MESSAGE_LENGTH = 500;
+const MIN_MESSAGE_LENGTH = 2;
+const MAX_MESSAGE_LENGTH = 1000;
 
 // ── In-memory rate limiter ────────────────────────────────────────────────────
 
 type RateBucket = { count: number; resetAt: number };
 const rateLimitMap = new Map<string, RateBucket>();
 const RATE_LIMIT  = 20;
-const RATE_WINDOW = 5 * 60_000;
+const RATE_WINDOW = 60_000;  // 1-minute window
 
 const ABUSE_STRIKE_THRESHOLD = 3;
 const ABUSE_BLOCK_DURATION   = 60 * 60_000;
@@ -392,10 +393,15 @@ export async function POST(request: NextRequest) {
   // ── Message length cap ────────────────────────────────────────────────────
   if (rawMessage !== null && rawMessage.length > MAX_MESSAGE_LENGTH) {
     logAbuse({ timestamp: new Date().toISOString(), ip, page_url: pathname, intent, blocked_reason: "message_too_long", message_length: rawMessage.length });
-    return NextResponse.json({ text: getRefusalMsg(uiLang) });
+    return NextResponse.json({ error: "Message too long" }, { status: 400 });
   }
 
   const message = rawMessage?.replace(/\s+/g, " ").trim() ?? null;
+
+  // ── Empty / too-short message ─────────────────────────────────────────────
+  if (message !== null && message.length < MIN_MESSAGE_LENGTH) {
+    return NextResponse.json({ error: "Empty message" }, { status: 400 });
+  }
 
   // ── Injection detection (runs BEFORE AI) ─────────────────────────────────
   if (message) {

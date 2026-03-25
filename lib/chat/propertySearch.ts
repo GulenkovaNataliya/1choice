@@ -98,16 +98,16 @@ async function extractLocation(message: string): Promise<string | null> {
 function parseAmount(rawNum: string, suffix: string): number | null {
   const raw = parseFloat(rawNum.replace(/[\s,_]/g, ""));
   if (isNaN(raw) || raw <= 0) return null;
-  const s = suffix.toLowerCase();
+  const s = suffix.toLowerCase().trim();
   let val = raw;
-  if (s === "m" || s === "million" || s === "млн" || s === "εκ") val = raw * 1_000_000;
-  else if (s === "k" || s === "thousand" || s === "тыс" || s === "χιλ" || s === "χ") val = raw * 1_000;
+  if (s === "m" || s === "million" || s === "млн" || s === "εκ" || s === "מיליון" || s === "مليون") val = raw * 1_000_000;
+  else if (s === "k" || s === "thousand" || s === "тыс" || s === "χιλ" || s === "χ" || s === "אלף" || s === "ألف") val = raw * 1_000;
   return val >= 50_000 ? val : null;
 }
 
 function extractMaxPrice(message: string): number | null {
   const re =
-    /€?\$?\s*([\d][\d\s,_]*(?:\.\d+)?)\s*(k|m|million|thousand|тыс|млн|εκ|χιλ|χ)?(?!\s*(?:bed|bath|floor|storey|room|sqm|sq|m²|m2|кв|τ\.μ))/gi;
+    /€?\$?\s*([\d][\d\s,_]*(?:\.\d+)?)\s*(k|m|million|thousand|тыс|млн|εκ|χιλ|χ|מיליון|אלף|مليون|ألف)?(?!\s*(?:bed|bath|floor|storey|room|sqm|sq|m²|m2|кв|τ\.μ|מ[״']\s*ר|מטר|متر))/gi;
   const candidates: number[] = [];
   let m: RegExpExecArray | null;
   while ((m = re.exec(message)) !== null) {
@@ -121,10 +121,14 @@ function extractMinPrice(message: string): number | null {
   // English: "from N", "starting at N", "above N", "over N", "minimum N", "at least N", "budget above N"
   // Russian: "от N" (e.g. "от 500к", "от €500,000")
   // Greek:   "από N" (e.g. "από 500χ", "από €500,000")
+  // Hebrew:  "מ-N", "ממחיר N", "לפחות N"
+  // Arabic:  "من N", "ابتداء من N", "على الأقل N"
   const patterns = [
     /(?:from|starting\s+at|above|over|minimum|at\s+least|budget\s+above|no\s+less\s+than)\s*€?\$?\s*([\d][\d\s,_]*(?:\.\d+)?)\s*(k|m|million|thousand)?/i,
     /\bот\s*€?\$?\s*([\d][\d\s,_]*(?:\.\d+)?)\s*(тыс|млн|k|m)?/i,
     /\bαπό\s*€?\$?\s*([\d][\d\s,_]*(?:\.\d+)?)\s*(χιλ|εκ|k|m)?/i,
+    /(?:מ-|ממחיר|לפחות)\s*€?\$?\s*([\d][\d\s,_]*(?:\.\d+)?)/,
+    /(?:من|ابتداء\s+من|على\s+الأقل)\s*€?\$?\s*([\d][\d\s,_]*(?:\.\d+)?)/,
   ];
   for (const re of patterns) {
     const m = message.match(re);
@@ -140,12 +144,16 @@ function extractMinPrice(message: string): number | null {
 // EN: "2 bedrooms", "2 bed"
 // RU: "2 спальни", "2 комнаты"
 // EL: "2 υπνοδωμάτια"
+// HE: "2 חדרי שינה", "2 חדרים"
+// AR: "2 غرفة نوم", "2 غرف"
 
 function extractBedrooms(message: string): number | null {
   const m =
     message.match(/(\d)\s*\+?\s*(?:bed(?:room)?s?|br\b)/i) ??
     message.match(/(\d)\s*(?:спальн|комнат)/i) ??
-    message.match(/(\d)\s*(?:υπνοδωμάτι)/i);
+    message.match(/(\d)\s*(?:υπνοδωμάτι)/i) ??
+    message.match(/(\d)\s*(?:חדרי\s+שינה|חדרים|חדר)/) ??
+    message.match(/(\d)\s*(?:غرف(?:ة)?\s+نوم|غرف(?:ة)?)/);
   return m ? parseInt(m[1], 10) : null;
 }
 
@@ -153,12 +161,16 @@ function extractBedrooms(message: string): number | null {
 // EN: "2 bathrooms", "2 baths"
 // RU: "2 ванных", "2 ванные"
 // EL: "2 μπάνια"
+// HE: "2 חדרי אמבטיה", "2 שירותים"
+// AR: "2 حمام", "2 حمامات"
 
 function extractBathrooms(message: string): number | null {
   const m =
     message.match(/(\d)\s*\+?\s*(?:bath(?:room)?s?|wc\b)/i) ??
     message.match(/(\d)\s*(?:ванн)/i) ??
-    message.match(/(\d)\s*(?:μπάνι)/i);
+    message.match(/(\d)\s*(?:μπάνι)/i) ??
+    message.match(/(\d)\s*(?:חדרי\s+אמבטיה|שירותים)/) ??
+    message.match(/(\d)\s*(?:حمامات?)/);
   return m ? parseInt(m[1], 10) : null;
 }
 
@@ -166,17 +178,21 @@ function extractBathrooms(message: string): number | null {
 // EN: "50 sqm", "50 m²", "50 sq.m"
 // RU: "50 кв.м", "50 кв м", "50 квадратных метров"
 // EL: "50 τ.μ.", "50 τετραγωνικά"
+// HE: "50 מ״ר", "50 מטר רבוע", "50 מ'ר"
+// AR: "50 متر", "50 م²", "50 متر مربع"
 
 function extractSize(message: string): { minSize: number | null; maxSize: number | null } {
   const lower = message.toLowerCase();
 
-  // Size unit — EN + RU + EL
-  const unitRe = /sqm|sq\.?\s*m\b|m²|m2|square\s*met|кв\.?\s*м|квадратных|τ\.?\s*μ\.?|τετραγωνικ/i;
+  // Size unit — EN + RU + EL + HE + AR
+  const unitRe = /sqm|sq\.?\s*m\b|m²|m2|square\s*met|кв\.?\s*м|квадратных|τ\.?\s*μ\.?|τετραγωνικ|מ[״']\s*ר|מטר\s*רבוע|متر\s*مربع|م²/i;
+  // Size unit alternatives for patterns below
+  const unitAlt = /sqm|sq|m²|m2|square|кв|τ\.?μ|מ[״']\s*ר|מטר|متر|م²/;
 
   // Explicit range
   const rangeM =
     lower.match(/between\s+(\d+)\s+and\s+(\d+)\s*(?:sqm|sq|m²|m2|square|кв|τ\.?μ)/) ??
-    lower.match(/(\d+)\s*[-–]\s*(\d+)\s*(?:sqm|sq|m²|m2|square|кв|τ\.?μ)/);
+    lower.match(/(\d+)\s*[-–]\s*(\d+)\s*(?:sqm|sq|m²|m2|square|кв|τ\.?μ|מ[״']\s*ר|מטר|متر|م²)/);
   if (rangeM) {
     const a = parseInt(rangeM[1], 10);
     const b = parseInt(rangeM[2], 10);
@@ -184,8 +200,8 @@ function extractSize(message: string): { minSize: number | null; maxSize: number
   }
 
   // Upper bound
-  const upperM = lower.match(
-    /(?:under|max(?:imum)?|up\s+to|less\s+than|до)\s+(\d+)\s*(?:sqm|sq|m²|m2|square|кв|τ\.?μ)/
+  const upperM = message.match(
+    /(?:under|max(?:imum)?|up\s+to|less\s+than|до|עד|حتى)\s+(\d+)\s*(?:sqm|sq|m²|m2|square|кв|τ\.?μ|מ[״']\s*ר|מטר|متر|م²)/i
   );
   if (upperM) {
     const v = parseInt(upperM[1], 10);
@@ -193,18 +209,18 @@ function extractSize(message: string): { minSize: number | null; maxSize: number
   }
 
   // Lower bound
-  const lowerM = lower.match(
-    /(?:at\s+least|min(?:imum)?|more\s+than|over|от|από)\s+(\d+)\s*(?:sqm|sq|m²|m2|square|кв|τ\.?μ)/
+  const lowerM = message.match(
+    /(?:at\s+least|min(?:imum)?|more\s+than|over|от|από|לפחות|على\s+الأقل)\s+(\d+)\s*(?:sqm|sq|m²|m2|square|кв|τ\.?μ|מ[״']\s*ר|מטר|متر|م²)/i
   );
   if (lowerM) {
     const v = parseInt(lowerM[1], 10);
     if (!isNaN(v)) return { minSize: v, maxSize: null };
   }
 
-  // Bare target "N sqm/кв.м/τ.μ." → ±30% band
-  if (unitRe.test(lower)) {
-    const m = lower.match(
-      /(\d{2,4})\s*(?:sqm|sq\.?\s*m\b|m²|m2|square|кв\.?\s*м|квадратных|τ\.?\s*μ\.?|τετραγωνικ)/
+  // Bare target "N sqm/кв.м/τ.μ./מ״ר/متر" → ±30% band
+  if (unitRe.test(message)) {
+    const m = message.match(
+      /(\d{2,4})\s*(?:sqm|sq\.?\s*m\b|m²|m2|square|кв\.?\s*м|квадратных|τ\.?\s*μ\.?|τετραγωνικ|מ[״']\s*ר|מטר\s*רבוע|מטר|متر\s*مربع|م²|متر)/i
     );
     if (m) {
       const v = parseInt(m[1], 10);
@@ -224,9 +240,11 @@ function extractSize(message: string): { minSize: number | null; maxSize: number
 // (those are handled by subtype).
 
 function extractCategory(message: string): "residential" | "commercial" | "land" | "hotel" | null {
-  if (/\b(?:land\b|plot\b|οικόπεδ|земл[яюе]|участок)\b/i.test(message)) return "land";
-  if (/\b(?:commercial|office\b|shop\b|retail\b|εμπορικ|коммерческ)/i.test(message)) return "commercial";
-  if (/\b(?:hotel\b|hospitality\b|ξενοδοχ|гостиниц|отель)/i.test(message)) return "hotel";
+  // HE: קרקע/מגרש (land), מסחרי/משרד/חנות (commercial), מלון (hotel)
+  // AR: أرض/قطعة أرض (land), تجاري/مكتب/محل (commercial), فندق (hotel)
+  if (/\b(?:land\b|plot\b|οικόπεδ|земл[яюе]|участок|קרקע|מגרש|أرض|قطعة\s+أرض)\b/i.test(message)) return "land";
+  if (/\b(?:commercial|office\b|shop\b|retail\b|εμπορικ|коммерческ|מסחרי|משרד|חנות|تجاري|مكتب|محل)/i.test(message)) return "commercial";
+  if (/\b(?:hotel\b|hospitality\b|ξενοδοχ|гостиниц|отель|מלון|فندق)/i.test(message)) return "hotel";
   return null;
 }
 
@@ -235,20 +253,20 @@ function extractCategory(message: string): "residential" | "commercial" | "land"
 // land/commercial handled by category — not listed here.
 
 const SUBTYPE_KEYWORDS: [RegExp, string][] = [
-  // studio: EN + RU + EL
-  [/\bstudio\b|\bстудия\b|\bστούντιο\b/i,                                                "studio"],
-  // apartment: EN + RU (квартира) + EL (διαμέρισμα)
-  [/\bapartment\b|\bapartements?\b|\bквартир[ауы]?\b|\bδιαμέρισμ/i,                      "apartment"],
-  // maisonette: EN + RU + EL
-  [/\bmaisonette\b|\bduplex\b|\bмезонет\b|\bтаунхаус\b|\bμεζονέτ/i,                     "maisonette"],
-  // villa: EN + RU + EL
-  [/\bvilla\b|\bвилл[аы]\b|\bβίλ[αε]?/i,                                                "villa"],
-  // house: EN + RU + EL
-  [/\bhouse\b|\bdetached\b|\bдом\b|\bκατοικί|\bμονοκατοικί/i,                           "house"],
-  // penthouse: EN + RU
-  [/\bpenthouse\b|\bпентхаус\b/i,                                                        "penthouse"],
-  // loft: EN + RU
-  [/\bloft\b|\bлофт\b/i,                                                                 "loft"],
+  // studio: EN + RU + EL + HE (סטודיו) + AR (ستوديو/استوديو)
+  [/\bstudio\b|\bстудия\b|\bστούντιο\b|סטודיו|\bستوديو\b|\باستوديو\b/i,                 "studio"],
+  // apartment: EN + RU (квартира) + EL (διαμέρισμα) + HE (דירה/שקה) + AR (شقة)
+  [/\bapartment\b|\bapartements?\b|\bквартир[ауы]?\b|\bδιαμέρισμ|דירה|שקה|\bشقة\b/i,   "apartment"],
+  // maisonette: EN + RU + EL + HE (מאיסונט/דופלקס) + AR (ميزونيت/دوبلكس)
+  [/\bmaisonette\b|\bduplex\b|\bмезонет\b|\bтаунхаус\b|\bμεζονέτ|מאיסונט|דופלקס|\bميزونيت\b|\bدوبلكس\b/i, "maisonette"],
+  // villa: EN + RU + EL + HE (וילה) + AR (فيلا)
+  [/\bvilla\b|\bвилл[аы]\b|\bβίλ[αε]?|וילה|\bفيلا\b/i,                                "villa"],
+  // house: EN + RU + EL + HE (בית) + AR (منزل/بيت)
+  [/\bhouse\b|\bdetached\b|\bдом\b|\bκατοικί|\bμονοκατοικί|בית|\bمنزل\b|\bبيت\b/i,    "house"],
+  // penthouse: EN + RU + HE (פנטהאוס) + AR (بنتهاوس)
+  [/\bpenthouse\b|\bпентхаус\b|פנטהאוס|\bبنتهاوس\b/i,                                  "penthouse"],
+  // loft: EN + RU + AR (لوفت)
+  [/\bloft\b|\bлофт\b|\bلوفت\b/i,                                                       "loft"],
 ];
 
 function extractSubtype(message: string): string | null {
@@ -259,71 +277,79 @@ function extractSubtype(message: string): string | null {
 }
 
 // ── Sea view extraction ───────────────────────────────────────────────────────
-// EN + RU (вид на море) + EL (θέα θάλασσα)
+// EN + RU (вид на море) + EL (θέα θάλασσα) + HE (נוף לים) + AR (إطلالة على البحر)
 
 function extractSeaView(message: string): boolean {
-  return /\bsea[-\s]?view\b|\bseaview\b|\bwith\s+sea\b|\bocean\s+view\b|\bвид\s+на\s+море\b|\bморской\s+вид\b|\bθέα\s+θάλασσ|\bθαλασσ[αίο]+\s*θέα/i.test(message);
+  return /\bsea[-\s]?view\b|\bseaview\b|\bwith\s+sea\b|\bocean\s+view\b|\bвид\s+на\s+море\b|\bморской\s+вид\b|\bθέα\s+θάλασσ|\bθαλασσ[αίο]+\s*θέα|נוף\s+לים|إطلالة\s+(?:على\s+)?البحر/i.test(message);
 }
 
 // ── Transaction type extraction ───────────────────────────────────────────────
-// EN + RU + EL
+// EN + RU + EL + HE (למכירה / להשכרה) + AR (للبيع / للإيجار)
 
 function extractTransactionType(message: string): "sale" | "rent" | "antiparochi" | null {
   if (/\bantiparochi\b/i.test(message)) return "antiparochi";
-  if (/\bfor\s+sale\b|\bto\s+buy\b|\bpurchase\b|\bbuying\b|\bbuy\b|\bпокупк|\bкупить\b|\bпродаётся\b|\bαγορ[αά]|\bπρος\s+πώλη/i.test(message)) return "sale";
-  if (/\bfor\s+rent\b|\bto\s+rent\b|\brental\b|\brenting\b|\brent\b|\bаренд|\bснять\b|\bенοικί|\bπρος\s+ενοικί/i.test(message)) return "rent";
+  if (/\bfor\s+sale\b|\bto\s+buy\b|\bpurchase\b|\bbuying\b|\bbuy\b|\bпокупк|\bкупить\b|\bпродаётся\b|\bαγορ[αά]|\bπρος\s+πώλη|למכירה|للبيع/i.test(message)) return "sale";
+  if (/\bfor\s+rent\b|\bto\s+rent\b|\brental\b|\brenting\b|\brent\b|\bаренд|\bснять\b|\bенοικί|\bπρος\s+ενοικί|להשכרה|للإيجار/i.test(message)) return "rent";
   return null;
 }
 
 // ── Furnished extraction ──────────────────────────────────────────────────────
 // EN + RU (меблированная, с мебелью) + EL (επιπλωμένο)
+// HE: מרוהט (furnished), ריהוט מלא (fully furnished), לא מרוהט (unfurnished)
+// AR: مفروش (furnished), مفروش بالكامل (fully), غير مفروش (unfurnished)
 
 function extractFurnished(message: string): "any" | "fully" | null {
-  if (/\bnot\s+furnished\b|\bunfurnished\b|\bнемеблированн|\bχωρίς\s+έπιπλ/i.test(message)) return null;
-  if (/\bfully\s+furnished\b|\bfull\s+furnished\b|\bполностью\s+меблир/i.test(message)) return "fully";
-  if (/\bfurnished\b|\bмеблир|\bс\s+мебелью\b|\bεπιπλωμέν/i.test(message)) return "any";
+  if (/\bnot\s+furnished\b|\bunfurnished\b|\bнемеблированн|\bχωρίς\s+έπιπλ|לא\s+מרוהט|غير\s+مفروش/i.test(message)) return null;
+  if (/\bfully\s+furnished\b|\bfull\s+furnished\b|\bполностью\s+меблир|ריהוט\s+מלא|מרוהט\s+במלואו|مفروش\s+بالكامل/i.test(message)) return "fully";
+  if (/\bfurnished\b|\bмеблир|\bс\s+мебелью\b|\bεπιπλωμέν|מרוהט|مفروش/i.test(message)) return "any";
   return null;
 }
 
 // ── Heating / cooling extraction ──────────────────────────────────────────────
-// EN + RU + EL
+// EN + RU + EL + HE (חימום / מיזוג) + AR (تدفئة / تكييف)
 
 function extractHeating(message: string): boolean {
-  return /\bheating\b|\bcentral\s+heat|\bheat\s+pump\b|\bunderfloor\s+heat|\bwith\s+heat|\bотопление\b|\bотопл|\bθέρμανσ/i.test(message);
+  return /\bheating\b|\bcentral\s+heat|\bheat\s+pump\b|\bunderfloor\s+heat|\bwith\s+heat|\bотопление\b|\bотопл|\bθέρμανσ|חימום|تدفئة/i.test(message);
 }
 
 function extractCooling(message: string): boolean {
-  return /\bcooling\b|\bair[-\s]?con(?:ditioning)?\b|\ba\/c\b|\bac\b|\bsplit\s+unit|\bclimate\s+control|\bкондиционер\b|\bκλιματισμ/i.test(message);
+  return /\bcooling\b|\bair[-\s]?con(?:ditioning)?\b|\ba\/c\b|\bac\b|\bsplit\s+unit|\bclimate\s+control|\bкондиционер\b|\bκλιματισμ|מיזוג|تكييف/i.test(message);
 }
 
 // ── Boolean amenities ────────────────────────────────────────────────────────
-// EN + RU + EL
+// EN + RU + EL + HE + AR
 
 function extractPool(message: string): boolean {
-  return /\bpool\b|\bswimming\b|\bбассейн\b|\bπισίν/i.test(message);
+  // HE: בריכה (pool)  |  AR: مسبح (pool)
+  return /\bpool\b|\bswimming\b|\bбассейн\b|\bπισίν|בריכה|مسبح/i.test(message);
 }
 
 function extractGarden(message: string): boolean {
-  return /\bgarden\b|\byard\b|\boutdoor\s+space|\bсад\b|\bκήπ/i.test(message);
+  // HE: גינה (garden)  |  AR: حديقة (garden)
+  return /\bgarden\b|\byard\b|\boutdoor\s+space|\bсад\b|\bκήπ|גינה|حديقة/i.test(message);
 }
 
 function extractElevator(message: string): boolean {
-  return /\belevator\b|\blift\b|\bwith\s+lift\b|\bwith\s+elevator\b|\bлифт\b|\bασανσέρ/i.test(message);
+  // HE: מעלית (elevator)  |  AR: مصعد (elevator)
+  return /\belevator\b|\blift\b|\bwith\s+lift\b|\bwith\s+elevator\b|\bлифт\b|\bασανσέρ|מעלית|مصعد/i.test(message);
 }
 
 // ── Parking extraction ────────────────────────────────────────────────────────
 // EN: "parking", "garage", "with parking", "parking space"
 // RU: "парковка", "с парковкой", "гараж"
 // EL: "στάθμευση", "πάρκινγκ"
+// HE: "חניה" (parking)
+// AR: "موقف" (parking), "جراج" (garage)
 
 function extractParking(message: string): boolean {
-  return /\bparking\b|\bgarage\b|\bparking\s+space\b|\bпарковк|\bгараж\b|\bσταθμευσ|\bπάρκινγκ/i.test(message);
+  return /\bparking\b|\bgarage\b|\bparking\s+space\b|\bпарковк|\bгараж\b|\bσταθμευσ|\bπάρκινγκ|חניה|موقف|جراج/i.test(message);
 }
 
 // ── Golden Visa ───────────────────────────────────────────────────────────────
+// HE: ויזת זהב  |  AR: تأشيرة ذهبية
 
 function extractGoldenVisa(message: string): boolean {
-  return /golden\s*visa|\bзолотая\s+виза\b|\bχρυσή\s+βίζα\b/i.test(message);
+  return /golden\s*visa|\bзолотая\s+виза\b|\bχρυσή\s+βίζα\b|ויזת\s+זהב|تأشيرة\s+ذهبية/i.test(message);
 }
 
 // ── Parse all criteria ────────────────────────────────────────────────────────

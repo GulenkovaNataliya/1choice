@@ -57,8 +57,12 @@ export type SearchCriteria = {
 };
 
 // ── Dynamic location map ───────────────────────────────────────────────────────
+//
+// Builds a flat list of [keyword, slug] pairs for every active location.
+// Each location row contributes up to 3 entries: name, name_he, name_ar.
+// Sorted longest-first so "vouliagmeni" beats "voula" on partial overlap.
 
-type LocationRow = { name: string; slug: string };
+type LocationRow = { name: string; slug: string; name_he: string | null; name_ar: string | null };
 let _locationMapCache: [string, string][] | null = null;
 
 async function getLocationMap(): Promise<[string, string][]> {
@@ -66,15 +70,19 @@ async function getLocationMap(): Promise<[string, string][]> {
   const admin = createSupabaseAdminClient();
   const { data, error } = await admin
     .from("locations")
-    .select("name,slug")
+    .select("name,slug,name_he,name_ar")
     .eq("is_active", true);
   if (error || !data) {
     console.error("[chat/propertySearch] location map fetch error:", error?.message);
     return [];
   }
-  const map = (data as LocationRow[])
-    .map(r => [r.name.toLowerCase(), r.slug] as [string, string])
-    .sort((a, b) => b[0].length - a[0].length);
+  const entries: [string, string][] = [];
+  for (const r of data as LocationRow[]) {
+    entries.push([r.name.toLowerCase(), r.slug]);
+    if (r.name_he) entries.push([r.name_he.toLowerCase(), r.slug]);
+    if (r.name_ar) entries.push([r.name_ar.toLowerCase(), r.slug]);
+  }
+  const map = entries.sort((a, b) => b[0].length - a[0].length);
   _locationMapCache = map;
   return map;
 }

@@ -288,10 +288,14 @@ function extractSubtype(message: string): string | null {
 }
 
 // ── Sea view extraction ───────────────────────────────────────────────────────
-// EN + RU (вид на море) + EL (θέα θάλασσα) + HE (נוף לים) + AR (إطلالة على البحر)
+// EN: sea view, seaview, with sea, ocean view
+// RU: вид на море / с видом на море / морской вид (instrumental case fixed)
+// EL: θέα θάλασσα / θέα στη θάλασσα / θέα στο Αιγαίο (preposition between words)
+// HE: נוף לים
+// AR: إطلالة على البحر
 
 function extractSeaView(message: string): boolean {
-  return /\bsea[-\s]?view\b|\bseaview\b|\bwith\s+sea\b|\bocean\s+view\b|\bвид\s+на\s+море\b|\bморской\s+вид\b|\bθέα\s+θάλασσ|\bθαλασσ[αίο]+\s*θέα|נוף\s+לים|إطلالة\s+(?:على\s+)?البحر/i.test(message);
+  return /\bsea[-\s]?view\b|\bseaview\b|\bwith\s+sea\b|\bocean\s+view\b|\bвид(?:ом)?\s+на\s+море\b|\bморской\s+вид\b|\bс\s+видом\s+на\s+море\b|\bθέα\s+(?:στη?[νν]?\s+)?θάλασσ|\bθαλασσ[αίο]+\s*θέα|נוף\s+לים|إطلالة\s+(?:على\s+)?البحر/i.test(message);
 }
 
 // ── Transaction type extraction ───────────────────────────────────────────────
@@ -299,8 +303,10 @@ function extractSeaView(message: string): boolean {
 
 function extractTransactionType(message: string): "sale" | "rent" | "antiparochi" | null {
   if (/\bantiparochi\b/i.test(message)) return "antiparochi";
-  if (/\bfor\s+sale\b|\bto\s+buy\b|\bpurchase\b|\bbuying\b|\bbuy\b|\bпокупк|\bкупить\b|\bпродаётся\b|\bαγορ[αά]|\bπρος\s+πώλη|למכירה|للبيع/i.test(message)) return "sale";
-  if (/\bfor\s+rent\b|\bto\s+rent\b|\brental\b|\brenting\b|\brent\b|\bаренд|\bснять\b|\bенοικί|\bπρος\s+ενοικί|להשכרה|للإيجار/i.test(message)) return "rent";
+  // RU: покупка/купить/продажа/на продажу/продаётся  |  EL: αγορά/προς πώληση/πώλησ  |  HE: למכירה  |  AR: للبيع
+  if (/\bfor\s+sale\b|\bto\s+buy\b|\bpurchase\b|\bbuying\b|\bbuy\b|\bпокупк|\bкупить\b|\bпродаётся\b|\bпродаж|\bна\s+продажу\b|\bαγορ[αά]|\bπρος\s+πώλη|\bπώλησ|למכירה|للبيع/i.test(message)) return "sale";
+  // EL: ενοικί (all-Greek, was accidentally Cyrillic е before)
+  if (/\bfor\s+rent\b|\bto\s+rent\b|\brental\b|\brenting\b|\brent\b|\bаренд|\bснять\b|\bενοικί|\bπρος\s+ενοικί|להשכרה|للإيجار/i.test(message)) return "rent";
   return null;
 }
 
@@ -311,7 +317,7 @@ function extractTransactionType(message: string): "sale" | "rent" | "antiparochi
 
 function extractFurnished(message: string): "any" | "fully" | null {
   if (/\bnot\s+furnished\b|\bunfurnished\b|\bнемеблированн|\bχωρίς\s+έπιπλ|לא\s+מרוהט|غير\s+مفروش/i.test(message)) return null;
-  if (/\bfully\s+furnished\b|\bfull\s+furnished\b|\bполностью\s+меблир|ריהוט\s+מלא|מרוהט\s+במלואו|مفروش\s+بالكامل/i.test(message)) return "fully";
+  if (/\bfully\s+furnished\b|\bfull\s+furnished\b|\bполностью\s+меблир|\bπλήρως\s+επιπλωμέν|ריהוט\s+מלא|מרוהט\s+במלואו|مفروش\s+بالكامل/i.test(message)) return "fully";
   if (/\bfurnished\b|\bмеблир|\bс\s+мебелью\b|\bεπιπλωμέν|מרוהט|مفروش/i.test(message)) return "any";
   return null;
 }
@@ -332,30 +338,33 @@ function extractCooling(message: string): boolean {
 
 function extractPool(message: string): boolean {
   // HE: בריכה (pool)  |  AR: مسبح (pool)
-  return /\bpool\b|\bswimming\b|\bбассейн\b|\bπισίν|בריכה|مسبح/i.test(message);
+  // RU: no end \b — covers inflected forms (бассейном, бассейна)
+  return /\bpool\b|\bswimming\b|\bбассейн|\bπισίν|בריכה|مسبح/i.test(message);
 }
 
 function extractGarden(message: string): boolean {
   // HE: גינה (garden)  |  AR: حديقة (garden)
-  return /\bgarden\b|\byard\b|\boutdoor\s+space|\bсад\b|\bκήπ|גינה|حديقة/i.test(message);
+  // RU: no end \b — covers садом, сада, садик
+  return /\bgarden\b|\byard\b|\boutdoor\s+space|\bсад|\bκήπ|גינה|حديقة/i.test(message);
 }
 
 function extractElevator(message: string): boolean {
   // HE: מעלית (elevator)  |  AR: مصعد (elevator)
-  return /\belevator\b|\blift\b|\bwith\s+lift\b|\bwith\s+elevator\b|\bлифт\b|\bασανσέρ|מעלית|مصعد/i.test(message);
+  // RU: no end \b — covers лифтом, лифта
+  return /\belevator\b|\blift\b|\bwith\s+lift\b|\bwith\s+elevator\b|\bлифт|\bασανσέρ|מעלית|مصعد/i.test(message);
 }
 
 // ── Balcony / terrace / awnings extraction ────────────────────────────────────
 // EN + RU + EL + HE + AR
 
 function extractBalcony(message: string): boolean {
-  // EN: balcony | RU: балкон | EL: μπαλκόνι | HE: מרפסת | AR: شرفة
-  return /\bbalcon(?:y|ies)\b|\bбалкон\b|\bμπαλκόνι\b|מרפסת|شرفة/i.test(message);
+  // EN: balcony | RU: балкон (no end \b — covers балконом, балкона) | EL: μπαλκόν (covers -ι, -ια) | HE: מרפסת | AR: شرفة
+  return /\bbalcon(?:y|ies)\b|\bбалкон|\bμπαλκόν|מרפסת|شرفة/i.test(message);
 }
 
 function extractTerrace(message: string): boolean {
-  // EN: terrace | RU: терраса | EL: βεράντα, ταράτσα | HE: טרסה | AR: تراس
-  return /\bterrace[s]?\b|\bтеррас[аы]\b|\bβεράντα\b|\bταράτσα\b|טרסה|تراس/i.test(message);
+  // EN: terrace | RU: террас (covers терраса, террасой, террасы) | EL: βεράντ/ταράτσ (covers plurals) | HE: טרסה | AR: تراس
+  return /\bterrace[s]?\b|\bтеррас|\bβεράντ[αες]|\bταράτσ[αες]|טרסה|تراس/i.test(message);
 }
 
 // ── Parking extraction ────────────────────────────────────────────────────────
@@ -373,7 +382,8 @@ function extractParking(message: string): boolean {
 // HE: ויזת זהב  |  AR: تأشيرة ذهبية
 
 function extractGoldenVisa(message: string): boolean {
-  return /golden\s*visa|\bзолотая\s+виза\b|\bχρυσή\s+βίζα\b|ויזת\s+זהב|تأشيرة\s+ذهبية/i.test(message);
+  // RU: золотая виза (nom) / золотой визы (gen)  |  HE: ויזת זהב / ויזת הזהב  |  AR: تأشيرة ذهبية / التأشيرة الذهبية
+  return /golden\s*visa|\bзолотой?\s+виз[аы]\b|\bχρυσή\s+βίζα\b|ויזת\s+(?:ה)?זהב|(?:ال)?تأشيرة\s+(?:ال)?ذهبية/i.test(message);
 }
 
 // ── Parse all criteria ────────────────────────────────────────────────────────

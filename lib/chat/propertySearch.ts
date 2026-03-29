@@ -57,7 +57,6 @@ export type SearchCriteria = {
   // ── 262.38 ─────────────────────────────────────────────────────────────────
   balcony:         boolean;
   terrace:         boolean;
-  awnings:         boolean;
 };
 
 // ── Dynamic location map ───────────────────────────────────────────────────────
@@ -359,11 +358,6 @@ function extractTerrace(message: string): boolean {
   return /\bterrace[s]?\b|\bтеррас[аы]\b|\bβεράντα\b|\bταράτσα\b|טרסה|تراس/i.test(message);
 }
 
-function extractAwnings(message: string): boolean {
-  // EN: awning(s) | RU: тент, маркиза | EL: τέντα, τέντες | HE: סוכך | AR: مظلة
-  return /\bawning[s]?\b|\bтент[ы]?\b|\bмарки[зз]а?\b|\bτέντ(?:α|ες)\b|סוכך|مظلة/i.test(message);
-}
-
 // ── Parking extraction ────────────────────────────────────────────────────────
 // EN: "parking", "garage", "with parking", "parking space"
 // RU: "парковка", "с парковкой", "гараж"
@@ -408,7 +402,6 @@ export async function parseCriteria(message: string): Promise<SearchCriteria> {
     parking:         extractParking(message),
     balcony:         extractBalcony(message),
     terrace:         extractTerrace(message),
-    awnings:         extractAwnings(message),
   };
 }
 
@@ -436,7 +429,6 @@ export function hasCriteria(criteria: SearchCriteria): boolean {
     criteria.parking         ||
     criteria.balcony         ||
     criteria.terrace         ||
-    criteria.awnings         ||
     criteria.category
   );
 }
@@ -501,7 +493,6 @@ function buildQuery(
     if (criteria.parking)              q = q.eq("parking",  true);
     if (criteria.balcony)              q = q.eq("balcony",  true);
     if (criteria.terrace)              q = q.eq("terrace",  true);
-    if (criteria.awnings)              q = q.eq("awnings",  true);
     if (criteria.furnished === "fully") q = q.eq("furnished", "Fully Furnished");
     else if (criteria.furnished === "any") q = q.in("furnished", FURNISHED_ANY);
     if (criteria.heating) {
@@ -560,7 +551,7 @@ export async function searchProperties(
   // Only run if we had secondary criteria worth dropping.
   const hasSecondary = criteria.seaView || criteria.pool || criteria.garden ||
     criteria.elevator || criteria.parking || criteria.furnished || criteria.heating || criteria.cooling ||
-    criteria.balcony || criteria.terrace || criteria.awnings;
+    criteria.balcony || criteria.terrace;
 
   if (!hasSecondary) {
     // No secondary criteria to drop — no point running a second query.

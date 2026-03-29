@@ -278,12 +278,29 @@ function LocationBlock({
   }
 
   // ── Scenario 2: coordinates exist but privacy requires approximate display ─
+  //
+  // Privacy strategy:
+  // 1. NO &marker= in OSM URL — removes the exact pin entirely
+  // 2. Deterministic coordinate jitter (~300–500 m) shifts the visible map
+  //    center away from the real location; derived from coords so stable
+  //    across page loads but opaque to the viewer
+  // 3. Visual circle overlay communicates "area shown, not exact address"
+  // 4. Google Maps link uses area name only — no raw coordinates
   if (hasCoords) {
     const lat = latitude as number;
     const lng = longitude as number;
-    const d = 0.012; // larger bbox to convey imprecision (~1.2 km)
-    const bbox = `${lng - d},${lat - d},${lng + d},${lat + d}`;
-    const osmUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`;
+
+    // Deterministic jitter: shifts center ~300–500 m, never exposes exact coords
+    const latJitter = ((Math.abs(Math.round(lat * 137)) % 9) - 4) * 0.0009;
+    const lngJitter = ((Math.abs(Math.round(lng * 97))  % 7) - 3) * 0.0011;
+    const cLat = lat + latJitter;
+    const cLng = lng + lngJitter;
+
+    const d = 0.015; // ~1.5 km radius — wide enough to obscure exact location
+    const bbox = `${cLng - d},${cLat - d},${cLng + d},${cLat + d}`;
+    // No &marker= — exact pin is intentionally omitted
+    const osmUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik`;
+
     return (
       <section className="mt-16">
         <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -292,7 +309,7 @@ function LocationBlock({
             Approximate
           </span>
         </div>
-        <div className="rounded-2xl overflow-hidden border border-[#E8E8E8]">
+        <div className="rounded-2xl overflow-hidden border border-[#E8E8E8] relative">
           <iframe
             src={osmUrl}
             title="Approximate property location map"
@@ -300,6 +317,16 @@ function LocationBlock({
             style={{ border: 0 }}
             loading="lazy"
           />
+          {/* Privacy circle overlay — visually marks the general search area */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+          >
+            <div
+              className="rounded-full border-2 border-[#3A2E4F]/50 bg-[#3A2E4F]/10"
+              style={{ width: 180, height: 180 }}
+            />
+          </div>
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm text-[#888888]">

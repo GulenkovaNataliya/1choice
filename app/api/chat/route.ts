@@ -407,9 +407,16 @@ export async function POST(request: NextRequest) {
   }
 
   const systemPrompt = buildSystemPrompt({
-    lang: uiLang,
+    lang:    uiLang,
     matchesBlock,
     isExact: matchesExact,
+    ...(propertyTitle ? {
+      propertyContext: {
+        title:    propertyTitle,
+        code:     propertyCode    ?? undefined,
+        location: propertyLocation ?? undefined,
+      },
+    } : {}),
   });
 
   // ── Call AI ───────────────────────────────────────────────────────────────

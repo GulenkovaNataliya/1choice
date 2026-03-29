@@ -58,7 +58,7 @@ export default function SiteNav() {
   const cmpCount   = compareHydrated ? compareCount    : 0;
 
   const DYNAMIC_ITEMS = [
-    { label: "Saved",   href: "/saved",    count: savedCount },
+    { label: "Saved Properties", href: "/favorites", count: savedCount },
     { label: "Compare", href: "/compare",  count: cmpCount   },
   ];
 

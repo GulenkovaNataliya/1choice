@@ -411,20 +411,15 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
     <main className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 pb-20">
 
-        {/* Gallery — full width, with favorite overlay top-right */}
-        <div className="relative">
-          <PropertyGalleryClient
-            title={title}
-            coverUrl={coverUrl}
-            galleryUrls={Array.isArray(gallery_image_urls) ? gallery_image_urls : []}
-            isFeatured={featured ?? false}
-            isGoldenVisa={is_golden_visa ?? false}
-            is1ChoiceDeal={publish_deals ?? false}
-          />
-          <div className="absolute top-3 right-3 z-10">
-            <FavoriteButton propertyId={property.id} variant="detail" />
-          </div>
-        </div>
+        {/* Gallery — full width */}
+        <PropertyGalleryClient
+          title={title}
+          coverUrl={coverUrl}
+          galleryUrls={Array.isArray(gallery_image_urls) ? gallery_image_urls : []}
+          isFeatured={featured ?? false}
+          isGoldenVisa={is_golden_visa ?? false}
+          is1ChoiceDeal={publish_deals ?? false}
+        />
 
         {/* 2-column layout */}
         <div className="flex flex-col md:flex-row gap-10 mt-10">
@@ -472,10 +467,13 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
 
             </div>
 
-            {/* Price */}
-            <p className="text-2xl font-bold text-[#1E1E1E]">
-              {price_eur ? formatPrice(price_eur) : "Price on request"}
-            </p>
+            {/* Price + heart — flex row, price left, heart right */}
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-2xl font-bold text-[#1E1E1E]">
+                {price_eur ? formatPrice(price_eur) : "Price on request"}
+              </p>
+              <FavoriteButton propertyId={property.id} variant="detail" />
+            </div>
 
             {/* Summary */}
             {summary && (

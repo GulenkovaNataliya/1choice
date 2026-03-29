@@ -54,6 +54,10 @@ export type SearchCriteria = {
   category:        "residential" | "commercial" | "land" | "hotel" | null;
   // ── 262.25 ─────────────────────────────────────────────────────────────────
   parking:         boolean;
+  // ── 262.38 ─────────────────────────────────────────────────────────────────
+  balcony:         boolean;
+  terrace:         boolean;
+  awnings:         boolean;
 };
 
 // ── Dynamic location map ───────────────────────────────────────────────────────
@@ -342,6 +346,24 @@ function extractElevator(message: string): boolean {
   return /\belevator\b|\blift\b|\bwith\s+lift\b|\bwith\s+elevator\b|\bлифт\b|\bασανσέρ|מעלית|مصعد/i.test(message);
 }
 
+// ── Balcony / terrace / awnings extraction ────────────────────────────────────
+// EN + RU + EL + HE + AR
+
+function extractBalcony(message: string): boolean {
+  // EN: balcony | RU: балкон | EL: μπαλκόνι | HE: מרפסת | AR: شرفة
+  return /\bbalcon(?:y|ies)\b|\bбалкон\b|\bμπαλκόνι\b|מרפסת|شرفة/i.test(message);
+}
+
+function extractTerrace(message: string): boolean {
+  // EN: terrace | RU: терраса | EL: βεράντα, ταράτσα | HE: טרסה | AR: تراس
+  return /\bterrace[s]?\b|\bтеррас[аы]\b|\bβεράντα\b|\bταράτσα\b|טרסה|تراس/i.test(message);
+}
+
+function extractAwnings(message: string): boolean {
+  // EN: awning(s) | RU: тент, маркиза | EL: τέντα, τέντες | HE: סוכך | AR: مظلة
+  return /\bawning[s]?\b|\bтент[ы]?\b|\bмарки[зз]а?\b|\bτέντ(?:α|ες)\b|סוכך|مظلة/i.test(message);
+}
+
 // ── Parking extraction ────────────────────────────────────────────────────────
 // EN: "parking", "garage", "with parking", "parking space"
 // RU: "парковка", "с парковкой", "гараж"
@@ -384,6 +406,9 @@ export async function parseCriteria(message: string): Promise<SearchCriteria> {
     elevator:        extractElevator(message),
     category:        extractCategory(message),
     parking:         extractParking(message),
+    balcony:         extractBalcony(message),
+    terrace:         extractTerrace(message),
+    awnings:         extractAwnings(message),
   };
 }
 
@@ -409,6 +434,9 @@ export function hasCriteria(criteria: SearchCriteria): boolean {
     criteria.garden          ||
     criteria.elevator        ||
     criteria.parking         ||
+    criteria.balcony         ||
+    criteria.terrace         ||
+    criteria.awnings         ||
     criteria.category
   );
 }
@@ -471,6 +499,9 @@ function buildQuery(
     if (criteria.garden)               q = q.eq("garden",   true);
     if (criteria.elevator)             q = q.eq("elevator", true);
     if (criteria.parking)              q = q.eq("parking",  true);
+    if (criteria.balcony)              q = q.eq("balcony",  true);
+    if (criteria.terrace)              q = q.eq("terrace",  true);
+    if (criteria.awnings)              q = q.eq("awnings",  true);
     if (criteria.furnished === "fully") q = q.eq("furnished", "Fully Furnished");
     else if (criteria.furnished === "any") q = q.in("furnished", FURNISHED_ANY);
     if (criteria.heating) {
@@ -528,7 +559,8 @@ export async function searchProperties(
   // ── Relaxed fallback (drop secondary feature flags) ────────────────────────
   // Only run if we had secondary criteria worth dropping.
   const hasSecondary = criteria.seaView || criteria.pool || criteria.garden ||
-    criteria.elevator || criteria.parking || criteria.furnished || criteria.heating || criteria.cooling;
+    criteria.elevator || criteria.parking || criteria.furnished || criteria.heating || criteria.cooling ||
+    criteria.balcony || criteria.terrace || criteria.awnings;
 
   if (!hasSecondary) {
     // No secondary criteria to drop — no point running a second query.

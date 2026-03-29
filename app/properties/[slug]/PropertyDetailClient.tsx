@@ -82,6 +82,9 @@ export type PropertyData = {
   garden: boolean | null;
   pool: boolean | null;
   parking: boolean | null;
+  balcony: boolean | null;
+  terrace: boolean | null;
+  awnings: boolean | null;
   // Location
   latitude: number | null;
   longitude: number | null;

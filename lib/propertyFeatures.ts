@@ -418,6 +418,33 @@ export const PROPERTY_FEATURES: PropertyFeature[] = [
     showOnDetail: true,
     group: "amenities",
   },
+  {
+    field: "balcony",
+    label: "Balcony",
+    icon: AppWindow,
+    valueType: "boolean",
+    showOnCard: false,
+    showOnDetail: true,
+    group: "amenities",
+  },
+  {
+    field: "terrace",
+    label: "Terrace",
+    icon: Trees,
+    valueType: "boolean",
+    showOnCard: false,
+    showOnDetail: true,
+    group: "amenities",
+  },
+  {
+    field: "awnings",
+    label: "Awnings",
+    icon: Wind,
+    valueType: "boolean",
+    showOnCard: false,
+    showOnDetail: true,
+    group: "amenities",
+  },
 
   // ── Premium flags ─────────────────────────────────────────────────────────
   {

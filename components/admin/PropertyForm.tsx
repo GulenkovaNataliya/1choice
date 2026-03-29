@@ -244,13 +244,7 @@ function buildPayload(form: FormState, resolveSlug = false) {
     kitchens: form.kitchens ? Number(form.kitchens) : null,
     storage_rooms: form.storage_rooms ? Number(form.storage_rooms) : null,
     wc: form.wc ? Number(form.wc) : null,
-    furnished: (() => {
-      const custom = form.custom_furnished.trim();
-      if (custom) return null;                          // custom text → let custom_furnished carry it
-      if (!form.furnished) return null;                 // nothing selected
-      if (form.furnished === "Not Furnished") return false;
-      return true;                                      // any positive dropdown value
-    })(),
+    furnished: form.furnished.trim() || null,
     custom_furnished: form.custom_furnished.trim() || null,
     summary: form.summary || null,
     description: form.description || null,

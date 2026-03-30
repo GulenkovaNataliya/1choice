@@ -42,7 +42,7 @@ type FormState = {
   smart_home: boolean;
   satellite_tv: boolean;
   internet_ready: boolean;
-  storage: boolean;
+  wardrobe_room: boolean;
   sea_view: boolean;
   mountain_view: boolean;
   balcony: boolean;
@@ -128,7 +128,7 @@ const INITIAL: FormState = {
   smart_home: false,
   satellite_tv: false,
   internet_ready: false,
-  storage: false,
+  wardrobe_room: false,
   sea_view: false,
   mountain_view: false,
   balcony: false,
@@ -249,7 +249,7 @@ function buildPayload(form: FormState, resolveSlug = false) {
     smart_home: form.smart_home,
     satellite_tv: form.satellite_tv,
     internet_ready: form.internet_ready,
-    storage: form.storage,
+    wardrobe_room: form.wardrobe_room,
     sea_view: form.sea_view,
     mountain_view: form.mountain_view,
     balcony: form.balcony,
@@ -1116,7 +1116,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
           </div>
           {/* Column 3 */}
           <div className="flex flex-col gap-3">
-            <Checkbox label="Wardrobe Room"   checked={form.storage}         onChange={(v) => set("storage", v)} />
+            <Checkbox label="Wardrobe Room"   checked={form.wardrobe_room}   onChange={(v) => set("wardrobe_room", v)} />
             <Checkbox label="Home Cinema"     checked={form.home_cinema}     onChange={(v) => set("home_cinema", v)} />
             <Checkbox label="Security Door"   checked={form.security_door}   onChange={(v) => set("security_door", v)} />
             <Checkbox label="Alarm System"    checked={form.alarm_system}    onChange={(v) => set("alarm_system", v)} />

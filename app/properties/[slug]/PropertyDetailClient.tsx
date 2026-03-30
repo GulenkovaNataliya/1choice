@@ -76,7 +76,7 @@ export type PropertyData = {
   smart_home: boolean | null;
   satellite_tv: boolean | null;
   internet_ready: boolean | null;
-  storage: boolean | null;
+  wardrobe_room: boolean | null;
   sea_view: boolean | null;
   mountain_view: boolean | null;
   garden: boolean | null;

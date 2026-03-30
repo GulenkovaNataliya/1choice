@@ -462,7 +462,7 @@ export const PROPERTY_FEATURES: PropertyFeature[] = [
 
   // ── Comfort & Amenities — Column 3 ───────────────────────────────────────
   {
-    field: "storage",
+    field: "wardrobe_room",
     label: "Wardrobe Room",
     icon: Archive,
     valueType: "boolean",

@@ -1,18 +1,23 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Heart } from "lucide-react";
+import { useFavorites } from "@/lib/favorites/useFavorites";
 
 const DRAWER_LINKS = [
   { label: "Properties", href: "/properties" },
   { label: "1ChoiceDeals", href: "/1choicedeals" },
   { label: "Golden Visa", href: "/golden-visa-greece" },
   { label: "Investment & Ownership Guide", href: "/investment-ownership-guide" },
+  { label: "Saved Properties", href: "/favorites" },
   { label: "Legal", href: "/legal" },
 ];
 
 export default function HeroVideo() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [visible, setVisible] = useState(false); // controls CSS transition
+  const { ids: savedIds, hydrated: savedHydrated } = useFavorites();
+  const savedCount = savedHydrated ? savedIds.length : 0;
 
   function openMenu() {
     setMenuOpen(true);
@@ -55,6 +60,31 @@ export default function HeroVideo() {
         <div className="flex items-center gap-8 text-black text-lg font-medium">
           <a href="/about" className="hover:opacity-70 transition">About 1Choice</a>
           <a href="/contact" className="hover:opacity-70 transition">Contact</a>
+          <a
+            href="/favorites"
+            className="hover:opacity-70 transition"
+            style={{ display: "inline-flex", alignItems: "center", gap: 5 }}
+            aria-label="Saved properties"
+          >
+            <Heart
+              size={20}
+              style={{
+                fill: savedCount > 0 ? "#E53E3E" : "none",
+                stroke: savedCount > 0 ? "#E53E3E" : "currentColor",
+              }}
+            />
+            {savedCount > 0 && (
+              <span
+                style={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  lineHeight: 1,
+                }}
+              >
+                {savedCount}
+              </span>
+            )}
+          </a>
           <button
             type="button"
             onClick={openMenu}

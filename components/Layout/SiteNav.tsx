@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Heart } from "lucide-react";
 import { useFavorites } from "@/lib/favorites/useFavorites";
 import { useCompare } from "@/lib/compare/useCompare";
 
@@ -127,6 +128,7 @@ export default function SiteNav() {
         {/* Dynamic: Saved + Compare with count badges */}
         {DYNAMIC_ITEMS.map(({ label, href, count }) => {
           const active = pathname === href;
+          const isFavorites = href === "/favorites";
           return (
             <Link
               key={href}
@@ -135,6 +137,18 @@ export default function SiteNav() {
               onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = "#3A2E4F"; }}
               onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = "#404040"; }}
             >
+              {isFavorites && (
+                <Heart
+                  size={14}
+                  style={{
+                    marginRight: 5,
+                    flexShrink: 0,
+                    fill: count > 0 ? "#E53E3E" : "none",
+                    stroke: count > 0 ? "#E53E3E" : "currentColor",
+                    verticalAlign: "middle",
+                  }}
+                />
+              )}
               {label}
               <CountBadge count={count} />
             </Link>

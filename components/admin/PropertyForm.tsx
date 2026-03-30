@@ -195,7 +195,10 @@ async function findUniqueSlug(base: string): Promise<string> {
 function buildPayload(form: FormState, resolveSlug = false) {
   return {
     title: form.title,
-    slug: resolveSlug ? (form.slug.trim() || toSlug(form.title)) : (form.slug || null),
+    // resolveSlug=true: compute slug but fall back to null (not "") so the UNIQUE
+    // constraint is never violated by an empty string when title is also blank.
+    // PostgreSQL UNIQUE excludes NULLs, so null is always safe here.
+    slug: resolveSlug ? (form.slug.trim() || toSlug(form.title) || null) : (form.slug || null),
     category: form.category || null,
     subtype: form.subtype || null,
     transaction_type: form.transaction_type || null,
@@ -729,7 +732,9 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
           if (slugChanged) originalSlugRef.current = newSlug;
         }
       } else {
-        const baseSlug = form.slug.trim() || toSlug(form.title);
+        // toSlug() strips all non-ASCII — Greek/Russian/Hebrew titles produce "".
+        // Fall back to property code so drafts always get a unique, non-empty slug.
+        const baseSlug = form.slug.trim() || toSlug(form.title) || `draft-${propertyCode.toLowerCase()}`;
         const uniqueSlug = await findUniqueSlug(baseSlug);
         const insertPayload = {
           property_code: propertyCode,

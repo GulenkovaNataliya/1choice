@@ -162,7 +162,7 @@ function extractBedrooms(message: string): number | null {
   const m =
     message.match(/(\d)\s*\+?\s*(?:bed(?:room)?s?|br\b)/i) ??
     message.match(/(\d)\s*(?:спальн|комнат)/i) ??
-    message.match(/(\d)\s*(?:υπνοδωμάτι)/i) ??
+    message.match(/(\d)\s*(?:υπνοδωμ)/i) ??    // stem covers: -άτιο (sg), -άτια (pl nom), -ατίων (gen pl)
     message.match(/(\d)\s*(?:חדרי\s+שינה|חדרים|חדר)/) ??
     message.match(/(\d)\s*(?:غرف(?:ة)?\s+نوم|غرف(?:ة)?)/);
   return m ? parseInt(m[1], 10) : null;
@@ -251,11 +251,12 @@ function extractSize(message: string): { minSize: number | null; maxSize: number
 // (those are handled by subtype).
 
 function extractCategory(message: string): "residential" | "commercial" | "land" | "hotel" | null {
+  // \b only on ASCII tokens; non-ASCII alternatives are plain substring matches
   // HE: קרקע/מגרש (land), מסחרי/משרד/חנות (commercial), מלון (hotel)
   // AR: أرض/قطعة أرض (land), تجاري/مكتب/محل (commercial), فندق (hotel)
-  if (/\b(?:land\b|plot\b|οικόπεδ|земл[яюе]|участок|קרקע|מגרש|أرض|قطعة\s+أرض)\b/i.test(message)) return "land";
-  if (/\b(?:commercial|office\b|shop\b|retail\b|εμπορικ|коммерческ|מסחרי|משרד|חנות|تجاري|مكتب|محل)/i.test(message)) return "commercial";
-  if (/\b(?:hotel\b|hospitality\b|ξενοδοχ|гостиниц|отель|מלון|فندق)/i.test(message)) return "hotel";
+  if (/\b(?:land|plot)\b|οικόπεδ|земл[яюе]|участок|קרקע|מגרש|أرض|قطعة\s+أرض/i.test(message)) return "land";
+  if (/\b(?:commercial|office|shop|retail)\b|εμπορικ|коммерческ|מסחרי|משרד|חנות|تجاري|مكتب|محل/i.test(message)) return "commercial";
+  if (/\b(?:hotel|hospitality)\b|ξενοδοχ|гостиниц|отель|מלון|فندق/i.test(message)) return "hotel";
   return null;
 }
 
@@ -263,21 +264,25 @@ function extractCategory(message: string): "residential" | "commercial" | "land"
 // EN + RU + EL equivalents.
 // land/commercial handled by category — not listed here.
 
+// NOTE: \b is only used for pure ASCII tokens (EN).
+// Cyrillic, Greek, Hebrew, Arabic characters are \W in JS regex — \b before/after them
+// would require an adjacent ASCII \w char, which never happens in pure non-ASCII text.
+// All non-ASCII alternatives use plain substring matching (no \b).
 const SUBTYPE_KEYWORDS: [RegExp, string][] = [
   // studio: EN + RU + EL + HE (סטודיו) + AR (ستوديو/استوديو)
-  [/\bstudio\b|\bстудия\b|\bστούντιο\b|סטודיו|\bستوديو\b|\باستوديو\b/i,                 "studio"],
+  [/\bstudio\b|студия|στούντιο|סטודיו|ستوديو|استوديو/i,                 "studio"],
   // apartment: EN + RU (квартира) + EL (διαμέρισμα) + HE (דירה/שקה) + AR (شقة)
-  [/\bapartment\b|\bapartements?\b|\bквартир[ауы]?\b|\bδιαμέρισμ|דירה|שקה|\bشقة\b/i,   "apartment"],
+  [/\bapartment\b|\bapartements?\b|квартир[ауы]?|διαμέρισμ|דירה|שקה|شقة/i,   "apartment"],
   // maisonette: EN + RU + EL + HE (מאיסונט/דופלקס) + AR (ميزونيت/دوبلكس)
-  [/\bmaisonette\b|\bduplex\b|\bмезонет\b|\bтаунхаус\b|\bμεζονέτ|מאיסונט|דופלקס|\bميزونيت\b|\bدوبلكس\b/i, "maisonette"],
+  [/\bmaisonette\b|\bduplex\b|мезонет|таунхаус|μεζονέτ|מאיסונט|דופלקס|ميزونيت|دوبلكس/i, "maisonette"],
   // villa: EN + RU + EL + HE (וילה) + AR (فيلا)
-  [/\bvilla\b|\bвилл[аы]\b|\bβίλ[αε]?|וילה|\bفيلا\b/i,                                "villa"],
+  [/\bvilla\b|вилл[аы]|βίλ[αε]?|וילה|فيلا/i,                                "villa"],
   // house: EN + RU + EL + HE (בית) + AR (منزل/بيت)
-  [/\bhouse\b|\bdetached\b|\bдом\b|\bκατοικί|\bμονοκατοικί|בית|\bمنزل\b|\bبيت\b/i,    "house"],
+  [/\bhouse\b|\bdetached\b|дом|κατοικί|μονοκατοικί|בית|منزل|بيت/i,    "house"],
   // penthouse: EN + RU + HE (פנטהאוס) + AR (بنتهاوس)
-  [/\bpenthouse\b|\bпентхаус\b|פנטהאוס|\bبنتهاوس\b/i,                                  "penthouse"],
+  [/\bpenthouse\b|пентхаус|פנטהאוס|بنتهاوس/i,                                  "penthouse"],
   // loft: EN + RU + AR (لوفت)
-  [/\bloft\b|\bлофт\b|\bلوفت\b/i,                                                       "loft"],
+  [/\bloft\b|лофт|لوفت/i,                                                       "loft"],
 ];
 
 function extractSubtype(message: string): string | null {
@@ -295,7 +300,8 @@ function extractSubtype(message: string): string | null {
 // AR: إطلالة على البحر
 
 function extractSeaView(message: string): boolean {
-  return /\bsea[-\s]?view\b|\bseaview\b|\bwith\s+sea\b|\bocean\s+view\b|\bвид(?:ом)?\s+на\s+море\b|\bморской\s+вид\b|\bс\s+видом\s+на\s+море\b|\bθέα\s+(?:στη?[νν]?\s+)?θάλασσ|\bθαλασσ[αίο]+\s*θέα|נוף\s+לים|إطلالة\s+(?:على\s+)?البحر/i.test(message);
+  // \b only used for ASCII tokens; no \b before/after Cyrillic or Greek (non-ASCII = \W in JS regex)
+  return /\bsea[-\s]?view\b|\bseaview\b|\bwith\s+sea\b|\bocean\s+view\b|вид(?:ом)?\s+на\s+море|морской\s+вид|с\s+видом\s+на\s+море|θέα\s+(?:στη?[νν]?\s+)?θάλασσ|θαλασσ[αίο]+\s*θέα|נוף\s+לים|إطلالة\s+(?:على\s+)?البحر/i.test(message);
 }
 
 // ── Transaction type extraction ───────────────────────────────────────────────
@@ -323,7 +329,8 @@ function extractSeaView(message: string): boolean {
 //   AR: للإيجار
 
 function extractTransactionType(message: string): "sale" | "rent" | "antiparochi" | null {
-  if (/\bantiparochi\b|αντιπαροχ|антипарохи/i.test(message)) return "antiparochi";
+  // HE אנטיפרוכי / AR أنتيباروخي — phonetic transliterations users would type
+  if (/\bantiparochi\b|αντιπαροχ|антипарохи|אנטיפרוכי|أنتيباروخي/i.test(message)) return "antiparochi";
   if (/\bfor\s+sale\b|\bto\s+buy\b|\bpurchase\b|\bbuying\b|\bbuy\b|покупк|купить|продаётся|продаж|на\s+продажу|αγορ[αά]|προς\s+πώλη|πώλησ|πωλείται|למכירה|للبيع/i.test(message)) return "sale";
   if (/\bfor\s+rent\b|\bto\s+rent\b|\brental\b|\brenting\b|\brent\b|аренд|снять|сдаётся|ενοικί|ενοίκιο|μισθών|προς\s+ενοικί|להשכרה|שכירות|للإيجار/i.test(message)) return "rent";
   return null;
@@ -335,9 +342,9 @@ function extractTransactionType(message: string): "sale" | "rent" | "antiparochi
 // AR: مفروش (furnished), مفروش بالكامل (fully), غير مفروش (unfurnished)
 
 function extractFurnished(message: string): "any" | "fully" | null {
-  if (/\bnot\s+furnished\b|\bunfurnished\b|\bнемеблированн|\bχωρίς\s+έπιπλ|לא\s+מרוהט|غير\s+مفروش/i.test(message)) return null;
-  if (/\bfully\s+furnished\b|\bfull\s+furnished\b|\bполностью\s+меблир|\bπλήρως\s+επιπλωμέν|ריהוט\s+מלא|מרוהט\s+במלואו|مفروش\s+بالكامل/i.test(message)) return "fully";
-  if (/\bfurnished\b|\bмеблир|\bс\s+мебелью\b|\bεπιπλωμέν|מרוהט|مفروش/i.test(message)) return "any";
+  if (/\bnot\s+furnished\b|\bunfurnished\b|немеблированн|χωρίς\s+έπιπλ|לא\s+מרוהט|غير\s+مفروش/i.test(message)) return null;
+  if (/\bfully\s+furnished\b|\bfull\s+furnished\b|полностью\s+меблир|πλήρως\s+επιπλωμέν|ריהוט\s+מלא|מרוהט\s+במלואו|مفروش\s+بالكامل/i.test(message)) return "fully";
+  if (/\bfurnished\b|меблир|с\s+мебелью|επιπλωμέν|מרוהט|مفروش/i.test(message)) return "any";
   return null;
 }
 
@@ -345,11 +352,11 @@ function extractFurnished(message: string): "any" | "fully" | null {
 // EN + RU + EL + HE (חימום / מיזוג) + AR (تدفئة / تكييف)
 
 function extractHeating(message: string): boolean {
-  return /\bheating\b|\bcentral\s+heat|\bheat\s+pump\b|\bunderfloor\s+heat|\bwith\s+heat|\bотопление\b|\bотопл|\bθέρμανσ|חימום|تدفئة/i.test(message);
+  return /\bheating\b|\bcentral\s+heat|\bheat\s+pump\b|\bunderfloor\s+heat|\bwith\s+heat|отопление|отопл|θέρμανσ|חימום|تدفئة/i.test(message);
 }
 
 function extractCooling(message: string): boolean {
-  return /\bcooling\b|\bair[-\s]?con(?:ditioning)?\b|\ba\/c\b|\bac\b|\bsplit\s+unit|\bclimate\s+control|\bкондиционер\b|\bκλιματισμ|מיזוג|تكييف/i.test(message);
+  return /\bcooling\b|\bair[-\s]?con(?:ditioning)?\b|\ba\/c\b|\bac\b|\bsplit\s+unit|\bclimate\s+control|кондиционер|κλιματισμ|מיזוג|تكييف/i.test(message);
 }
 
 // ── Boolean amenities ────────────────────────────────────────────────────────
@@ -357,33 +364,30 @@ function extractCooling(message: string): boolean {
 
 function extractPool(message: string): boolean {
   // HE: בריכה (pool)  |  AR: مسبح (pool)
-  // RU: no end \b — covers inflected forms (бассейном, бассейна)
-  return /\bpool\b|\bswimming\b|\bбассейн|\bπισίν|בריכה|مسبح/i.test(message);
+  return /\bpool\b|\bswimming\b|бассейн|πισίν|בריכה|مسبح/i.test(message);
 }
 
 function extractGarden(message: string): boolean {
   // HE: גינה (garden)  |  AR: حديقة (garden)
-  // RU: no end \b — covers садом, сада, садик
-  return /\bgarden\b|\byard\b|\boutdoor\s+space|\bсад|\bκήπ|גינה|حديقة/i.test(message);
+  return /\bgarden\b|\byard\b|\boutdoor\s+space|сад|κήπ|גינה|حديقة/i.test(message);
 }
 
 function extractElevator(message: string): boolean {
   // HE: מעלית (elevator)  |  AR: مصعد (elevator)
-  // RU: no end \b — covers лифтом, лифта
-  return /\belevator\b|\blift\b|\bwith\s+lift\b|\bwith\s+elevator\b|\bлифт|\bασανσέρ|מעלית|مصعد/i.test(message);
+  return /\belevator\b|\blift\b|\bwith\s+lift\b|\bwith\s+elevator\b|лифт|ασανσέρ|מעלית|مصعد/i.test(message);
 }
 
 // ── Balcony / terrace / awnings extraction ────────────────────────────────────
 // EN + RU + EL + HE + AR
 
 function extractBalcony(message: string): boolean {
-  // EN: balcony | RU: балкон (no end \b — covers балконом, балкона) | EL: μπαλκόν (covers -ι, -ια) | HE: מרפסת | AR: شرفة
-  return /\bbalcon(?:y|ies)\b|\bбалкон|\bμπαλκόν|מרפסת|شرفة/i.test(message);
+  // EN: balcony | RU: балкон (covers -ом, -а) | EL: μπαλκόν (covers -ι, -ια) | HE: מרפסת | AR: شرفة
+  return /\bbalcon(?:y|ies)\b|балкон|μπαλκόν|מרפסת|شرفة/i.test(message);
 }
 
 function extractTerrace(message: string): boolean {
   // EN: terrace | RU: террас (covers терраса, террасой, террасы) | EL: βεράντ/ταράτσ (covers plurals) | HE: טרסה | AR: تراس
-  return /\bterrace[s]?\b|\bтеррас|\bβεράντ[αες]|\bταράτσ[αες]|טרסה|تراس/i.test(message);
+  return /\bterrace[s]?\b|террас|βεράντ[αες]|ταράτσ[αες]|טרסה|تراس/i.test(message);
 }
 
 // ── Parking extraction ────────────────────────────────────────────────────────
@@ -394,7 +398,7 @@ function extractTerrace(message: string): boolean {
 // AR: "موقف" (parking), "جراج" (garage)
 
 function extractParking(message: string): boolean {
-  return /\bparking\b|\bgarage\b|\bparking\s+space\b|\bпарковк|\bгараж\b|\bσταθμευσ|\bπάρκινγκ|חניה|موقف|جراج/i.test(message);
+  return /\bparking\b|\bgarage\b|\bparking\s+space\b|парковк|гараж|σταθμευσ|πάρκινγκ|חניה|موقف|جراج/i.test(message);
 }
 
 // ── Golden Visa ───────────────────────────────────────────────────────────────
@@ -402,7 +406,7 @@ function extractParking(message: string): boolean {
 
 function extractGoldenVisa(message: string): boolean {
   // RU: золотая виза (nom) / золотой визы (gen)  |  HE: ויזת זהב / ויזת הזהב  |  AR: تأشيرة ذهبية / التأشيرة الذهبية
-  return /golden\s*visa|\bзолотой?\s+виз[аы]\b|\bχρυσή\s+βίζα\b|ויזת\s+(?:ה)?זהב|(?:ال)?تأشيرة\s+(?:ال)?ذهبية/i.test(message);
+  return /golden\s*visa|золотой?\s+виз[аы]|χρυσή\s+βίζα|ויזת\s+(?:ה)?זהב|(?:ال)?تأشيرة\s+(?:ال)?ذهبية/i.test(message);
 }
 
 // ── Parse all criteria ────────────────────────────────────────────────────────

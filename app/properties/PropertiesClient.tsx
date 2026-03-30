@@ -29,6 +29,9 @@ function titleCase(s: string): string {
 const FEATURE_LABEL: Record<string, string> = {
   parking: "Parking", pool: "Pool", seaview: "Sea View",
   garden: "Garden", furnished: "Furnished", investment: "Investment",
+  elevator: "Elevator", balcony: "Balcony", veranda: "Veranda",
+  privateroofterrace: "Private Roof Terrace", duplex: "Duplex",
+  closetobeaches: "Close to Beaches", panoramicview: "Panoramic View",
 };
 
 const CONDITION_LABEL: Record<string, string> = {
@@ -44,6 +47,9 @@ const TRANSACTION_FROM_URL: Record<string, string> = {
 const FEATURE_FROM_URL: Record<string, string> = {
   parking: "Parking", pool: "Pool", seaview: "Sea View",
   garden: "Garden", furnished: "Furnished", investment: "Investment",
+  elevator: "Elevator", balcony: "Balcony", veranda: "Veranda",
+  privateroofterrace: "Private Roof Terrace", duplex: "Duplex",
+  closetobeaches: "Close to Beaches", panoramicview: "Panoramic View",
 };
 
 const CONDITION_FROM_URL: Record<string, string> = {
@@ -217,9 +223,16 @@ const CONDITION_URL_TO_DB: Record<string, string[]> = {
 
 // URL feature slug → PropertyRow boolean field name
 const FEATURE_SLUG_TO_FIELD: Record<string, keyof PropertyRow> = {
-  pool:    "pool",
-  seaview: "sea_view",
-  garden:  "garden",
+  pool:              "pool",
+  seaview:           "sea_view",
+  garden:            "garden",
+  elevator:          "elevator",
+  balcony:           "balcony",
+  veranda:           "veranda",
+  privateroofterrace:"private_roof_terrace",
+  duplex:            "duplex",
+  closetobeaches:    "close_to_beaches",
+  panoramicview:     "panoramic_view",
 };
 
 function applyFilters(properties: PropertyRow[], params: ReadonlyURLSearchParams): PropertyRow[] {

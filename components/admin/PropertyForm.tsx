@@ -46,11 +46,22 @@ type FormState = {
   sea_view: boolean;
   mountain_view: boolean;
   balcony: boolean;
-  terrace: boolean;
+  veranda: boolean;
   awnings: boolean;
   garden: boolean;
   pool: boolean;
   parking: boolean;
+  jacuzzi: boolean;
+  close_to_beaches: boolean;
+  panoramic_view: boolean;
+  acropolis_view: boolean;
+  duplex: boolean;
+  private_roof_terrace: boolean;
+  loft: boolean;
+  internal_staircase: boolean;
+  barbeque: boolean;
+  home_cinema: boolean;
+  smoke_detection: boolean;
   frames_type: string;
   double_glazing: boolean;
   triple_glazing: boolean;
@@ -121,11 +132,22 @@ const INITIAL: FormState = {
   sea_view: false,
   mountain_view: false,
   balcony: false,
-  terrace: false,
+  veranda: false,
   awnings: false,
   garden: false,
   pool: false,
   parking: false,
+  jacuzzi: false,
+  close_to_beaches: false,
+  panoramic_view: false,
+  acropolis_view: false,
+  duplex: false,
+  private_roof_terrace: false,
+  loft: false,
+  internal_staircase: false,
+  barbeque: false,
+  home_cinema: false,
+  smoke_detection: false,
   frames_type: "",
   double_glazing: false,
   triple_glazing: false,
@@ -231,11 +253,22 @@ function buildPayload(form: FormState, resolveSlug = false) {
     sea_view: form.sea_view,
     mountain_view: form.mountain_view,
     balcony: form.balcony,
-    terrace: form.terrace,
+    veranda: form.veranda,
     awnings: form.awnings,
     garden: form.garden,
     pool: form.pool,
     parking: form.parking,
+    jacuzzi: form.jacuzzi,
+    close_to_beaches: form.close_to_beaches,
+    panoramic_view: form.panoramic_view,
+    acropolis_view: form.acropolis_view,
+    duplex: form.duplex,
+    private_roof_terrace: form.private_roof_terrace,
+    loft: form.loft,
+    internal_staircase: form.internal_staircase,
+    barbeque: form.barbeque,
+    home_cinema: form.home_cinema,
+    smoke_detection: form.smoke_detection,
     frames_type: form.frames_type || null,
     double_glazing: form.double_glazing,
     triple_glazing: form.triple_glazing,
@@ -831,7 +864,6 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
         <Field label="Title">
           <input
             type="text"
-            required
             value={form.title}
             onChange={(e) => set("title", e.target.value)}
             className={inputCls}
@@ -1057,24 +1089,43 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
 
       {/* ── Comfort & Amenities ───────────────────────────────────────────── */}
       <Section title="Comfort & Amenities">
-        <div className="grid grid-cols-2 gap-3">
-          <Checkbox label="Fireplace"       checked={form.fireplace}       onChange={(v) => set("fireplace", v)} />
-          <Checkbox label="Elevator"        checked={form.elevator}        onChange={(v) => set("elevator", v)} />
-          <Checkbox label="Security Door"   checked={form.security_door}   onChange={(v) => set("security_door", v)} />
-          <Checkbox label="Alarm System"    checked={form.alarm_system}    onChange={(v) => set("alarm_system", v)} />
-          <Checkbox label="Video Doorphone" checked={form.video_doorphone} onChange={(v) => set("video_doorphone", v)} />
-          <Checkbox label="Smart Home"      checked={form.smart_home}      onChange={(v) => set("smart_home", v)} />
-          <Checkbox label="Satellite TV"    checked={form.satellite_tv}    onChange={(v) => set("satellite_tv", v)} />
-          <Checkbox label="Internet Ready"  checked={form.internet_ready}  onChange={(v) => set("internet_ready", v)} />
-          <Checkbox label="Storage"         checked={form.storage}         onChange={(v) => set("storage", v)} />
-          <Checkbox label="Pool"            checked={form.pool}            onChange={(v) => set("pool", v)} />
-          <Checkbox label="Garden"          checked={form.garden}          onChange={(v) => set("garden", v)} />
-          <Checkbox label="Parking"         checked={form.parking}         onChange={(v) => set("parking", v)} />
-          <Checkbox label="Sea View"        checked={form.sea_view}        onChange={(v) => set("sea_view", v)} />
-          <Checkbox label="Mountain View"   checked={form.mountain_view}   onChange={(v) => set("mountain_view", v)} />
-          <Checkbox label="Balcony"         checked={form.balcony}         onChange={(v) => set("balcony", v)} />
-          <Checkbox label="Terrace"         checked={form.terrace}         onChange={(v) => set("terrace", v)} />
-          <Checkbox label="Awnings"         checked={form.awnings}         onChange={(v) => set("awnings", v)} />
+        <div className="grid grid-cols-3 gap-x-6 gap-y-3">
+          {/* Column 1 */}
+          <div className="flex flex-col gap-3">
+            <Checkbox label="Pool"               checked={form.pool}               onChange={(v) => set("pool", v)} />
+            <Checkbox label="Jacuzzi"            checked={form.jacuzzi}            onChange={(v) => set("jacuzzi", v)} />
+            <Checkbox label="Garden"             checked={form.garden}             onChange={(v) => set("garden", v)} />
+            <Checkbox label="Sea View"           checked={form.sea_view}           onChange={(v) => set("sea_view", v)} />
+            <Checkbox label="Close to Beaches"   checked={form.close_to_beaches}   onChange={(v) => set("close_to_beaches", v)} />
+            <Checkbox label="Panoramic View"     checked={form.panoramic_view}     onChange={(v) => set("panoramic_view", v)} />
+            <Checkbox label="Mountain View"      checked={form.mountain_view}      onChange={(v) => set("mountain_view", v)} />
+            <Checkbox label="Acropolis View"     checked={form.acropolis_view}     onChange={(v) => set("acropolis_view", v)} />
+            <Checkbox label="Duplex"             checked={form.duplex}             onChange={(v) => set("duplex", v)} />
+          </div>
+          {/* Column 2 */}
+          <div className="flex flex-col gap-3">
+            <Checkbox label="Balcony"             checked={form.balcony}             onChange={(v) => set("balcony", v)} />
+            <Checkbox label="Veranda"             checked={form.veranda}             onChange={(v) => set("veranda", v)} />
+            <Checkbox label="Awnings"             checked={form.awnings}             onChange={(v) => set("awnings", v)} />
+            <Checkbox label="Private Roof Terrace" checked={form.private_roof_terrace} onChange={(v) => set("private_roof_terrace", v)} />
+            <Checkbox label="Loft"                checked={form.loft}                onChange={(v) => set("loft", v)} />
+            <Checkbox label="Internal Staircase"  checked={form.internal_staircase}  onChange={(v) => set("internal_staircase", v)} />
+            <Checkbox label="Elevator"            checked={form.elevator}            onChange={(v) => set("elevator", v)} />
+            <Checkbox label="Fireplace"           checked={form.fireplace}           onChange={(v) => set("fireplace", v)} />
+            <Checkbox label="Barbeque"            checked={form.barbeque}            onChange={(v) => set("barbeque", v)} />
+          </div>
+          {/* Column 3 */}
+          <div className="flex flex-col gap-3">
+            <Checkbox label="Wardrobe Room"   checked={form.storage}         onChange={(v) => set("storage", v)} />
+            <Checkbox label="Home Cinema"     checked={form.home_cinema}     onChange={(v) => set("home_cinema", v)} />
+            <Checkbox label="Security Door"   checked={form.security_door}   onChange={(v) => set("security_door", v)} />
+            <Checkbox label="Alarm System"    checked={form.alarm_system}    onChange={(v) => set("alarm_system", v)} />
+            <Checkbox label="Smoke Detection" checked={form.smoke_detection} onChange={(v) => set("smoke_detection", v)} />
+            <Checkbox label="Smart Home"      checked={form.smart_home}      onChange={(v) => set("smart_home", v)} />
+            <Checkbox label="Internet Ready"  checked={form.internet_ready}  onChange={(v) => set("internet_ready", v)} />
+            <Checkbox label="Video Doorphone" checked={form.video_doorphone} onChange={(v) => set("video_doorphone", v)} />
+            <Checkbox label="Satellite TV"    checked={form.satellite_tv}    onChange={(v) => set("satellite_tv", v)} />
+          </div>
         </div>
       </Section>
 

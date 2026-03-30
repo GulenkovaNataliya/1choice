@@ -55,8 +55,19 @@ export type SearchCriteria = {
   // ── 262.25 ─────────────────────────────────────────────────────────────────
   parking:         boolean;
   // ── 262.38 ─────────────────────────────────────────────────────────────────
-  balcony:         boolean;
-  terrace:         boolean;
+  balcony:             boolean;
+  // ── 267 ────────────────────────────────────────────────────────────────────
+  veranda:             boolean;
+  private_roof_terrace: boolean;
+  close_to_beaches:    boolean;
+  panoramic_view:      boolean;
+  mountain_view:       boolean;
+  acropolis_view:      boolean;
+  duplex:              boolean;
+  loft:                boolean;
+  internal_staircase:  boolean;
+  jacuzzi:             boolean;
+  barbeque:            boolean;
 };
 
 // ── Dynamic location map ───────────────────────────────────────────────────────
@@ -385,9 +396,60 @@ function extractBalcony(message: string): boolean {
   return /\bbalcon(?:y|ies)\b|балкон|μπαλκόν|מרפסת|شرفة/i.test(message);
 }
 
-function extractTerrace(message: string): boolean {
-  // EN: terrace | RU: террас (covers терраса, террасой, террасы) | EL: βεράντ/ταράτσ (covers plurals) | HE: טרסה | AR: تراس
-  return /\bterrace[s]?\b|террас|βεράντ[αες]|ταράτσ[αες]|טרסה|تراس/i.test(message);
+function extractVeranda(message: string): boolean {
+  // EN: veranda, verandah, terrace | RU: веранда, терраса | EL: βεράντα, βεράντ, ταράτσα | HE: ורנדה, מרפסת מקורה | AR: فيراندا, شرفة مغطاة
+  return /\bveranda[h]?\b|\bterrace[s]?\b|веранд|террас|βεράντ[αες]?|ταράτσ[αες]|ורנדה|מרפסת\s+מקורה|فيراندا|شرفة\s+مغطاة/i.test(message);
+}
+
+function extractPrivateRoofTerrace(message: string): boolean {
+  // EN: roof terrace, rooftop terrace, private terrace | RU: терраса на крыше, частная терраса | EL: ταράτσα | HE: גג פרטי, טרסה פרטית | AR: تراس سطح, تراس خاص
+  return /\broof\s+terrace\b|\brooftop\s+terrace\b|\bprivate\s+(?:roof\s+)?terrace\b|терраса\s+на\s+крыше|частная\s+терраса|ταράτσ[αες]|גג\s+פרטי|טרסה\s+פרטית|تراس\s+(?:سطح|خاص)/i.test(message);
+}
+
+function extractCloseToBeaches(message: string): boolean {
+  // EN: close to beach, near beach, beach access | RU: рядом с пляжем, у моря | EL: κοντά σε παραλί, κοντά στη θάλασσα | HE: קרוב לחוף, ליד הים | AR: قريب من الشاطئ, بالقرب من البحر
+  return /\bclose\s+to\s+(?:the\s+)?beach|\bnear\s+(?:the\s+)?beach|\bbeach\s+access|\bbeachfront\b|рядом\s+с\s+пляж|у\s+моря|κοντά\s+(?:σε\s+παραλ|στη\s+θάλασσ)|קרוב\s+לחוף|ליד\s+הים|قريب\s+من\s+الشاطئ|بالقرب\s+من\s+البحر/i.test(message);
+}
+
+function extractPanoramicView(message: string): boolean {
+  // EN: panoramic view, panoramic | RU: панорамный вид, панорама | EL: πανοραμική θέα, πανόραμα | HE: נוף פנורמי, פנורמה | AR: إطلالة بانورامية, بانوراما
+  return /\bpanoramic\b|панорам|πανοραμικ|πανόραμ|נוף\s+פנורמ|פנורמה|إطلالة\s+بانوراميّة|بانوراما/i.test(message);
+}
+
+function extractMountainView(message: string): boolean {
+  // EN: mountain view | RU: вид на горы | EL: θέα βουνό, ορεινή θέα | HE: נוף להרים | AR: إطلالة على الجبال
+  return /\bmountain\s+view\b|\bwith\s+mountain\b|вид\s+на\s+гор|горный\s+вид|θέα\s+(?:στο\s+)?βουν|ορεινή\s+θέα|נוף\s+להרים|إطلالة\s+(?:على\s+)?الجبال/i.test(message);
+}
+
+function extractAcropolisView(message: string): boolean {
+  // EN: acropolis view, acropolis | RU: вид на акрополь | EL: θέα Ακρόπολη | HE: נוף לאקרופוליס | AR: إطلالة على الأكروبوليس
+  return /\bacropolis\b|акрополь|Ακρόπολ|אקרופוליס|الأكروبوليس/i.test(message);
+}
+
+function extractDuplex(message: string): boolean {
+  // EN: duplex, two-level, two level | RU: дуплекс, двухуровневый | EL: δύο επίπεδα, δυόροφ | HE: דופלקס, שתי קומות | AR: دوبلكس, طابقين
+  // Note: not same as subtype; this detects amenity/feature intent
+  return /\bduplex\b|\btwo[-\s]level\b|дуплекс|двухуровнев|δύο\s+επίπεδα|δυόροφ|דופלקס|שתי\s+קומות|دوبلكس|طابقين/i.test(message);
+}
+
+function extractLoft(message: string): boolean {
+  // EN: loft | RU: лофт | EL: λοφτ | HE: לופט | AR: لوفت
+  return /\bloft\b|лофт|λοφτ|לופט|لوفت/i.test(message);
+}
+
+function extractInternalStaircase(message: string): boolean {
+  // EN: internal staircase, internal stairs, private staircase | RU: внутренняя лестница | EL: εσωτερική σκάλα | HE: גרם מדרגות פנימי | AR: درج داخلي
+  return /\binternal\s+staircase\b|\binternal\s+stairs\b|\bprivate\s+staircase\b|внутренняя\s+лестниц|εσωτερική\s+σκάλ|גרם\s+מדרגות\s+פנימי|درج\s+داخلي/i.test(message);
+}
+
+function extractJacuzzi(message: string): boolean {
+  // EN: jacuzzi, hot tub, whirlpool | RU: джакузи | EL: τζακούζι | HE: ג'קוזי | AR: جاكوزي
+  return /\bjacuzzi\b|\bhot\s+tub\b|\bwhirlpool\b|джакузи|τζακούζι|ג'קוזי|جاكوزي/i.test(message);
+}
+
+function extractBarbeque(message: string): boolean {
+  // EN: barbeque, bbq, barbecue, grill | RU: барбекю, гриль | EL: μπάρμπεκιου, ψησταριά | HE: מנגל, גריל | AR: شواء, باربيكيو
+  return /\bbarb(?:e)?que\b|\bbbq\b|\bgrill\b|барбекю|гриль|μπάρμπεκιου|ψησταρι[αά]|מנגל|גריל|شواء|باربيكيو/i.test(message);
 }
 
 // ── Parking extraction ────────────────────────────────────────────────────────
@@ -431,10 +493,20 @@ export async function parseCriteria(message: string): Promise<SearchCriteria> {
     pool:            extractPool(message),
     garden:          extractGarden(message),
     elevator:        extractElevator(message),
-    category:        extractCategory(message),
-    parking:         extractParking(message),
-    balcony:         extractBalcony(message),
-    terrace:         extractTerrace(message),
+    category:             extractCategory(message),
+    parking:              extractParking(message),
+    balcony:              extractBalcony(message),
+    veranda:              extractVeranda(message),
+    private_roof_terrace: extractPrivateRoofTerrace(message),
+    close_to_beaches:     extractCloseToBeaches(message),
+    panoramic_view:       extractPanoramicView(message),
+    mountain_view:        extractMountainView(message),
+    acropolis_view:       extractAcropolisView(message),
+    duplex:               extractDuplex(message),
+    loft:                 extractLoft(message),
+    internal_staircase:   extractInternalStaircase(message),
+    jacuzzi:              extractJacuzzi(message),
+    barbeque:             extractBarbeque(message),
   };
 }
 
@@ -459,9 +531,19 @@ export function hasCriteria(criteria: SearchCriteria): boolean {
     criteria.pool            ||
     criteria.garden          ||
     criteria.elevator        ||
-    criteria.parking         ||
-    criteria.balcony         ||
-    criteria.terrace         ||
+    criteria.parking              ||
+    criteria.balcony              ||
+    criteria.veranda              ||
+    criteria.private_roof_terrace ||
+    criteria.close_to_beaches     ||
+    criteria.panoramic_view       ||
+    criteria.mountain_view        ||
+    criteria.acropolis_view       ||
+    criteria.duplex               ||
+    criteria.loft                 ||
+    criteria.internal_staircase   ||
+    criteria.jacuzzi              ||
+    criteria.barbeque             ||
     criteria.category
   );
 }
@@ -523,9 +605,19 @@ function buildQuery(
     if (criteria.pool)                 q = q.eq("pool",     true);
     if (criteria.garden)               q = q.eq("garden",   true);
     if (criteria.elevator)             q = q.eq("elevator", true);
-    if (criteria.parking)              q = q.eq("parking",  true);
-    if (criteria.balcony)              q = q.eq("balcony",  true);
-    if (criteria.terrace)              q = q.eq("terrace",  true);
+    if (criteria.parking)              q = q.eq("parking",               true);
+    if (criteria.balcony)              q = q.eq("balcony",               true);
+    if (criteria.veranda)              q = q.eq("veranda",               true);
+    if (criteria.private_roof_terrace) q = q.eq("private_roof_terrace",  true);
+    if (criteria.close_to_beaches)     q = q.eq("close_to_beaches",      true);
+    if (criteria.panoramic_view)       q = q.eq("panoramic_view",        true);
+    if (criteria.mountain_view)        q = q.eq("mountain_view",         true);
+    if (criteria.acropolis_view)       q = q.eq("acropolis_view",        true);
+    if (criteria.duplex)               q = q.eq("duplex",                true);
+    if (criteria.loft)                 q = q.eq("loft",                  true);
+    if (criteria.internal_staircase)   q = q.eq("internal_staircase",    true);
+    if (criteria.jacuzzi)              q = q.eq("jacuzzi",               true);
+    if (criteria.barbeque)             q = q.eq("barbeque",              true);
     if (criteria.furnished === "fully") q = q.eq("furnished", "Fully Furnished");
     else if (criteria.furnished === "any") q = q.in("furnished", FURNISHED_ANY);
     if (criteria.heating) {
@@ -584,7 +676,10 @@ export async function searchProperties(
   // Only run if we had secondary criteria worth dropping.
   const hasSecondary = criteria.seaView || criteria.pool || criteria.garden ||
     criteria.elevator || criteria.parking || criteria.furnished || criteria.heating || criteria.cooling ||
-    criteria.balcony || criteria.terrace;
+    criteria.balcony || criteria.veranda || criteria.private_roof_terrace ||
+    criteria.close_to_beaches || criteria.panoramic_view || criteria.mountain_view ||
+    criteria.acropolis_view || criteria.duplex || criteria.loft ||
+    criteria.internal_staircase || criteria.jacuzzi || criteria.barbeque;
 
   if (!hasSecondary) {
     // No secondary criteria to drop — no point running a second query.

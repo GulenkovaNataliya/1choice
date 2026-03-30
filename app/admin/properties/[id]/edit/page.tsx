@@ -18,7 +18,7 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
     supabase
       .from("properties")
       .select(
-        "id,property_code,title,slug,category,subtype,transaction_type,price_eur,location,location_text,summary,description,size_sqm,bedrooms,bathrooms,floor,year_built,year_renovated,building_condition,energy_class,heating_type,custom_heating,cooling_type,custom_cooling,fireplace,elevator,security_door,alarm_system,video_doorphone,smart_home,satellite_tv,internet_ready,storage,sea_view,mountain_view,balcony,terrace,awnings,garden,pool,parking,frames_type,double_glazing,triple_glazing,mosquito_screens,thermal_insulation,sound_insulation,flooring_type,living_rooms,kitchens,storage_rooms,wc,furnished,custom_furnished,cover_image_url,gallery_image_urls,youtube_video_url,virtual_tour_url,latitude,longitude,approximate_location,address,show_address,is_golden_visa,featured,private_collection,publish_1choice,publish_deals,status,agent_notes,custom_badge,custom_badge_color"
+        "id,property_code,title,slug,category,subtype,transaction_type,price_eur,location,location_text,summary,description,size_sqm,bedrooms,bathrooms,floor,year_built,year_renovated,building_condition,energy_class,heating_type,custom_heating,cooling_type,custom_cooling,fireplace,elevator,security_door,alarm_system,video_doorphone,smart_home,satellite_tv,internet_ready,storage,sea_view,mountain_view,balcony,veranda,awnings,garden,pool,parking,jacuzzi,close_to_beaches,panoramic_view,acropolis_view,duplex,private_roof_terrace,loft,internal_staircase,barbeque,home_cinema,smoke_detection,frames_type,double_glazing,triple_glazing,mosquito_screens,thermal_insulation,sound_insulation,flooring_type,living_rooms,kitchens,storage_rooms,wc,furnished,custom_furnished,cover_image_url,gallery_image_urls,youtube_video_url,virtual_tour_url,latitude,longitude,approximate_location,address,show_address,is_golden_visa,featured,private_collection,publish_1choice,publish_deals,status,agent_notes,custom_badge,custom_badge_color"
       )
       .eq("id", id)
       .single(),
@@ -76,11 +76,22 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
     sea_view: property.sea_view ?? false,
     mountain_view: property.mountain_view ?? false,
     balcony: (property as { balcony?: boolean | null }).balcony ?? false,
-    terrace: (property as { terrace?: boolean | null }).terrace ?? false,
+    veranda: (property as { veranda?: boolean | null }).veranda ?? false,
     awnings: (property as { awnings?: boolean | null }).awnings ?? false,
     garden: property.garden ?? false,
     pool: property.pool ?? false,
     parking: (property as { parking?: boolean | null }).parking ?? false,
+    jacuzzi: (property as { jacuzzi?: boolean | null }).jacuzzi ?? false,
+    close_to_beaches: (property as { close_to_beaches?: boolean | null }).close_to_beaches ?? false,
+    panoramic_view: (property as { panoramic_view?: boolean | null }).panoramic_view ?? false,
+    acropolis_view: (property as { acropolis_view?: boolean | null }).acropolis_view ?? false,
+    duplex: (property as { duplex?: boolean | null }).duplex ?? false,
+    private_roof_terrace: (property as { private_roof_terrace?: boolean | null }).private_roof_terrace ?? false,
+    loft: (property as { loft?: boolean | null }).loft ?? false,
+    internal_staircase: (property as { internal_staircase?: boolean | null }).internal_staircase ?? false,
+    barbeque: (property as { barbeque?: boolean | null }).barbeque ?? false,
+    home_cinema: (property as { home_cinema?: boolean | null }).home_cinema ?? false,
+    smoke_detection: (property as { smoke_detection?: boolean | null }).smoke_detection ?? false,
     frames_type: property.frames_type ?? "",
     double_glazing: property.double_glazing ?? false,
     triple_glazing: property.triple_glazing ?? false,

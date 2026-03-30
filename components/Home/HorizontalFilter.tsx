@@ -42,7 +42,11 @@ const PROPERTY_TYPES = ["Apartment", "Maisonette", "House", "Villa", "Land", "Co
 const BEDROOMS_OPTS  = ["1+", "2+", "3+", "4+", "5+"];
 const BATHROOMS_OPTS = ["1+", "2+", "3+", "4+"];
 const CONDITIONS     = ["Renovated", "Needs Renovation", "Under Construction"];
-const FEATURES       = ["Parking", "Pool", "Sea View", "Garden", "Furnished", "Investment"];
+const FEATURES       = [
+  "Pool", "Sea View", "Garden", "Elevator", "Balcony", "Veranda",
+  "Private Roof Terrace", "Duplex", "Close to Beaches", "Panoramic View",
+  "Parking", "Furnished", "Investment",
+];
 
 const ROW1_KEYS: Row1Key[] = ["transaction", "type", "location", "price", "bedrooms"];
 const ROW2_KEYS: Row2Key[] = ["features", "bathrooms", "size", "yearBuilt", "condition"];
@@ -106,6 +110,9 @@ function hasValue(key: PanelKey, f: FilterState): boolean {
 const FEATURE_SLUG: Record<string, string> = {
   "Parking": "parking", "Pool": "pool", "Sea View": "seaview",
   "Garden": "garden", "Furnished": "furnished", "Investment": "investment",
+  "Elevator": "elevator", "Balcony": "balcony", "Veranda": "veranda",
+  "Private Roof Terrace": "privateroofterrace", "Duplex": "duplex",
+  "Close to Beaches": "closetobeaches", "Panoramic View": "panoramicview",
 };
 
 const CONDITION_SLUG: Record<string, string> = {

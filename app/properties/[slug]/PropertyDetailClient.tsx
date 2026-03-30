@@ -83,8 +83,19 @@ export type PropertyData = {
   pool: boolean | null;
   parking: boolean | null;
   balcony: boolean | null;
-  terrace: boolean | null;
+  veranda: boolean | null;
   awnings: boolean | null;
+  jacuzzi: boolean | null;
+  close_to_beaches: boolean | null;
+  panoramic_view: boolean | null;
+  acropolis_view: boolean | null;
+  duplex: boolean | null;
+  private_roof_terrace: boolean | null;
+  loft: boolean | null;
+  internal_staircase: boolean | null;
+  barbeque: boolean | null;
+  home_cinema: boolean | null;
+  smoke_detection: boolean | null;
   // Location
   latitude: number | null;
   longitude: number | null;

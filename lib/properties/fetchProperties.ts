@@ -23,6 +23,12 @@ export type PropertyRow = {
   transaction_type: string | null;
   subtype: string | null;
   garden: boolean | null;
+  balcony: boolean | null;
+  veranda: boolean | null;
+  private_roof_terrace: boolean | null;
+  duplex: boolean | null;
+  close_to_beaches: boolean | null;
+  panoramic_view: boolean | null;
   building_condition: string | null;
   created_at: string;
   cover_image_url: string | null;
@@ -41,7 +47,7 @@ export async function fetchProperties(args: FetchArgs = {}): Promise<PropertyRow
   let q = supabase
     .from("properties")
     .select(
-      "id,property_code,title,slug,price_eur,location,location_text,bedrooms,bathrooms,size_sqm,floor,year_built,featured,private_collection,is_golden_visa,publish_deals,sea_view,pool,elevator,transaction_type,created_at,cover_image_url,gallery_image_urls,custom_badge,custom_badge_color"
+      "id,property_code,title,slug,price_eur,location,location_text,bedrooms,bathrooms,size_sqm,floor,year_built,featured,private_collection,is_golden_visa,publish_deals,sea_view,pool,elevator,transaction_type,created_at,cover_image_url,gallery_image_urls,custom_badge,custom_badge_color,balcony,veranda,private_roof_terrace,duplex,close_to_beaches,panoramic_view"
     )
     .order("featured", { ascending: false })
     .order("created_at", { ascending: false });

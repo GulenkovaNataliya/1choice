@@ -300,13 +300,32 @@ function extractSeaView(message: string): boolean {
 
 // ── Transaction type extraction ───────────────────────────────────────────────
 // EN + RU + EL + HE (למכירה / להשכרה) + AR (للبيع / للإيجار)
+//
+// Order: antiparochi must be checked FIRST (it is a subtype of sale in some contexts).
+//
+// antiparochi:
+//   EN: antiparochi
+//   EL: αντιπαροχ (covers αντιπαροχή, αντιπαροχής, etc.)
+//   RU: антипарохи (transliteration — users of this term likely know the Greek word)
+//
+// sale:
+//   EN: for sale, to buy, purchase, buying, buy
+//   RU: покупк / купить / продаётся / продаж / на продажу
+//   EL: αγορ(ά) / προς πώλη / πώλησ / πωλείται ("is for sale" — common passive form)
+//   HE: למכירה
+//   AR: للبيع
+//
+// rent:
+//   EN: for rent, to rent, rental, renting, rent
+//   RU: аренд / снять / сдаётся ("is for rent" — common passive form)
+//   EL: ενοικί / ενοίκιο (rent as noun) / μισθών(εται) / προς ενοικί
+//   HE: להשכרה / שכירות (rental noun)
+//   AR: للإيجار
 
 function extractTransactionType(message: string): "sale" | "rent" | "antiparochi" | null {
-  if (/\bantiparochi\b/i.test(message)) return "antiparochi";
-  // RU: покупка/купить/продажа/на продажу/продаётся  |  EL: αγορά/προς πώληση/πώλησ  |  HE: למכירה  |  AR: للبيع
-  if (/\bfor\s+sale\b|\bto\s+buy\b|\bpurchase\b|\bbuying\b|\bbuy\b|\bпокупк|\bкупить\b|\bпродаётся\b|\bпродаж|\bна\s+продажу\b|\bαγορ[αά]|\bπρος\s+πώλη|\bπώλησ|למכירה|للبيع/i.test(message)) return "sale";
-  // EL: ενοικί (all-Greek, was accidentally Cyrillic е before)
-  if (/\bfor\s+rent\b|\bto\s+rent\b|\brental\b|\brenting\b|\brent\b|\bаренд|\bснять\b|\bενοικί|\bπρος\s+ενοικί|להשכרה|للإيجار/i.test(message)) return "rent";
+  if (/\bantiparochi\b|αντιπαροχ|антипарохи/i.test(message)) return "antiparochi";
+  if (/\bfor\s+sale\b|\bto\s+buy\b|\bpurchase\b|\bbuying\b|\bbuy\b|покупк|купить|продаётся|продаж|на\s+продажу|αγορ[αά]|προς\s+πώλη|πώλησ|πωλείται|למכירה|للبيع/i.test(message)) return "sale";
+  if (/\bfor\s+rent\b|\bto\s+rent\b|\brental\b|\brenting\b|\brent\b|аренд|снять|сдаётся|ενοικί|ενοίκιο|μισθών|προς\s+ενοικί|להשכרה|שכירות|للإيجار/i.test(message)) return "rent";
   return null;
 }
 

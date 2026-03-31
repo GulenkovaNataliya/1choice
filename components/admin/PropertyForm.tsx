@@ -1126,7 +1126,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
               <button
                 type="button"
                 onClick={() => setShowAreaModal(true)}
-                className="text-xs text-[#3A2E4F] hover:underline self-start"
+                className="text-sm font-medium text-[#C1121F] hover:opacity-70 transition-opacity self-start"
               >
                 + Add new area
               </button>

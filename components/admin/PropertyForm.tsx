@@ -1175,7 +1175,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
                 </button>
                 {/* Subtype chips — visible only when accordion is open */}
                 {isOpen && (
-                  <div className="px-4 pb-4 pt-2 border-t border-[#F0F0F0] flex flex-wrap gap-2">
+                  <div className="px-4 pb-4 pt-3 border-t border-[#F0F0F0] flex flex-wrap gap-2">
                     {subtypes.map((sub) => {
                       const SubIcon = sub.icon;
                       const isActive = form.subtype === sub.value;
@@ -1190,13 +1190,13 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
                               subtype: isActive ? "" : sub.value,
                             }));
                           }}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                          className={`flex items-center gap-2 px-4 py-2 h-9 rounded-lg text-sm font-medium border transition-colors ${
                             isActive
                               ? "bg-[#1E1E1E] text-white border-[#1E1E1E]"
-                              : "bg-white text-[#1E1E1E] border-[#D9D9D9] hover:border-[#1E1E1E]"
+                              : "bg-white text-[#1E1E1E] border-[#D9D9D9] hover:border-[#1E1E1E] hover:bg-[#F5F5F5]"
                           }`}
                         >
-                          <SubIcon size={11} />
+                          <SubIcon size={13} />
                           {sub.label}
                         </button>
                       );
@@ -1208,10 +1208,10 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
           })}
         </div>
 
-        {/* Property Position / Exposure — multi-select chips below the accordion grid */}
+        {/* Property Position / Exposure — 4-column grid below the accordion */}
         <div>
           <p className="text-sm font-medium text-[#1E1E1E] mb-2">Property Position / Exposure</p>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {EXPOSURE_OPTIONS.map((exp) => {
               const ExpIcon = exp.icon;
               const isActive = form.exposure.includes(exp.value);
@@ -1225,13 +1225,13 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
                       : [...form.exposure, exp.value];
                     set("exposure", next);
                   }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                  className={`w-full flex items-center justify-center gap-2 px-4 py-2 h-9 rounded-lg text-sm font-medium border transition-colors ${
                     isActive
                       ? "bg-[#1E1E1E] text-white border-[#1E1E1E]"
-                      : "bg-white text-[#1E1E1E] border-[#D9D9D9] hover:border-[#1E1E1E]"
+                      : "bg-white text-[#1E1E1E] border-[#D9D9D9] hover:border-[#1E1E1E] hover:bg-[#F5F5F5]"
                   }`}
                 >
-                  <ExpIcon size={11} />
+                  <ExpIcon size={13} />
                   {exp.label}
                 </button>
               );

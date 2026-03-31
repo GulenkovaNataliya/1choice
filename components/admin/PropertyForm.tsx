@@ -395,14 +395,15 @@ function buildPayload(form: FormState, resolveSlug = false) {
     mountain_view: form.mountain_view,
     garden: form.garden,
     pool: form.pool,
-    // Parking — legacy boolean kept as source of truth; structured fields cleared when unchecked
-    parking: form.parking,
-    parking_spaces: form.parking && form.parking_spaces ? Number(form.parking_spaces) : null,
-    parking_type: form.parking ? (form.parking_type || null) : null,
-    parking_level: form.parking ? (form.parking_level || null) : null,
-    parking_area_sqm: form.parking && form.parking_area_sqm ? Number(form.parking_area_sqm) : null,
+    // Parking structured fields — gated by checkbox; cleared when unchecked
+    parking_spaces:       form.parking ? (form.parking_spaces.trim() || null) : null,
+    parking_type:         form.parking ? (form.parking_type || null) : null,
+    parking_level:        form.parking ? (form.parking_level || null) : null,
+    parking_area_sqm:     form.parking && form.parking_area_sqm ? Number(form.parking_area_sqm) : null,
     parking_suitable_for: form.parking && form.parking_suitable_for.length > 0 ? form.parking_suitable_for : null,
-    parking_features: form.parking && form.parking_features.length > 0 ? form.parking_features : null,
+    parking_features:     form.parking && form.parking_features.length > 0 ? form.parking_features : null,
+    // Legacy boolean — checkbox is source of truth; keeps AI / filters working unchanged
+    parking: form.parking,
     close_to_beaches: form.close_to_beaches,
     panoramic_view: form.panoramic_view,
     acropolis_view: form.acropolis_view,
@@ -1245,24 +1246,24 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
       {/* ── Comfort & Amenities ───────────────────────────────────────────── */}
       <Section title="Comfort & Amenities">
         <div className="grid grid-cols-3 gap-x-6 gap-y-3">
-          {/* Column 1 — views, outdoor, global flags */}
+          {/* Column 1 — views */}
           <div className="flex flex-col gap-3">
-            <Checkbox label="Pool"               checked={form.pool}               onChange={(v) => set("pool", v)} />
-            <Checkbox label="Garden"             checked={form.garden}             onChange={(v) => set("garden", v)} />
             <Checkbox label="Sea View"           checked={form.sea_view}           onChange={(v) => set("sea_view", v)} />
             <Checkbox label="Close to Beaches"   checked={form.close_to_beaches}   onChange={(v) => set("close_to_beaches", v)} />
             <Checkbox label="Panoramic View"     checked={form.panoramic_view}     onChange={(v) => set("panoramic_view", v)} />
             <Checkbox label="Mountain View"      checked={form.mountain_view}      onChange={(v) => set("mountain_view", v)} />
             <Checkbox label="Acropolis View"     checked={form.acropolis_view}     onChange={(v) => set("acropolis_view", v)} />
           </div>
-          {/* Column 2 — building access, outdoor extras */}
+          {/* Column 2 — outdoor & building */}
           <div className="flex flex-col gap-3">
-            <Checkbox label="Elevator"   checked={form.elevator}   onChange={(v) => set("elevator", v)} />
-            <Checkbox label="Barbeque"   checked={form.barbeque}   onChange={(v) => set("barbeque", v)} />
+            <Checkbox label="Pool"           checked={form.pool}          onChange={(v) => set("pool", v)} />
+            <Checkbox label="Garden"         checked={form.garden}        onChange={(v) => set("garden", v)} />
+            <Checkbox label="Barbeque"       checked={form.barbeque}      onChange={(v) => set("barbeque", v)} />
+            <Checkbox label="Security Door"  checked={form.security_door} onChange={(v) => set("security_door", v)} />
+            <Checkbox label="Elevator"       checked={form.elevator}      onChange={(v) => set("elevator", v)} />
           </div>
           {/* Column 3 — security & tech */}
           <div className="flex flex-col gap-3">
-            <Checkbox label="Security Door"   checked={form.security_door}   onChange={(v) => set("security_door", v)} />
             <Checkbox label="Alarm System"    checked={form.alarm_system}    onChange={(v) => set("alarm_system", v)} />
             <Checkbox label="Smoke Detection" checked={form.smoke_detection} onChange={(v) => set("smoke_detection", v)} />
             <Checkbox label="Smart Home"      checked={form.smart_home}      onChange={(v) => set("smart_home", v)} />
@@ -1277,17 +1278,13 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
       {form.levels.map((level, idx) => (
         <Section key={idx} title={`Level ${idx + 1} Details`}>
           <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-            {/* Column 1 */}
+            {/* Column 1 — numeric / count / room fields only */}
             <div className="flex flex-col gap-4">
               <Field label="Level Size (sqm)">
                 <input type="number" value={level.level_size_sqm}
                   onChange={(e) => setLevel(idx, "level_size_sqm", e.target.value)}
                   className={inputCls} placeholder="120" min={0} />
               </Field>
-              <div className="pt-1">
-                <Checkbox label="Maisonette" checked={level.is_maisonette}
-                  onChange={(v) => setLevel(idx, "is_maisonette", v)} />
-              </div>
               <Field label="Bedrooms">
                 <input type="number" value={level.bedrooms}
                   onChange={(e) => setLevel(idx, "bedrooms", e.target.value)}
@@ -1323,11 +1320,11 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
                   onChange={(e) => setLevel(idx, "storage_rooms", e.target.value)}
                   className={inputCls} placeholder="0" min={0} />
               </Field>
-              <Checkbox label="Wardrobe Room" checked={level.wardrobe_room}
-                onChange={(v) => setLevel(idx, "wardrobe_room", v)} />
             </div>
-            {/* Column 2 */}
+            {/* Column 2 — boolean feature checkboxes */}
             <div className="flex flex-col gap-4">
+              <Checkbox label="Maisonette"           checked={level.is_maisonette}        onChange={(v) => setLevel(idx, "is_maisonette", v)} />
+              <Checkbox label="Wardrobe Room"        checked={level.wardrobe_room}        onChange={(v) => setLevel(idx, "wardrobe_room", v)} />
               <Checkbox label="Balcony"              checked={level.balcony}              onChange={(v) => setLevel(idx, "balcony", v)} />
               <Checkbox label="Veranda"              checked={level.veranda}              onChange={(v) => setLevel(idx, "veranda", v)} />
               <Checkbox label="Awnings"              checked={level.awnings}              onChange={(v) => setLevel(idx, "awnings", v)} />

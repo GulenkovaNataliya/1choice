@@ -18,7 +18,7 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
     supabase
       .from("properties")
       .select(
-        "id,property_code,title,slug,category,subtype,transaction_type,price_eur,location,location_text,summary,description,size_sqm,bedrooms,bathrooms,floor,year_built,year_renovated,building_condition,energy_class,heating_type,custom_heating,cooling_type,custom_cooling,heating_system,heating_fuel,heating_features,cooling_system,fireplace,elevator,security_door,alarm_system,video_doorphone,smart_home,satellite_tv,internet_ready,wardrobe_room,sea_view,mountain_view,balcony,veranda,awnings,garden,pool,parking,jacuzzi,close_to_beaches,panoramic_view,acropolis_view,duplex,private_roof_terrace,loft,internal_staircase,barbeque,home_cinema,smoke_detection,total_property_area_sqm,total_building_floors,number_of_levels,level_details,frames_type,double_glazing,triple_glazing,mosquito_screens,thermal_insulation,sound_insulation,flooring_type,living_rooms,kitchens,storage_rooms,wc,furnished,custom_furnished,cover_image_url,gallery_image_urls,youtube_video_url,virtual_tour_url,latitude,longitude,approximate_location,address,show_address,is_golden_visa,featured,private_collection,publish_1choice,publish_deals,status,agent_notes,custom_badge,custom_badge_color"
+        "id,property_code,title,slug,category,subtype,transaction_type,price_eur,location,location_text,summary,description,size_sqm,bedrooms,bathrooms,floor,year_built,year_renovated,building_condition,energy_class,heating_type,custom_heating,cooling_type,custom_cooling,heating_system,heating_fuel,heating_features,cooling_system,fireplace,elevator,security_door,alarm_system,video_doorphone,smart_home,satellite_tv,internet_ready,wardrobe_room,sea_view,mountain_view,balcony,veranda,awnings,garden,pool,parking,parking_spaces,parking_type,parking_level,parking_area_sqm,parking_suitable_for,parking_features,jacuzzi,close_to_beaches,panoramic_view,acropolis_view,private_roof_terrace,loft,internal_staircase,barbeque,home_cinema,smoke_detection,total_property_area_sqm,total_building_floors,number_of_levels,level_details,frames_type,double_glazing,triple_glazing,mosquito_screens,thermal_insulation,sound_insulation,flooring_type,living_rooms,kitchens,storage_rooms,wc,furnished,custom_furnished,cover_image_url,gallery_image_urls,youtube_video_url,virtual_tour_url,latitude,longitude,approximate_location,address,show_address,is_golden_visa,featured,private_collection,publish_1choice,publish_deals,status,agent_notes,custom_badge,custom_badge_color"
       )
       .eq("id", id)
       .single(),
@@ -52,11 +52,15 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
     location_text: property.location_text ?? "",
     summary: property.summary ?? "",
     description: property.description ?? "",
-    size_sqm: property.size_sqm != null ? String(property.size_sqm) : "",
     bedrooms: property.bedrooms != null ? String(property.bedrooms) : "",
     bathrooms: property.bathrooms != null ? String(property.bathrooms) : "",
     floor: property.floor != null ? String(property.floor) : "",
-    total_property_area_sqm: (property as { total_property_area_sqm?: number | null }).total_property_area_sqm != null ? String((property as { total_property_area_sqm?: number | null }).total_property_area_sqm) : "",
+    // Prefer total_property_area_sqm; fall back to legacy size_sqm for old rows that only had that field
+    total_property_area_sqm: (() => {
+      const n = (property as { total_property_area_sqm?: number | null }).total_property_area_sqm;
+      if (n != null) return String(n);
+      return property.size_sqm != null ? String(property.size_sqm) : "";
+    })(),
     total_building_floors: (property as { total_building_floors?: number | null }).total_building_floors != null ? String((property as { total_building_floors?: number | null }).total_building_floors) : "",
     number_of_levels: (() => {
       const n = (property as { number_of_levels?: number | null }).number_of_levels;
@@ -68,7 +72,7 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
       // Backward compat: build Level 1 from legacy flat fields
       return [{
         level_size_sqm: "",
-        is_maisonette_duplex: false,
+        is_maisonette: false,
         bedrooms: property.bedrooms != null ? String(property.bedrooms) : "",
         bathrooms: property.bathrooms != null ? String(property.bathrooms) : "",
         wc: property.wc != null ? String(property.wc) : "",
@@ -146,11 +150,16 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
     garden: property.garden ?? false,
     pool: property.pool ?? false,
     parking: (property as { parking?: boolean | null }).parking ?? false,
+    parking_spaces: (property as { parking_spaces?: number | null }).parking_spaces != null ? String((property as { parking_spaces?: number | null }).parking_spaces) : "",
+    parking_type: (property as { parking_type?: string | null }).parking_type ?? "",
+    parking_level: (property as { parking_level?: string | null }).parking_level ?? "",
+    parking_area_sqm: (property as { parking_area_sqm?: number | null }).parking_area_sqm != null ? String((property as { parking_area_sqm?: number | null }).parking_area_sqm) : "",
+    parking_suitable_for: (property as { parking_suitable_for?: string[] | null }).parking_suitable_for ?? [],
+    parking_features: (property as { parking_features?: string[] | null }).parking_features ?? [],
     jacuzzi: (property as { jacuzzi?: boolean | null }).jacuzzi ?? false,
     close_to_beaches: (property as { close_to_beaches?: boolean | null }).close_to_beaches ?? false,
     panoramic_view: (property as { panoramic_view?: boolean | null }).panoramic_view ?? false,
     acropolis_view: (property as { acropolis_view?: boolean | null }).acropolis_view ?? false,
-    duplex: (property as { duplex?: boolean | null }).duplex ?? false,
     private_roof_terrace: (property as { private_roof_terrace?: boolean | null }).private_roof_terrace ?? false,
     loft: (property as { loft?: boolean | null }).loft ?? false,
     internal_staircase: (property as { internal_staircase?: boolean | null }).internal_staircase ?? false,

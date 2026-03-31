@@ -15,7 +15,7 @@ import { createBadgeQuick } from "@/app/admin/badges/actions";
 
 export type LevelDetail = {
   level_size_sqm: string;
-  is_maisonette_duplex: boolean;
+  is_maisonette: boolean;
   bedrooms: string;
   bathrooms: string;
   wc: string;
@@ -38,7 +38,7 @@ export type LevelDetail = {
 
 const EMPTY_LEVEL: LevelDetail = {
   level_size_sqm: "",
-  is_maisonette_duplex: false,
+  is_maisonette: false,
   bedrooms: "",
   bathrooms: "",
   wc: "",
@@ -68,7 +68,6 @@ type FormState = {
   price_eur: string;
   location_slug: string;
   location_text: string;
-  size_sqm: string;
   bedrooms: string;
   bathrooms: string;
   floor: string;
@@ -105,11 +104,16 @@ type FormState = {
   garden: boolean;
   pool: boolean;
   parking: boolean;
+  parking_spaces: string;
+  parking_type: string;
+  parking_level: string;
+  parking_area_sqm: string;
+  parking_suitable_for: string[];
+  parking_features: string[];
   jacuzzi: boolean;
   close_to_beaches: boolean;
   panoramic_view: boolean;
   acropolis_view: boolean;
-  duplex: boolean;
   private_roof_terrace: boolean;
   loft: boolean;
   internal_staircase: boolean;
@@ -162,7 +166,6 @@ const INITIAL: FormState = {
   price_eur: "",
   location_slug: "",
   location_text: "",
-  size_sqm: "",
   bedrooms: "",
   bathrooms: "",
   floor: "",
@@ -199,11 +202,16 @@ const INITIAL: FormState = {
   garden: false,
   pool: false,
   parking: false,
+  parking_spaces: "",
+  parking_type: "",
+  parking_level: "",
+  parking_area_sqm: "",
+  parking_suitable_for: [],
+  parking_features: [],
   jacuzzi: false,
   close_to_beaches: false,
   panoramic_view: false,
   acropolis_view: false,
-  duplex: false,
   private_roof_terrace: false,
   loft: false,
   internal_staircase: false,
@@ -321,8 +329,9 @@ function buildPayload(form: FormState, resolveSlug = false) {
     price:     form.price_eur ? Number(form.price_eur) : null, // legacy column kept in sync
     location: form.location_slug || null,
     location_text: form.location_text || null,
-    size_sqm: form.size_sqm ? Number(form.size_sqm) : null,
-    size:     form.size_sqm  ? Number(form.size_sqm)  : null, // legacy column kept in sync
+    // size_sqm / size derived from total_property_area_sqm — keeps AI, filters, cards, catalog working
+    size_sqm: form.total_property_area_sqm ? Number(form.total_property_area_sqm) : null,
+    size:     form.total_property_area_sqm ? Number(form.total_property_area_sqm) : null,
     // Legacy flat columns — summed across all levels so existing queries/AI/catalog still work
     bedrooms: form.levels.length > 0 ? sumLevels(form.levels, "bedrooms") : (form.bedrooms ? Number(form.bedrooms) : null),
     bathrooms: form.levels.length > 0 ? sumLevels(form.levels, "bathrooms") : (form.bathrooms ? Number(form.bathrooms) : null),
@@ -335,14 +344,34 @@ function buildPayload(form: FormState, resolveSlug = false) {
     year_renovated: form.year_renovated ? Number(form.year_renovated) : null,
     building_condition: form.building_condition || null,
     energy_class: form.energy_class || null,
-    heating_type: form.heating_type || null,   // legacy — kept for DB compat
-    custom_heating: form.custom_heating.trim() || null,
-    cooling_type: form.cooling_type || null,   // legacy — kept for DB compat
-    custom_cooling: form.custom_cooling.trim() || null,
+    // New structured fields
     heating_system: form.heating_system || null,
     heating_fuel: form.heating_fuel || null,
     heating_features: form.heating_features.length > 0 ? form.heating_features : null,
     cooling_system: form.cooling_system || null,
+    custom_heating: form.custom_heating.trim() || null,
+    custom_cooling: form.custom_cooling.trim() || null,
+    // Legacy fields — derived from new structured fields so AI/search/filter keeps working
+    heating_type: (() => {
+      if (form.heating_system) {
+        if (form.heating_system === "central" || form.heating_system === "none") return form.heating_system;
+        if (form.heating_system === "central_autonomous" || form.heating_system === "autonomous") return "autonomous";
+      }
+      if (!form.heating_system && form.heating_features.includes("heat_pump")) return "heat_pump";
+      if (!form.heating_system && form.heating_fuel) {
+        if (form.heating_fuel === "natural_gas" || form.heating_fuel === "oil" || form.heating_fuel === "electric") return form.heating_fuel;
+      }
+      return form.heating_type || null;
+    })(),
+    cooling_type: (() => {
+      if (form.cooling_system) {
+        if (form.cooling_system === "central_ac") return "central_ac";
+        if (form.cooling_system === "split_units") return "split_units";
+        if (form.cooling_system === "fan_coil")    return "fan";
+        if (form.cooling_system === "none")        return "none";
+      }
+      return form.cooling_type || null;
+    })(),
     // Level-derived booleans: OR across all levels when levels exist; fallback to global form field for legacy properties.
     fireplace:            form.levels.length > 0 ? someLevelTrue(form.levels, "fireplace")            : form.fireplace,
     wardrobe_room:        form.levels.length > 0 ? someLevelTrue(form.levels, "wardrobe_room")        : form.wardrobe_room,
@@ -366,11 +395,17 @@ function buildPayload(form: FormState, resolveSlug = false) {
     mountain_view: form.mountain_view,
     garden: form.garden,
     pool: form.pool,
+    // Parking — legacy boolean kept as source of truth; structured fields cleared when unchecked
     parking: form.parking,
+    parking_spaces: form.parking && form.parking_spaces ? Number(form.parking_spaces) : null,
+    parking_type: form.parking ? (form.parking_type || null) : null,
+    parking_level: form.parking ? (form.parking_level || null) : null,
+    parking_area_sqm: form.parking && form.parking_area_sqm ? Number(form.parking_area_sqm) : null,
+    parking_suitable_for: form.parking && form.parking_suitable_for.length > 0 ? form.parking_suitable_for : null,
+    parking_features: form.parking && form.parking_features.length > 0 ? form.parking_features : null,
     close_to_beaches: form.close_to_beaches,
     panoramic_view: form.panoramic_view,
     acropolis_view: form.acropolis_view,
-    duplex: form.duplex,
     barbeque: form.barbeque,
     smoke_detection: form.smoke_detection,
     frames_type: form.frames_type || null,
@@ -1109,22 +1144,6 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
         </div>
       </Section>
 
-      {/* ── Basic Characteristics ──────────────────────────────────────────── */}
-      <Section title="Basic Characteristics">
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Size (sqm)" hint="Main listing size">
-            <input
-              type="number"
-              value={form.size_sqm}
-              onChange={(e) => set("size_sqm", e.target.value)}
-              className={inputCls}
-              placeholder="120"
-              min={0}
-            />
-          </Field>
-        </div>
-      </Section>
-
       {/* ── Building Information ──────────────────────────────────────────── */}
       <Section title="Building Information">
         <div className="grid grid-cols-2 gap-4">
@@ -1235,12 +1254,10 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
             <Checkbox label="Panoramic View"     checked={form.panoramic_view}     onChange={(v) => set("panoramic_view", v)} />
             <Checkbox label="Mountain View"      checked={form.mountain_view}      onChange={(v) => set("mountain_view", v)} />
             <Checkbox label="Acropolis View"     checked={form.acropolis_view}     onChange={(v) => set("acropolis_view", v)} />
-            <Checkbox label="Duplex"             checked={form.duplex}             onChange={(v) => set("duplex", v)} />
           </div>
           {/* Column 2 — building access, outdoor extras */}
           <div className="flex flex-col gap-3">
             <Checkbox label="Elevator"   checked={form.elevator}   onChange={(v) => set("elevator", v)} />
-            <Checkbox label="Parking"    checked={form.parking}    onChange={(v) => set("parking", v)} />
             <Checkbox label="Barbeque"   checked={form.barbeque}   onChange={(v) => set("barbeque", v)} />
           </div>
           {/* Column 3 — security & tech */}
@@ -1268,8 +1285,8 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
                   className={inputCls} placeholder="120" min={0} />
               </Field>
               <div className="pt-1">
-                <Checkbox label="Maisonette (Duplex)" checked={level.is_maisonette_duplex}
-                  onChange={(v) => setLevel(idx, "is_maisonette_duplex", v)} />
+                <Checkbox label="Maisonette" checked={level.is_maisonette}
+                  onChange={(v) => setLevel(idx, "is_maisonette", v)} />
               </div>
               <Field label="Bedrooms">
                 <input type="number" value={level.bedrooms}
@@ -1474,6 +1491,139 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
             <input type="text" value={form.custom_cooling} onChange={(e) => set("custom_cooling", e.target.value)} className={inputCls} placeholder="π.χ. Σύστημα VRF" />
           </Field>
         </div>
+      </Section>
+
+      {/* ── Parking ───────────────────────────────────────────────────────── */}
+      <Section title="Parking">
+        <Checkbox label="Parking" checked={form.parking} onChange={(v) => set("parking", v)} />
+        {form.parking && (
+          <div className="flex flex-col gap-4 pt-2">
+            {/* Row 1 — Spaces + Type */}
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Parking Spaces">
+                <input
+                  type="number"
+                  value={form.parking_spaces}
+                  onChange={(e) => set("parking_spaces", e.target.value)}
+                  className={inputCls}
+                  placeholder="1"
+                  min={0}
+                />
+              </Field>
+              <Field label="Parking Type">
+                <select
+                  value={form.parking_type}
+                  onChange={(e) => set("parking_type", e.target.value)}
+                  className={inputCls}
+                >
+                  <option value="">— select —</option>
+                  <option value="outdoor">Outdoor</option>
+                  <option value="covered">Covered</option>
+                  <option value="underground">Underground</option>
+                  <option value="closed_garage">Closed Garage</option>
+                  <option value="pilotis">Pilotis</option>
+                </select>
+              </Field>
+            </div>
+            {/* Row 2 — Level + Area */}
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Parking Level">
+                <select
+                  value={form.parking_level}
+                  onChange={(e) => set("parking_level", e.target.value)}
+                  className={inputCls}
+                >
+                  <option value="">— select —</option>
+                  <option value="b4">B4</option>
+                  <option value="b3">B3</option>
+                  <option value="b2">B2</option>
+                  <option value="b1">B1</option>
+                  <option value="ground_floor">Ground Floor</option>
+                  <option value="level_1">Level 1</option>
+                  <option value="level_2">Level 2</option>
+                  <option value="level_3">Level 3</option>
+                  <option value="level_4">Level 4</option>
+                </select>
+              </Field>
+              <Field label="Parking Area (sqm)">
+                <input
+                  type="number"
+                  value={form.parking_area_sqm}
+                  onChange={(e) => set("parking_area_sqm", e.target.value)}
+                  className={inputCls}
+                  placeholder="20"
+                  min={0}
+                />
+              </Field>
+            </div>
+            {/* Row 3 — Suitable for (chips) */}
+            <Field label="Suitable for">
+              <div className="flex flex-wrap gap-2 pt-1">
+                {([
+                  { value: "cars",        label: "Cars" },
+                  { value: "motorcycles", label: "Motorcycles" },
+                  { value: "boats",       label: "Boats" },
+                  { value: "camper_vans", label: "Camper Vans" },
+                  { value: "trucks",      label: "Trucks" },
+                ] as const).map(({ value, label }) => {
+                  const active = form.parking_suitable_for.includes(value);
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => {
+                        const next = active
+                          ? form.parking_suitable_for.filter((f) => f !== value)
+                          : [...form.parking_suitable_for, value];
+                        set("parking_suitable_for", next);
+                      }}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                        active
+                          ? "bg-[#1E1E1E] text-white border-[#1E1E1E]"
+                          : "bg-white text-[#888888] border-[#E8E8E8] hover:border-[#1E1E1E] hover:text-[#1E1E1E]"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
+            {/* Row 4 — Parking Features (chips) */}
+            <Field label="Parking Features">
+              <div className="flex flex-wrap gap-2 pt-1">
+                {([
+                  { value: "electric_gate",   label: "Electric Gate" },
+                  { value: "car_lift",         label: "Car Lift" },
+                  { value: "alarm_system",     label: "Alarm System" },
+                  { value: "fire_protection",  label: "Fire Protection" },
+                  { value: "ev_charging",      label: "EV Charging" },
+                ] as const).map(({ value, label }) => {
+                  const active = form.parking_features.includes(value);
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => {
+                        const next = active
+                          ? form.parking_features.filter((f) => f !== value)
+                          : [...form.parking_features, value];
+                        set("parking_features", next);
+                      }}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                        active
+                          ? "bg-[#1E1E1E] text-white border-[#1E1E1E]"
+                          : "bg-white text-[#888888] border-[#E8E8E8] hover:border-[#1E1E1E] hover:text-[#1E1E1E]"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
+          </div>
+        )}
       </Section>
 
       {/* ── Description ───────────────────────────────────────────────────── */}

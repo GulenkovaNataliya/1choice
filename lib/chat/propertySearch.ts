@@ -63,7 +63,6 @@ export type SearchCriteria = {
   panoramic_view:      boolean;
   mountain_view:       boolean;
   acropolis_view:      boolean;
-  duplex:              boolean;
   loft:                boolean;
   internal_staircase:  boolean;
   jacuzzi:             boolean;
@@ -426,12 +425,6 @@ function extractAcropolisView(message: string): boolean {
   return /\bacropolis\b|акрополь|Ακρόπολ|אקרופוליס|الأكروبوليس/i.test(message);
 }
 
-function extractDuplex(message: string): boolean {
-  // EN: duplex, two-level, two level | RU: дуплекс, двухуровневый | EL: δύο επίπεδα, δυόροφ | HE: דופלקס, שתי קומות | AR: دوبلكس, طابقين
-  // Note: not same as subtype; this detects amenity/feature intent
-  return /\bduplex\b|\btwo[-\s]level\b|дуплекс|двухуровнев|δύο\s+επίπεδα|δυόροφ|דופלקס|שתי\s+קומות|دوبلكس|طابقين/i.test(message);
-}
-
 function extractLoft(message: string): boolean {
   // EN: loft | RU: лофт | EL: λοφτ | HE: לופט | AR: لوفت
   return /\bloft\b|лофт|λοφτ|לופט|لوفت/i.test(message);
@@ -502,7 +495,6 @@ export async function parseCriteria(message: string): Promise<SearchCriteria> {
     panoramic_view:       extractPanoramicView(message),
     mountain_view:        extractMountainView(message),
     acropolis_view:       extractAcropolisView(message),
-    duplex:               extractDuplex(message),
     loft:                 extractLoft(message),
     internal_staircase:   extractInternalStaircase(message),
     jacuzzi:              extractJacuzzi(message),
@@ -539,7 +531,6 @@ export function hasCriteria(criteria: SearchCriteria): boolean {
     criteria.panoramic_view       ||
     criteria.mountain_view        ||
     criteria.acropolis_view       ||
-    criteria.duplex               ||
     criteria.loft                 ||
     criteria.internal_staircase   ||
     criteria.jacuzzi              ||
@@ -613,7 +604,6 @@ function buildQuery(
     if (criteria.panoramic_view)       q = q.eq("panoramic_view",        true);
     if (criteria.mountain_view)        q = q.eq("mountain_view",         true);
     if (criteria.acropolis_view)       q = q.eq("acropolis_view",        true);
-    if (criteria.duplex)               q = q.eq("duplex",                true);
     if (criteria.loft)                 q = q.eq("loft",                  true);
     if (criteria.internal_staircase)   q = q.eq("internal_staircase",    true);
     if (criteria.jacuzzi)              q = q.eq("jacuzzi",               true);
@@ -678,7 +668,7 @@ export async function searchProperties(
     criteria.elevator || criteria.parking || criteria.furnished || criteria.heating || criteria.cooling ||
     criteria.balcony || criteria.veranda || criteria.private_roof_terrace ||
     criteria.close_to_beaches || criteria.panoramic_view || criteria.mountain_view ||
-    criteria.acropolis_view || criteria.duplex || criteria.loft ||
+    criteria.acropolis_view || criteria.loft ||
     criteria.internal_staircase || criteria.jacuzzi || criteria.barbeque;
 
   if (!hasSecondary) {

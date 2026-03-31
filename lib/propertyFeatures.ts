@@ -205,8 +205,8 @@ export const PROPERTY_FEATURES: PropertyFeature[] = [
     group: "amenities",
   },
   {
-    field: "is_maisonette_duplex",
-    label: "Maisonette (Duplex)",
+    field: "is_maisonette",
+    label: "Maisonette",
     icon: Layers,
     valueType: "boolean",
     showOnCard: false,
@@ -437,16 +437,6 @@ export const PROPERTY_FEATURES: PropertyFeature[] = [
     showOnDetail: true,
     group: "amenities",
   },
-  {
-    field: "duplex",
-    label: "Duplex",
-    icon: Layers,
-    valueType: "boolean",
-    showOnCard: false,
-    showOnDetail: true,
-    group: "amenities",
-  },
-
   // ── Comfort & Amenities — Column 2 ───────────────────────────────────────
   {
     field: "balcony",

@@ -44,7 +44,7 @@ const BATHROOMS_OPTS = ["1+", "2+", "3+", "4+"];
 const CONDITIONS     = ["Renovated", "Needs Renovation", "Under Construction"];
 const FEATURES       = [
   "Pool", "Sea View", "Garden", "Elevator", "Balcony", "Veranda",
-  "Private Roof Terrace", "Duplex", "Close to Beaches", "Panoramic View",
+  "Private Roof Terrace", "Close to Beaches", "Panoramic View",
   "Parking", "Furnished", "Investment",
 ];
 
@@ -111,7 +111,7 @@ const FEATURE_SLUG: Record<string, string> = {
   "Parking": "parking", "Pool": "pool", "Sea View": "seaview",
   "Garden": "garden", "Furnished": "furnished", "Investment": "investment",
   "Elevator": "elevator", "Balcony": "balcony", "Veranda": "veranda",
-  "Private Roof Terrace": "privateroofterrace", "Duplex": "duplex",
+  "Private Roof Terrace": "privateroofterrace",
   "Close to Beaches": "closetobeaches", "Panoramic View": "panoramicview",
 };
 

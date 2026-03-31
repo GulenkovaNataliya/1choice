@@ -93,7 +93,6 @@ export type PropertyData = {
   close_to_beaches: boolean | null;
   panoramic_view: boolean | null;
   acropolis_view: boolean | null;
-  duplex: boolean | null;
   private_roof_terrace: boolean | null;
   loft: boolean | null;
   internal_staircase: boolean | null;

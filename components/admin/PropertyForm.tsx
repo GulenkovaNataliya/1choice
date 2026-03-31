@@ -11,6 +11,7 @@ import type { Badge } from "@/lib/badges";
 import { BADGE_COLORS, getBadgeStyle } from "@/lib/badgeColors";
 import { createBadgeQuick } from "@/app/admin/badges/actions";
 import { CATEGORIES, EXPOSURE_OPTIONS, getSubtypesByCategory } from "@/lib/propertyTypeOptions";
+import { TOWN_PLANNING_OPTIONS, LAND_SLOPE_OPTIONS, LAND_FEATURE_OPTIONS } from "@/lib/landPlotOptions";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -158,6 +159,15 @@ type FormState = {
   show_address: boolean;
   custom_badge: string;
   custom_badge_color: string;
+  // Land / Plot
+  land_area_sqm: string;
+  building_coefficient: string;
+  coverage_ratio: string;
+  frontage_m: string;
+  remaining_buildable_area_sqm: string;
+  town_planning_status: string;
+  land_slope: string;
+  land_features: string[];
 };
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -260,6 +270,15 @@ const INITIAL: FormState = {
   show_address: false,
   custom_badge: "",
   custom_badge_color: "red",
+  // Land / Plot
+  land_area_sqm: "",
+  building_coefficient: "",
+  coverage_ratio: "",
+  frontage_m: "",
+  remaining_buildable_area_sqm: "",
+  town_planning_status: "",
+  land_slope: "",
+  land_features: [],
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -455,6 +474,15 @@ function buildPayload(form: FormState, resolveSlug = false) {
     show_address: form.show_address,
     custom_badge: form.custom_badge || null,
     custom_badge_color: form.custom_badge ? (form.custom_badge_color || "red") : null,
+    // Land / Plot
+    land_area_sqm:                form.land_area_sqm ? Number(form.land_area_sqm) : null,
+    building_coefficient:         form.building_coefficient ? Number(form.building_coefficient) : null,
+    coverage_ratio:               form.coverage_ratio ? Number(form.coverage_ratio) : null,
+    frontage_m:                   form.frontage_m ? Number(form.frontage_m) : null,
+    remaining_buildable_area_sqm: form.remaining_buildable_area_sqm ? Number(form.remaining_buildable_area_sqm) : null,
+    town_planning_status:         form.town_planning_status || null,
+    land_slope:                   form.land_slope || null,
+    land_features:                form.land_features.length > 0 ? form.land_features : null,
   };
 }
 
@@ -1335,6 +1363,134 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
               <option value="G">G</option>
             </select>
           </Field>
+        </div>
+      </Section>
+
+      {/* ── Land / Plot ───────────────────────────────────────────────────── */}
+      <Section title="Land / Plot">
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Land Area (sqm)">
+            <input
+              type="number"
+              value={form.land_area_sqm}
+              onChange={(e) => set("land_area_sqm", e.target.value)}
+              className={inputCls}
+              placeholder="500"
+              min={0}
+            />
+          </Field>
+          <Field label="Building Coefficient" hint="e.g. 0.4">
+            <input
+              type="number"
+              value={form.building_coefficient}
+              onChange={(e) => set("building_coefficient", e.target.value)}
+              className={inputCls}
+              placeholder="0.4"
+              min={0}
+              step={0.01}
+            />
+          </Field>
+          <Field label="Coverage Ratio" hint="e.g. 0.6">
+            <input
+              type="number"
+              value={form.coverage_ratio}
+              onChange={(e) => set("coverage_ratio", e.target.value)}
+              className={inputCls}
+              placeholder="0.6"
+              min={0}
+              step={0.01}
+            />
+          </Field>
+          <Field label="Frontage (m)">
+            <input
+              type="number"
+              value={form.frontage_m}
+              onChange={(e) => set("frontage_m", e.target.value)}
+              className={inputCls}
+              placeholder="20"
+              min={0}
+              step={0.1}
+            />
+          </Field>
+          <Field label="Remaining Buildable Area (sqm)">
+            <input
+              type="number"
+              value={form.remaining_buildable_area_sqm}
+              onChange={(e) => set("remaining_buildable_area_sqm", e.target.value)}
+              className={inputCls}
+              placeholder="200"
+              min={0}
+            />
+          </Field>
+          <Field label="Town Planning Status">
+            <select
+              value={form.town_planning_status}
+              onChange={(e) => set("town_planning_status", e.target.value)}
+              className={inputCls}
+            >
+              <option value="">— select —</option>
+              {TOWN_PLANNING_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </Field>
+        </div>
+
+        {/* Land Slope — single-select chips */}
+        <div className="mt-4">
+          <p className="text-xs font-semibold text-[#888888] uppercase tracking-wide mb-2">Land Slope</p>
+          <div className="flex flex-wrap gap-2">
+            {LAND_SLOPE_OPTIONS.map((o) => {
+              const active = form.land_slope === o.value;
+              const Icon = o.icon;
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => set("land_slope", active ? "" : o.value)}
+                  className={`flex items-center gap-2 px-4 py-2 h-9 rounded-lg text-base font-medium border transition-colors ${
+                    active
+                      ? "bg-[#1E1E1E] text-white border-[#1E1E1E]"
+                      : "bg-white text-[#1E1E1E] border-[#CCCCCC] hover:border-[#1E1E1E]"
+                  }`}
+                >
+                  <Icon className="w-4 h-4 shrink-0" />
+                  {o.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Land Features — multi-select chips */}
+        <div className="mt-4">
+          <p className="text-xs font-semibold text-[#888888] uppercase tracking-wide mb-2">Land Features</p>
+          <div className="flex flex-wrap gap-2">
+            {LAND_FEATURE_OPTIONS.map((o) => {
+              const active = form.land_features.includes(o.value);
+              const Icon = o.icon;
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => {
+                    const next = active
+                      ? form.land_features.filter((v) => v !== o.value)
+                      : [...form.land_features, o.value];
+                    set("land_features", next);
+                  }}
+                  className={`flex items-center gap-2 px-4 py-2 h-9 rounded-lg text-base font-medium border transition-colors ${
+                    active
+                      ? "bg-[#1E1E1E] text-white border-[#1E1E1E]"
+                      : "bg-white text-[#1E1E1E] border-[#CCCCCC] hover:border-[#1E1E1E]"
+                  }`}
+                >
+                  <Icon className="w-4 h-4 shrink-0" />
+                  {o.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </Section>
 

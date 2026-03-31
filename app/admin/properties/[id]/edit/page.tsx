@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import PropertyForm from "@/components/admin/PropertyForm";
+import PropertyForm, { type LevelDetail } from "@/components/admin/PropertyForm";
 import PrivateLinkManager from "@/components/admin/PrivateLinkManager";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/adminClient";
@@ -18,7 +18,7 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
     supabase
       .from("properties")
       .select(
-        "id,property_code,title,slug,category,subtype,transaction_type,price_eur,location,location_text,summary,description,size_sqm,bedrooms,bathrooms,floor,year_built,year_renovated,building_condition,energy_class,heating_type,custom_heating,cooling_type,custom_cooling,fireplace,elevator,security_door,alarm_system,video_doorphone,smart_home,satellite_tv,internet_ready,wardrobe_room,sea_view,mountain_view,balcony,veranda,awnings,garden,pool,parking,jacuzzi,close_to_beaches,panoramic_view,acropolis_view,duplex,private_roof_terrace,loft,internal_staircase,barbeque,home_cinema,smoke_detection,frames_type,double_glazing,triple_glazing,mosquito_screens,thermal_insulation,sound_insulation,flooring_type,living_rooms,kitchens,storage_rooms,wc,furnished,custom_furnished,cover_image_url,gallery_image_urls,youtube_video_url,virtual_tour_url,latitude,longitude,approximate_location,address,show_address,is_golden_visa,featured,private_collection,publish_1choice,publish_deals,status,agent_notes,custom_badge,custom_badge_color"
+        "id,property_code,title,slug,category,subtype,transaction_type,price_eur,location,location_text,summary,description,size_sqm,bedrooms,bathrooms,floor,year_built,year_renovated,building_condition,energy_class,heating_type,custom_heating,cooling_type,custom_cooling,fireplace,elevator,security_door,alarm_system,video_doorphone,smart_home,satellite_tv,internet_ready,wardrobe_room,sea_view,mountain_view,balcony,veranda,awnings,garden,pool,parking,jacuzzi,close_to_beaches,panoramic_view,acropolis_view,duplex,private_roof_terrace,loft,internal_staircase,barbeque,home_cinema,smoke_detection,total_property_area_sqm,total_building_floors,number_of_levels,level_details,frames_type,double_glazing,triple_glazing,mosquito_screens,thermal_insulation,sound_insulation,flooring_type,living_rooms,kitchens,storage_rooms,wc,furnished,custom_furnished,cover_image_url,gallery_image_urls,youtube_video_url,virtual_tour_url,latitude,longitude,approximate_location,address,show_address,is_golden_visa,featured,private_collection,publish_1choice,publish_deals,status,agent_notes,custom_badge,custom_badge_color"
       )
       .eq("id", id)
       .single(),
@@ -56,6 +56,39 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
     bedrooms: property.bedrooms != null ? String(property.bedrooms) : "",
     bathrooms: property.bathrooms != null ? String(property.bathrooms) : "",
     floor: property.floor != null ? String(property.floor) : "",
+    total_property_area_sqm: (property as { total_property_area_sqm?: number | null }).total_property_area_sqm != null ? String((property as { total_property_area_sqm?: number | null }).total_property_area_sqm) : "",
+    total_building_floors: (property as { total_building_floors?: number | null }).total_building_floors != null ? String((property as { total_building_floors?: number | null }).total_building_floors) : "",
+    number_of_levels: (() => {
+      const n = (property as { number_of_levels?: number | null }).number_of_levels;
+      return n != null ? String(n) : "1";
+    })(),
+    levels: (() => {
+      const stored = (property as { level_details?: LevelDetail[] | null }).level_details;
+      if (stored && stored.length > 0) return stored;
+      // Backward compat: build Level 1 from legacy flat fields
+      return [{
+        level_size_sqm: "",
+        is_maisonette_duplex: false,
+        bedrooms: property.bedrooms != null ? String(property.bedrooms) : "",
+        bathrooms: property.bathrooms != null ? String(property.bathrooms) : "",
+        wc: property.wc != null ? String(property.wc) : "",
+        kitchens: property.kitchens != null ? String(property.kitchens) : "",
+        living_rooms: property.living_rooms != null ? String(property.living_rooms) : "",
+        hall: "",
+        storage_rooms: property.storage_rooms != null ? String(property.storage_rooms) : "",
+        wardrobe_room: false,
+        balcony: false,
+        veranda: false,
+        awnings: false,
+        private_roof_terrace: false,
+        loft: false,
+        internal_staircase: false,
+        internal_elevator: false,
+        fireplace: false,
+        jacuzzi: false,
+        home_cinema: false,
+      } satisfies LevelDetail];
+    })(),
     year_built: property.year_built != null ? String(property.year_built) : "",
     year_renovated: property.year_renovated != null ? String(property.year_renovated) : "",
     building_condition: property.building_condition ?? "",

@@ -48,6 +48,8 @@ import {
   Landmark,
   Eye,
   Home,
+  DoorOpen,
+  ArrowUpDown,
 } from "lucide-react";
 
 // ── Value types ───────────────────────────────────────────────────────────────
@@ -151,6 +153,65 @@ export const PROPERTY_FEATURES: PropertyFeature[] = [
     showOnCard: false,
     showOnDetail: true,
     group: "building",
+  },
+
+  // ── Building structure (new fields) ──────────────────────────────────────
+  {
+    field: "total_property_area_sqm",
+    label: "Total Property Area",
+    icon: Ruler,
+    valueType: "number",
+    unit: "m²",
+    showOnCard: false,
+    showOnDetail: true,
+    group: "core",
+  },
+  {
+    field: "total_building_floors",
+    label: "Total Building Floors",
+    icon: Layers,
+    valueType: "number",
+    showOnCard: false,
+    showOnDetail: true,
+    group: "building",
+  },
+  {
+    field: "number_of_levels",
+    label: "Number of Levels",
+    icon: Layers2,
+    valueType: "number",
+    showOnCard: false,
+    showOnDetail: true,
+    group: "building",
+  },
+
+  // ── Level-specific icon reference (showOnDetail: false — stored in level_details JSON) ──
+  {
+    field: "hall",
+    label: "Hall",
+    icon: DoorOpen,
+    valueType: "number",
+    showOnCard: false,
+    showOnDetail: false,
+    group: "layout",
+  },
+  {
+    field: "internal_elevator",
+    label: "Internal Elevator",
+    icon: ArrowUpDown,
+    valueType: "boolean",
+    showOnCard: false,
+    showOnDetail: false,
+    group: "amenities",
+  },
+  {
+    field: "is_maisonette_duplex",
+    label: "Maisonette (Duplex)",
+    icon: Layers,
+    valueType: "boolean",
+    showOnCard: false,
+    showOnDetail: false,
+    group: "layout",
   },
 
   // ── Layout & Rooms ────────────────────────────────────────────────────────

@@ -13,6 +13,52 @@ import { createBadgeQuick } from "@/app/admin/badges/actions";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+export type LevelDetail = {
+  level_size_sqm: string;
+  is_maisonette_duplex: boolean;
+  bedrooms: string;
+  bathrooms: string;
+  wc: string;
+  kitchens: string;
+  living_rooms: string;
+  hall: string;
+  storage_rooms: string;
+  wardrobe_room: boolean;
+  balcony: boolean;
+  veranda: boolean;
+  awnings: boolean;
+  private_roof_terrace: boolean;
+  loft: boolean;
+  internal_staircase: boolean;
+  internal_elevator: boolean;
+  fireplace: boolean;
+  jacuzzi: boolean;
+  home_cinema: boolean;
+};
+
+const EMPTY_LEVEL: LevelDetail = {
+  level_size_sqm: "",
+  is_maisonette_duplex: false,
+  bedrooms: "",
+  bathrooms: "",
+  wc: "",
+  kitchens: "",
+  living_rooms: "",
+  hall: "",
+  storage_rooms: "",
+  wardrobe_room: false,
+  balcony: false,
+  veranda: false,
+  awnings: false,
+  private_roof_terrace: false,
+  loft: false,
+  internal_staircase: false,
+  internal_elevator: false,
+  fireplace: false,
+  jacuzzi: false,
+  home_cinema: false,
+};
+
 type FormState = {
   title: string;
   slug: string;
@@ -26,6 +72,10 @@ type FormState = {
   bedrooms: string;
   bathrooms: string;
   floor: string;
+  total_property_area_sqm: string;
+  total_building_floors: string;
+  number_of_levels: string;
+  levels: LevelDetail[];
   year_built: string;
   year_renovated: string;
   building_condition: string;
@@ -112,6 +162,10 @@ const INITIAL: FormState = {
   bedrooms: "",
   bathrooms: "",
   floor: "",
+  total_property_area_sqm: "",
+  total_building_floors: "",
+  number_of_levels: "1",
+  levels: [{ ...EMPTY_LEVEL }],
   year_built: "",
   year_renovated: "",
   building_condition: "",
@@ -230,9 +284,14 @@ function buildPayload(form: FormState, resolveSlug = false) {
     location_text: form.location_text || null,
     size_sqm: form.size_sqm ? Number(form.size_sqm) : null,
     size:     form.size_sqm  ? Number(form.size_sqm)  : null, // legacy column kept in sync
-    bedrooms: form.bedrooms ? Number(form.bedrooms) : null,
-    bathrooms: form.bathrooms ? Number(form.bathrooms) : null,
+    // Legacy flat columns — synced from level 1 so existing queries/AI/catalog still work
+    bedrooms: form.levels[0]?.bedrooms ? Number(form.levels[0].bedrooms) : (form.bedrooms ? Number(form.bedrooms) : null),
+    bathrooms: form.levels[0]?.bathrooms ? Number(form.levels[0].bathrooms) : (form.bathrooms ? Number(form.bathrooms) : null),
     floor: form.floor ? Number(form.floor) : null,
+    total_property_area_sqm: form.total_property_area_sqm ? Number(form.total_property_area_sqm) : null,
+    total_building_floors: form.total_building_floors ? Number(form.total_building_floors) : null,
+    number_of_levels: form.number_of_levels ? Number(form.number_of_levels) : null,
+    level_details: form.levels.length > 0 ? form.levels : null,
     year_built: form.year_built ? Number(form.year_built) : null,
     year_renovated: form.year_renovated ? Number(form.year_renovated) : null,
     building_condition: form.building_condition || null,
@@ -276,10 +335,10 @@ function buildPayload(form: FormState, resolveSlug = false) {
     thermal_insulation: form.thermal_insulation,
     sound_insulation: form.sound_insulation,
     flooring_type: form.flooring_type || null,
-    living_rooms: form.living_rooms ? Number(form.living_rooms) : null,
-    kitchens: form.kitchens ? Number(form.kitchens) : null,
-    storage_rooms: form.storage_rooms ? Number(form.storage_rooms) : null,
-    wc: form.wc ? Number(form.wc) : null,
+    living_rooms: form.levels[0]?.living_rooms ? Number(form.levels[0].living_rooms) : (form.living_rooms ? Number(form.living_rooms) : null),
+    kitchens: form.levels[0]?.kitchens ? Number(form.levels[0].kitchens) : (form.kitchens ? Number(form.kitchens) : null),
+    storage_rooms: form.levels[0]?.storage_rooms ? Number(form.levels[0].storage_rooms) : (form.storage_rooms ? Number(form.storage_rooms) : null),
+    wc: form.levels[0]?.wc ? Number(form.levels[0].wc) : (form.wc ? Number(form.wc) : null),
     furnished: form.furnished.trim() || null,
     custom_furnished: form.custom_furnished.trim() || null,
     summary: form.summary || null,
@@ -643,6 +702,27 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
+  function setLevel<K extends keyof LevelDetail>(idx: number, key: K, value: LevelDetail[K]) {
+    setForm((prev) => {
+      const updated = prev.levels.map((l, i) => i === idx ? { ...l, [key]: value } : l);
+      return { ...prev, levels: updated };
+    });
+  }
+
+  function setNumberOfLevels(v: string) {
+    const n = Math.max(1, parseInt(v, 10) || 1);
+    setForm((prev) => {
+      const current = prev.levels;
+      let updated: LevelDetail[];
+      if (n > current.length) {
+        updated = [...current, ...Array.from({ length: n - current.length }, () => ({ ...EMPTY_LEVEL }))];
+      } else {
+        updated = current.slice(0, n);
+      }
+      return { ...prev, number_of_levels: String(n), levels: updated };
+    });
+  }
+
   // ── Autosave ────────────────────────────────────────────────────────────────
 
   const autosave = useCallback(async (snapshot: FormState) => {
@@ -987,7 +1067,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
       {/* ── Basic Characteristics ──────────────────────────────────────────── */}
       <Section title="Basic Characteristics">
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Size (sqm)">
+          <Field label="Size (sqm)" hint="Main listing size">
             <input
               type="number"
               value={form.size_sqm}
@@ -997,27 +1077,23 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
               min={0}
             />
           </Field>
-          <Field label="Bedrooms">
+        </div>
+      </Section>
+
+      {/* ── Building Information ──────────────────────────────────────────── */}
+      <Section title="Building Information">
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Total Property Area (sqm)" hint="All levels combined">
             <input
               type="number"
-              value={form.bedrooms}
-              onChange={(e) => set("bedrooms", e.target.value)}
+              value={form.total_property_area_sqm}
+              onChange={(e) => set("total_property_area_sqm", e.target.value)}
               className={inputCls}
-              placeholder="3"
+              placeholder="240"
               min={0}
             />
           </Field>
-          <Field label="Bathrooms">
-            <input
-              type="number"
-              value={form.bathrooms}
-              onChange={(e) => set("bathrooms", e.target.value)}
-              className={inputCls}
-              placeholder="2"
-              min={0}
-            />
-          </Field>
-          <Field label="Floor">
+          <Field label="Property Floor" hint="Floor the property is on">
             <input
               type="number"
               value={form.floor}
@@ -1027,12 +1103,27 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
               min={0}
             />
           </Field>
-        </div>
-      </Section>
-
-      {/* ── Building Information ──────────────────────────────────────────── */}
-      <Section title="Building Information">
-        <div className="grid grid-cols-2 gap-4">
+          <Field label="Total Building Floors">
+            <input
+              type="number"
+              value={form.total_building_floors}
+              onChange={(e) => set("total_building_floors", e.target.value)}
+              className={inputCls}
+              placeholder="6"
+              min={1}
+            />
+          </Field>
+          <Field label="Number of Levels" hint="Drives Level Details blocks below">
+            <input
+              type="number"
+              value={form.number_of_levels}
+              onChange={(e) => setNumberOfLevels(e.target.value)}
+              className={inputCls}
+              placeholder="1"
+              min={1}
+              max={10}
+            />
+          </Field>
           <Field label="Year Built" hint="optional">
             <input
               type="number"
@@ -1129,51 +1220,75 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
         </div>
       </Section>
 
-      {/* ── Layout & Rooms ────────────────────────────────────────────────── */}
-      <Section title="Layout & Rooms">
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Living Rooms">
-            <input
-              type="number"
-              value={form.living_rooms}
-              onChange={(e) => set("living_rooms", e.target.value)}
-              className={inputCls}
-              placeholder="1"
-              min={0}
-            />
-          </Field>
-          <Field label="Kitchens">
-            <input
-              type="number"
-              value={form.kitchens}
-              onChange={(e) => set("kitchens", e.target.value)}
-              className={inputCls}
-              placeholder="1"
-              min={0}
-            />
-          </Field>
-          <Field label="WC">
-            <input
-              type="number"
-              value={form.wc}
-              onChange={(e) => set("wc", e.target.value)}
-              className={inputCls}
-              placeholder="1"
-              min={0}
-            />
-          </Field>
-          <Field label="Storage Rooms">
-            <input
-              type="number"
-              value={form.storage_rooms}
-              onChange={(e) => set("storage_rooms", e.target.value)}
-              className={inputCls}
-              placeholder="0"
-              min={0}
-            />
-          </Field>
-        </div>
-      </Section>
+      {/* ── Level Details (repeatable, driven by Number of Levels) ──────── */}
+      {form.levels.map((level, idx) => (
+        <Section key={idx} title={`Level ${idx + 1} Details`}>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+            {/* Column 1 */}
+            <div className="flex flex-col gap-4">
+              <Field label="Level Size (sqm)">
+                <input type="number" value={level.level_size_sqm}
+                  onChange={(e) => setLevel(idx, "level_size_sqm", e.target.value)}
+                  className={inputCls} placeholder="120" min={0} />
+              </Field>
+              <div className="pt-1">
+                <Checkbox label="Maisonette (Duplex)" checked={level.is_maisonette_duplex}
+                  onChange={(v) => setLevel(idx, "is_maisonette_duplex", v)} />
+              </div>
+              <Field label="Bedrooms">
+                <input type="number" value={level.bedrooms}
+                  onChange={(e) => setLevel(idx, "bedrooms", e.target.value)}
+                  className={inputCls} placeholder="3" min={0} />
+              </Field>
+              <Field label="Bathrooms">
+                <input type="number" value={level.bathrooms}
+                  onChange={(e) => setLevel(idx, "bathrooms", e.target.value)}
+                  className={inputCls} placeholder="2" min={0} />
+              </Field>
+              <Field label="WC">
+                <input type="number" value={level.wc}
+                  onChange={(e) => setLevel(idx, "wc", e.target.value)}
+                  className={inputCls} placeholder="1" min={0} />
+              </Field>
+              <Field label="Kitchens">
+                <input type="number" value={level.kitchens}
+                  onChange={(e) => setLevel(idx, "kitchens", e.target.value)}
+                  className={inputCls} placeholder="1" min={0} />
+              </Field>
+              <Field label="Living Rooms">
+                <input type="number" value={level.living_rooms}
+                  onChange={(e) => setLevel(idx, "living_rooms", e.target.value)}
+                  className={inputCls} placeholder="1" min={0} />
+              </Field>
+              <Field label="Hall">
+                <input type="number" value={level.hall}
+                  onChange={(e) => setLevel(idx, "hall", e.target.value)}
+                  className={inputCls} placeholder="0" min={0} />
+              </Field>
+              <Field label="Storage Rooms">
+                <input type="number" value={level.storage_rooms}
+                  onChange={(e) => setLevel(idx, "storage_rooms", e.target.value)}
+                  className={inputCls} placeholder="0" min={0} />
+              </Field>
+              <Checkbox label="Wardrobe Room" checked={level.wardrobe_room}
+                onChange={(v) => setLevel(idx, "wardrobe_room", v)} />
+            </div>
+            {/* Column 2 */}
+            <div className="flex flex-col gap-4">
+              <Checkbox label="Balcony"              checked={level.balcony}              onChange={(v) => setLevel(idx, "balcony", v)} />
+              <Checkbox label="Veranda"              checked={level.veranda}              onChange={(v) => setLevel(idx, "veranda", v)} />
+              <Checkbox label="Awnings"              checked={level.awnings}              onChange={(v) => setLevel(idx, "awnings", v)} />
+              <Checkbox label="Private Roof Terrace" checked={level.private_roof_terrace} onChange={(v) => setLevel(idx, "private_roof_terrace", v)} />
+              <Checkbox label="Loft"                 checked={level.loft}                onChange={(v) => setLevel(idx, "loft", v)} />
+              <Checkbox label="Internal Staircase"   checked={level.internal_staircase}   onChange={(v) => setLevel(idx, "internal_staircase", v)} />
+              <Checkbox label="Internal Elevator"    checked={level.internal_elevator}    onChange={(v) => setLevel(idx, "internal_elevator", v)} />
+              <Checkbox label="Fireplace"            checked={level.fireplace}            onChange={(v) => setLevel(idx, "fireplace", v)} />
+              <Checkbox label="Jacuzzi"              checked={level.jacuzzi}              onChange={(v) => setLevel(idx, "jacuzzi", v)} />
+              <Checkbox label="Home Cinema"          checked={level.home_cinema}          onChange={(v) => setLevel(idx, "home_cinema", v)} />
+            </div>
+          </div>
+        </Section>
+      ))}
 
       {/* ── Furnished ────────────────────────────────────────────────────── */}
       <Section title="Furnished">

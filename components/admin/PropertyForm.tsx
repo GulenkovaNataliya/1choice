@@ -1190,7 +1190,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
                               subtype: isActive ? "" : sub.value,
                             }));
                           }}
-                          className={`flex items-center gap-2 px-4 py-2 h-9 rounded-lg text-sm font-medium border transition-colors ${
+                          className={`flex items-center gap-2 px-4 py-2 h-9 rounded-lg text-base font-medium border transition-colors ${
                             isActive
                               ? "bg-[#1E1E1E] text-white border-[#1E1E1E]"
                               : "bg-white text-[#1E1E1E] border-[#D9D9D9] hover:border-[#1E1E1E] hover:bg-[#F5F5F5]"
@@ -1225,7 +1225,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
                       : [...form.exposure, exp.value];
                     set("exposure", next);
                   }}
-                  className={`w-full flex items-center justify-center gap-2 px-4 py-2 h-9 rounded-lg text-sm font-medium border transition-colors ${
+                  className={`w-full flex items-center justify-center gap-2 px-4 py-2 h-9 rounded-lg text-base font-medium border transition-colors ${
                     isActive
                       ? "bg-[#1E1E1E] text-white border-[#1E1E1E]"
                       : "bg-white text-[#1E1E1E] border-[#D9D9D9] hover:border-[#1E1E1E] hover:bg-[#F5F5F5]"

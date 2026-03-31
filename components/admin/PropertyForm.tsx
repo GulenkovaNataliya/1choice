@@ -123,11 +123,14 @@ type FormState = {
   home_cinema: boolean;
   smoke_detection: boolean;
   frames_type: string;
+  single_glazing: boolean;
   double_glazing: boolean;
   triple_glazing: boolean;
   mosquito_screens: boolean;
   thermal_insulation: boolean;
   sound_insulation: boolean;
+  blinds: boolean;
+  electric_shutters: boolean;
   flooring_type: string;
   living_rooms: string;
   kitchens: string;
@@ -222,11 +225,14 @@ const INITIAL: FormState = {
   home_cinema: false,
   smoke_detection: false,
   frames_type: "",
+  single_glazing: false,
   double_glazing: false,
   triple_glazing: false,
   mosquito_screens: false,
   thermal_insulation: false,
   sound_insulation: false,
+  blinds: false,
+  electric_shutters: false,
   flooring_type: "",
   living_rooms: "",
   kitchens: "",
@@ -414,11 +420,14 @@ function buildPayload(form: FormState, resolveSlug = false) {
     barbeque: form.barbeque,
     smoke_detection: form.smoke_detection,
     frames_type: form.frames_type || null,
+    single_glazing: form.single_glazing,
     double_glazing: form.double_glazing,
     triple_glazing: form.triple_glazing,
     mosquito_screens: form.mosquito_screens,
     thermal_insulation: form.thermal_insulation,
     sound_insulation: form.sound_insulation,
+    blinds: form.blinds,
+    electric_shutters: form.electric_shutters,
     flooring_type: form.flooring_type || null,
     living_rooms: form.levels.length > 0 ? sumLevels(form.levels, "living_rooms") : (form.living_rooms ? Number(form.living_rooms) : null),
     kitchens: form.levels.length > 0 ? sumLevels(form.levels, "kitchens") : (form.kitchens ? Number(form.kitchens) : null),
@@ -1489,12 +1498,21 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
             </select>
           </Field>
         </div>
-        <div className="grid grid-cols-2 gap-3 pt-1">
-          <Checkbox label="Double Glazing" checked={form.double_glazing} onChange={(v) => set("double_glazing", v)} />
-          <Checkbox label="Triple Glazing" checked={form.triple_glazing} onChange={(v) => set("triple_glazing", v)} />
-          <Checkbox label="Mosquito Screens" checked={form.mosquito_screens} onChange={(v) => set("mosquito_screens", v)} />
-          <Checkbox label="Thermal Insulation" checked={form.thermal_insulation} onChange={(v) => set("thermal_insulation", v)} />
-          <Checkbox label="Sound Insulation" checked={form.sound_insulation} onChange={(v) => set("sound_insulation", v)} />
+        <div className="grid grid-cols-2 gap-x-6 gap-y-3 pt-1">
+          {/* Column 1 — Glazing */}
+          <div className="flex flex-col gap-3">
+            <Checkbox label="Single Glazing"   checked={form.single_glazing}   onChange={(v) => set("single_glazing", v)} />
+            <Checkbox label="Double Glazing"   checked={form.double_glazing}   onChange={(v) => set("double_glazing", v)} />
+            <Checkbox label="Triple Glazing"   checked={form.triple_glazing}   onChange={(v) => set("triple_glazing", v)} />
+            <Checkbox label="Mosquito Screens" checked={form.mosquito_screens} onChange={(v) => set("mosquito_screens", v)} />
+          </div>
+          {/* Column 2 — Insulation + Covering */}
+          <div className="flex flex-col gap-3">
+            <Checkbox label="Thermal Insulation" checked={form.thermal_insulation} onChange={(v) => set("thermal_insulation", v)} />
+            <Checkbox label="Sound Insulation"   checked={form.sound_insulation}   onChange={(v) => set("sound_insulation", v)} />
+            <Checkbox label="Blinds"             checked={form.blinds}             onChange={(v) => set("blinds", v)} />
+            <Checkbox label="Electric Shutters"  checked={form.electric_shutters}  onChange={(v) => set("electric_shutters", v)} />
+          </div>
         </div>
       </Section>
 

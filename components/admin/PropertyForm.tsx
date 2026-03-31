@@ -1518,79 +1518,82 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
 
       {/* ── Heating & Cooling ────────────────────────────────────────────── */}
       <Section title="Heating & Cooling">
-        <div className="grid grid-cols-2 gap-4">
-          {/* Row 1 left — Heating System */}
-          <Field label="Heating System">
-            <select value={form.heating_system} onChange={(e) => set("heating_system", e.target.value)} className={inputCls}>
-              <option value="">— select —</option>
-              <option value="central">Central Heating</option>
-              <option value="central_autonomous">Central with Autonomy</option>
-              <option value="autonomous">Autonomous Heating</option>
-              <option value="none">No Heating</option>
-            </select>
-          </Field>
-          {/* Row 1 right — Heating Fuel */}
-          <Field label="Heating Fuel">
-            <select value={form.heating_fuel} onChange={(e) => set("heating_fuel", e.target.value)} className={inputCls}>
-              <option value="">— select —</option>
-              <option value="oil">Oil</option>
-              <option value="natural_gas">Natural Gas</option>
-              <option value="electric">Electric</option>
-              <option value="none">None</option>
-            </select>
-          </Field>
-          {/* Row 2 left — Cooling System */}
-          <Field label="Cooling / AC">
-            <select value={form.cooling_system} onChange={(e) => set("cooling_system", e.target.value)} className={inputCls}>
-              <option value="">— select —</option>
-              <option value="central_ac">Central AC</option>
-              <option value="split_units">Split Units</option>
-              <option value="fan_coil">Fan Coil</option>
-              <option value="none">None</option>
-            </select>
-          </Field>
-          {/* Row 2 right — Additional Features (multi-select chips) */}
-          <Field label="Additional Features">
-            <div className="flex flex-wrap gap-2 pt-1">
-              {([
-                { value: "air_conditioning",   label: "Air Conditioning" },
-                { value: "heat_pump",          label: "Heat Pump" },
-                { value: "underfloor",         label: "Underfloor Heating" },
-                { value: "fan_coil",           label: "Fan Coil" },
-                { value: "solar_water_heater", label: "Solar Water Heater" },
-                { value: "storage_heaters",    label: "Storage Heaters" },
-              ] as const).map(({ value, label }) => {
-                const active = form.heating_features.includes(value);
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => {
-                      const next = active
-                        ? form.heating_features.filter((f) => f !== value)
-                        : [...form.heating_features, value];
-                      set("heating_features", next);
-                    }}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                      active
-                        ? "bg-[#1E1E1E] text-white border-[#1E1E1E]"
-                        : "bg-white text-[#888888] border-[#E8E8E8] hover:border-[#1E1E1E] hover:text-[#1E1E1E]"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          </Field>
-          {/* Row 3 left — Custom Heating */}
-          <Field label="Custom Heating" hint="Overrides the selected value on the public page">
-            <input type="text" value={form.custom_heating} onChange={(e) => set("custom_heating", e.target.value)} className={inputCls} placeholder="e.g. Pellet stove + underfloor" />
-          </Field>
-          {/* Row 3 right — Custom Cooling */}
-          <Field label="Custom Cooling" hint="Overrides the selected value on the public page">
-            <input type="text" value={form.custom_cooling} onChange={(e) => set("custom_cooling", e.target.value)} className={inputCls} placeholder="e.g. VRF system" />
-          </Field>
+        <div className="grid grid-cols-2 gap-x-6">
+          {/* LEFT COLUMN — Heating */}
+          <div className="flex flex-col gap-4">
+            <Field label="Heating Fuel">
+              <select value={form.heating_fuel} onChange={(e) => set("heating_fuel", e.target.value)} className={inputCls}>
+                <option value="">— select —</option>
+                <option value="oil">Oil</option>
+                <option value="natural_gas">Natural Gas</option>
+                <option value="electric">Electric</option>
+                <option value="none">None</option>
+              </select>
+            </Field>
+            <Field label="Heating System">
+              <select value={form.heating_system} onChange={(e) => set("heating_system", e.target.value)} className={inputCls}>
+                <option value="">— select —</option>
+                <option value="central">Central Heating</option>
+                <option value="central_autonomous">Central with Autonomy</option>
+                <option value="autonomous">Autonomous Heating</option>
+                <option value="heat_pump">Heat Pump</option>
+                <option value="underfloor">Underfloor Heating</option>
+                <option value="fan_coil">Fan Coil</option>
+                <option value="storage_heaters">Storage Heaters</option>
+                <option value="pellet_wood_stove">Pellet / Wood Stove</option>
+                <option value="energy_fireplace">Energy Fireplace</option>
+                <option value="none">No Heating</option>
+              </select>
+            </Field>
+            <Field label="Custom Heating" hint="Overrides the selected value on the public page">
+              <input type="text" value={form.custom_heating} onChange={(e) => set("custom_heating", e.target.value)} className={inputCls} placeholder="e.g. Pellet stove + underfloor" />
+            </Field>
+          </div>
+          {/* RIGHT COLUMN — Cooling + Features */}
+          <div className="flex flex-col gap-4">
+            <Field label="Cooling / AC">
+              <select value={form.cooling_system} onChange={(e) => set("cooling_system", e.target.value)} className={inputCls}>
+                <option value="">— select —</option>
+                <option value="central_ac">Central AC</option>
+                <option value="split_units">Split Units</option>
+                <option value="fan_coil">Fan Coil</option>
+                <option value="heat_pump">Heat Pump</option>
+                <option value="none">None</option>
+              </select>
+            </Field>
+            <Field label="Additional Features">
+              <div className="flex flex-wrap gap-2 pt-1">
+                {([
+                  { value: "photovoltaic",       label: "Photovoltaic Panels" },
+                  { value: "solar_water_heater", label: "Solar Water Heater" },
+                ] as const).map(({ value, label }) => {
+                  const active = form.heating_features.includes(value);
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => {
+                        const next = active
+                          ? form.heating_features.filter((f) => f !== value)
+                          : [...form.heating_features, value];
+                        set("heating_features", next);
+                      }}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                        active
+                          ? "bg-[#1E1E1E] text-white border-[#1E1E1E]"
+                          : "bg-white text-[#888888] border-[#E8E8E8] hover:border-[#1E1E1E] hover:text-[#1E1E1E]"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
+            <Field label="Custom Cooling" hint="Overrides the selected value on the public page">
+              <input type="text" value={form.custom_cooling} onChange={(e) => set("custom_cooling", e.target.value)} className={inputCls} placeholder="e.g. VRF system" />
+            </Field>
+          </div>
         </div>
       </Section>
 

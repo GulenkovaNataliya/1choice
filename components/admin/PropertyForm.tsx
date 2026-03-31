@@ -10,6 +10,7 @@ import { createAreaQuick } from "@/app/admin/areas/actions";
 import type { Badge } from "@/lib/badges";
 import { BADGE_COLORS, getBadgeStyle } from "@/lib/badgeColors";
 import { createBadgeQuick } from "@/app/admin/badges/actions";
+import { CATEGORIES, EXPOSURE_OPTIONS, getSubtypesByCategory } from "@/lib/propertyTypeOptions";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -110,6 +111,7 @@ type FormState = {
   parking_area_sqm: string;
   parking_suitable_for: string[];
   parking_features: string[];
+  exposure: string[];
   jacuzzi: boolean;
   close_to_beaches: boolean;
   panoramic_view: boolean;
@@ -208,6 +210,7 @@ const INITIAL: FormState = {
   parking_area_sqm: "",
   parking_suitable_for: [],
   parking_features: [],
+  exposure: [],
   jacuzzi: false,
   close_to_beaches: false,
   panoramic_view: false,
@@ -404,6 +407,7 @@ function buildPayload(form: FormState, resolveSlug = false) {
     parking_features:     form.parking && form.parking_features.length > 0 ? form.parking_features : null,
     // Legacy boolean — checkbox is source of truth; keeps AI / filters working unchanged
     parking: form.parking,
+    exposure: form.exposure.length > 0 ? form.exposure : null,
     close_to_beaches: form.close_to_beaches,
     panoramic_view: form.panoramic_view,
     acropolis_view: form.acropolis_view,
@@ -752,6 +756,7 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
 
   // ── Advanced section toggle (slug) ────────────────────────────────────────
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [openAccordion, setOpenAccordion] = useState<string | null>(initialValues?.category ?? null);
 
   async function lookupCoordinates() {
     const q = form.address.trim();
@@ -1053,40 +1058,16 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
             </div>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Category">
-            <select
-              value={form.category}
-              onChange={(e) => set("category", e.target.value)}
-              className={inputCls}
-            >
-              <option value="">— select —</option>
-              <option value="residential">Residential</option>
-              <option value="commercial">Commercial</option>
-              <option value="land">Land</option>
-              <option value="hotel">Hotel / Hospitality</option>
-            </select>
-          </Field>
-          <Field label="Transaction Type">
-            <select
-              value={form.transaction_type}
-              onChange={(e) => set("transaction_type", e.target.value)}
-              className={inputCls}
-            >
-              <option value="sale">Sale</option>
-              <option value="rent">Rent</option>
-              <option value="antiparochi">Antiparochi</option>
-            </select>
-          </Field>
-        </div>
-        <Field label="Subtype" hint="e.g. apartment, villa, studio, office">
-          <input
-            type="text"
-            value={form.subtype}
-            onChange={(e) => set("subtype", e.target.value)}
+        <Field label="Transaction Type">
+          <select
+            value={form.transaction_type}
+            onChange={(e) => set("transaction_type", e.target.value)}
             className={inputCls}
-            placeholder="e.g. villa"
-          />
+          >
+            <option value="sale">Sale</option>
+            <option value="rent">Rent</option>
+            <option value="antiparochi">Antiparochi</option>
+          </select>
         </Field>
         <div className="grid grid-cols-2 gap-4">
           <Field label="Price (€)">
@@ -1142,6 +1123,111 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
               </button>
             </div>
           </Field>
+        </div>
+      </Section>
+
+      {/* ── Property Type ──────────────────────────────────────────────────── */}
+      <Section title="Property Type">
+        {/* 2-column accordion grid — one accordion open at a time */}
+        <div className="grid grid-cols-2 gap-3">
+          {CATEGORIES.map((cat) => {
+            const CatIcon = cat.icon;
+            const isOpen = openAccordion === cat.value;
+            const subtypes = getSubtypesByCategory(cat.value);
+            return (
+              <div
+                key={cat.value}
+                className={`rounded-lg border transition-colors ${
+                  isOpen ? "border-[#1E1E1E]" : "border-[#E8E8E8]"
+                }`}
+              >
+                {/* Accordion header — opens/closes card and sets category */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isOpen) {
+                      setOpenAccordion(null);
+                    } else {
+                      setOpenAccordion(cat.value);
+                      if (form.category !== cat.value) {
+                        setForm((prev) => ({ ...prev, category: cat.value, subtype: "" }));
+                      }
+                    }
+                  }}
+                  className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-left transition-colors ${
+                    isOpen ? "text-[#1E1E1E]" : "text-[#555555] hover:text-[#1E1E1E]"
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <CatIcon size={14} />
+                    {cat.label}
+                  </span>
+                  <span className="text-xs text-[#AAAAAA]">{isOpen ? "▾" : "▸"}</span>
+                </button>
+                {/* Subtype chips — visible only when accordion is open */}
+                {isOpen && (
+                  <div className="px-4 pb-4 pt-2 border-t border-[#F0F0F0] flex flex-wrap gap-2">
+                    {subtypes.map((sub) => {
+                      const SubIcon = sub.icon;
+                      const isActive = form.subtype === sub.value;
+                      return (
+                        <button
+                          key={sub.value}
+                          type="button"
+                          onClick={() => {
+                            setForm((prev) => ({
+                              ...prev,
+                              category: cat.value,
+                              subtype: isActive ? "" : sub.value,
+                            }));
+                          }}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                            isActive
+                              ? "bg-[#1E1E1E] text-white border-[#1E1E1E]"
+                              : "bg-white text-[#1E1E1E] border-[#D9D9D9] hover:border-[#1E1E1E]"
+                          }`}
+                        >
+                          <SubIcon size={11} />
+                          {sub.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Property Position / Exposure — multi-select chips below the accordion grid */}
+        <div>
+          <p className="text-sm font-medium text-[#1E1E1E] mb-2">Property Position / Exposure</p>
+          <div className="flex flex-wrap gap-2">
+            {EXPOSURE_OPTIONS.map((exp) => {
+              const ExpIcon = exp.icon;
+              const isActive = form.exposure.includes(exp.value);
+              return (
+                <button
+                  key={exp.value}
+                  type="button"
+                  onClick={() => {
+                    const next = isActive
+                      ? form.exposure.filter((v) => v !== exp.value)
+                      : [...form.exposure, exp.value];
+                    set("exposure", next);
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                    isActive
+                      ? "bg-[#1E1E1E] text-white border-[#1E1E1E]"
+                      : "bg-white text-[#1E1E1E] border-[#D9D9D9] hover:border-[#1E1E1E]"
+                  }`}
+                >
+                  <ExpIcon size={11} />
+                  {exp.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </Section>
 

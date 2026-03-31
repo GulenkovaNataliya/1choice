@@ -289,6 +289,15 @@ export const PROPERTY_FEATURES: PropertyFeature[] = [
     showOnDetail: true,
     group: "building",
   },
+  {
+    field: "heating_features",
+    label: "Heating Features",
+    icon: Sparkles,
+    valueType: "string",
+    showOnCard: false,
+    showOnDetail: true,
+    group: "building",
+  },
 
   // ── Windows & Construction ────────────────────────────────────────────────
   {

@@ -233,6 +233,7 @@ const FEATURE_SLUG_TO_FIELD: Record<string, keyof PropertyRow> = {
   duplex:            "duplex",
   closetobeaches:    "close_to_beaches",
   panoramicview:     "panoramic_view",
+  parking:           "parking",
 };
 
 function applyFilters(properties: PropertyRow[], params: ReadonlyURLSearchParams): PropertyRow[] {

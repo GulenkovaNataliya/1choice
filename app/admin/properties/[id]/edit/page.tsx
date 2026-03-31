@@ -18,7 +18,7 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
     supabase
       .from("properties")
       .select(
-        "id,property_code,title,slug,category,subtype,transaction_type,price_eur,location,location_text,summary,description,size_sqm,bedrooms,bathrooms,floor,year_built,year_renovated,building_condition,energy_class,heating_type,custom_heating,cooling_type,custom_cooling,fireplace,elevator,security_door,alarm_system,video_doorphone,smart_home,satellite_tv,internet_ready,wardrobe_room,sea_view,mountain_view,balcony,veranda,awnings,garden,pool,parking,jacuzzi,close_to_beaches,panoramic_view,acropolis_view,duplex,private_roof_terrace,loft,internal_staircase,barbeque,home_cinema,smoke_detection,total_property_area_sqm,total_building_floors,number_of_levels,level_details,frames_type,double_glazing,triple_glazing,mosquito_screens,thermal_insulation,sound_insulation,flooring_type,living_rooms,kitchens,storage_rooms,wc,furnished,custom_furnished,cover_image_url,gallery_image_urls,youtube_video_url,virtual_tour_url,latitude,longitude,approximate_location,address,show_address,is_golden_visa,featured,private_collection,publish_1choice,publish_deals,status,agent_notes,custom_badge,custom_badge_color"
+        "id,property_code,title,slug,category,subtype,transaction_type,price_eur,location,location_text,summary,description,size_sqm,bedrooms,bathrooms,floor,year_built,year_renovated,building_condition,energy_class,heating_type,custom_heating,cooling_type,custom_cooling,heating_system,heating_fuel,heating_features,cooling_system,fireplace,elevator,security_door,alarm_system,video_doorphone,smart_home,satellite_tv,internet_ready,wardrobe_room,sea_view,mountain_view,balcony,veranda,awnings,garden,pool,parking,jacuzzi,close_to_beaches,panoramic_view,acropolis_view,duplex,private_roof_terrace,loft,internal_staircase,barbeque,home_cinema,smoke_detection,total_property_area_sqm,total_building_floors,number_of_levels,level_details,frames_type,double_glazing,triple_glazing,mosquito_screens,thermal_insulation,sound_insulation,flooring_type,living_rooms,kitchens,storage_rooms,wc,furnished,custom_furnished,cover_image_url,gallery_image_urls,youtube_video_url,virtual_tour_url,latitude,longitude,approximate_location,address,show_address,is_golden_visa,featured,private_collection,publish_1choice,publish_deals,status,agent_notes,custom_badge,custom_badge_color"
       )
       .eq("id", id)
       .single(),
@@ -76,17 +76,18 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
         living_rooms: property.living_rooms != null ? String(property.living_rooms) : "",
         hall: "",
         storage_rooms: property.storage_rooms != null ? String(property.storage_rooms) : "",
-        wardrobe_room: false,
-        balcony: false,
-        veranda: false,
-        awnings: false,
-        private_roof_terrace: false,
-        loft: false,
-        internal_staircase: false,
-        internal_elevator: false,
-        fireplace: false,
-        jacuzzi: false,
-        home_cinema: false,
+        // Prefill from global DB fields so legacy properties are not visually empty
+        wardrobe_room:        (property as { wardrobe_room?: boolean | null }).wardrobe_room ?? false,
+        balcony:              (property as { balcony?: boolean | null }).balcony ?? false,
+        veranda:              (property as { veranda?: boolean | null }).veranda ?? false,
+        awnings:              (property as { awnings?: boolean | null }).awnings ?? false,
+        private_roof_terrace: (property as { private_roof_terrace?: boolean | null }).private_roof_terrace ?? false,
+        loft:                 (property as { loft?: boolean | null }).loft ?? false,
+        internal_staircase:   (property as { internal_staircase?: boolean | null }).internal_staircase ?? false,
+        internal_elevator:    false, // no global DB equivalent
+        fireplace:            property.fireplace ?? false,
+        jacuzzi:              (property as { jacuzzi?: boolean | null }).jacuzzi ?? false,
+        home_cinema:          (property as { home_cinema?: boolean | null }).home_cinema ?? false,
       } satisfies LevelDetail];
     })(),
     year_built: property.year_built != null ? String(property.year_built) : "",
@@ -97,6 +98,37 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
     custom_heating: (property as { custom_heating?: string | null }).custom_heating ?? "",
     cooling_type: (property as { cooling_type?: string | null }).cooling_type ?? "",
     custom_cooling: (property as { custom_cooling?: string | null }).custom_cooling ?? "",
+    // New structured fields — load from DB when present; safe fallback from legacy heating_type/cooling_type
+    heating_system: (() => {
+      const n = (property as { heating_system?: string | null }).heating_system;
+      if (n) return n;
+      const leg = (property as { heating_type?: string | null }).heating_type;
+      if (leg === "central" || leg === "autonomous" || leg === "none") return leg;
+      return "";
+    })(),
+    heating_fuel: (() => {
+      const n = (property as { heating_fuel?: string | null }).heating_fuel;
+      if (n) return n;
+      const leg = (property as { heating_type?: string | null }).heating_type;
+      if (leg === "oil" || leg === "natural_gas" || leg === "electric") return leg;
+      return "";
+    })(),
+    heating_features: (() => {
+      const n = (property as { heating_features?: string[] | null }).heating_features;
+      if (n && n.length > 0) return n;
+      const leg = (property as { heating_type?: string | null }).heating_type;
+      if (leg === "heat_pump") return ["heat_pump"];
+      if (leg === "air_conditioning") return ["air_conditioning"];
+      if (leg === "underfloor") return ["underfloor"];
+      return [];
+    })(),
+    cooling_system: (() => {
+      const n = (property as { cooling_system?: string | null }).cooling_system;
+      if (n) return n;
+      const leg = (property as { cooling_type?: string | null }).cooling_type;
+      if (leg === "central_ac" || leg === "split_units" || leg === "none") return leg;
+      return "";
+    })(),
     fireplace: property.fireplace ?? false,
     elevator: property.elevator ?? false,
     security_door: property.security_door ?? false,

@@ -52,6 +52,10 @@ export type PropertyData = {
   custom_heating: string | null;
   cooling_type: string | null;
   custom_cooling: string | null;
+  heating_system: string | null;
+  heating_fuel: string | null;
+  heating_features: string[] | null;
+  cooling_system: string | null;
   // Layout
   living_rooms: number | null;
   kitchens: number | null;
@@ -397,13 +401,61 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
   const areaLabel = titleCase(location_text ?? location ?? "");
   const mapsQuery = encodeURIComponent(`${areaLabel}, Greece`);
 
+  // ── Heating / Cooling label maps ─────────────────────────────────────────
+  const HEATING_SYSTEM_LABEL: Record<string, string> = {
+    central:            "Κεντρική θέρμανση",
+    central_autonomous: "Κεντρική με αυτονομία",
+    autonomous:         "Αυτόνομη θέρμανση",
+    none:               "Χωρίς θέρμανση",
+  };
+  const HEATING_FUEL_LABEL: Record<string, string> = {
+    oil:         "Πετρέλαιο",
+    natural_gas: "Φυσικό αέριο",
+    electric:    "Ηλεκτρικό ρεύμα",
+    none:        "Χωρίς",
+  };
+  const HEATING_FEATURE_LABEL: Record<string, string> = {
+    air_conditioning:   "Κλιματισμός",
+    heat_pump:          "Αντλία θερμότητας",
+    underfloor:         "Ενδοδαπέδια θέρμανση",
+    fan_coil:           "Fan coil",
+    solar_water_heater: "Ηλιακός θερμοσίφωνας",
+    storage_heaters:    "Θερμοσυσσωρευτές",
+  };
+  const COOLING_SYSTEM_LABEL: Record<string, string> = {
+    central_ac:  "Κεντρικός κλιματισμός",
+    split_units: "Split units",
+    fan_coil:    "Fan coil",
+    none:        "Χωρίς",
+  };
+
+  // Build derived heating display: system + fuel joined, e.g. "Αυτόνομη θέρμανση / Φυσικό αέριο"
+  const heatingSystemLabel = property.heating_system
+    ? (HEATING_SYSTEM_LABEL[property.heating_system] ?? property.heating_system)
+    : null;
+  const heatingFuelLabel =
+    property.heating_fuel && property.heating_fuel !== "none"
+      ? (HEATING_FUEL_LABEL[property.heating_fuel] ?? property.heating_fuel)
+      : null;
+  const derivedHeating = [heatingSystemLabel, heatingFuelLabel].filter(Boolean).join(" / ") || null;
+
+  const derivedCooling = property.cooling_system
+    ? (COOLING_SYSTEM_LABEL[property.cooling_system] ?? property.cooling_system)
+    : null;
+
+  const derivedFeatures = (() => {
+    const f = property.heating_features;
+    if (!f || f.length === 0) return null;
+    return f.map((x) => HEATING_FEATURE_LABEL[x] ?? x).join(", ");
+  })();
+
   // Cast property to a plain record for dynamic DETAIL_FEATURES lookup.
-  // Apply custom_heating / custom_cooling override: if a free-text custom value exists,
-  // it takes priority over the dropdown value for public display.
+  // Priority: custom_heating/cooling free text → new structured fields → legacy heating_type/cooling_type
   const featureRecord: Record<string, unknown> = {
     ...property,
-    heating_type: property.custom_heating?.trim() || property.heating_type,
-    cooling_type: property.custom_cooling?.trim() || property.cooling_type,
+    heating_type: property.custom_heating?.trim() || derivedHeating || property.heating_type,
+    cooling_type: property.custom_cooling?.trim() || derivedCooling || property.cooling_type,
+    heating_features: derivedFeatures,
     furnished: property.custom_furnished?.trim() || property.furnished,
   };
 

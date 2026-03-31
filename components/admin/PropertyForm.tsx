@@ -80,10 +80,14 @@ type FormState = {
   year_renovated: string;
   building_condition: string;
   energy_class: string;
-  heating_type: string;
+  heating_type: string;       // legacy — kept for backward compat
   custom_heating: string;
-  cooling_type: string;
+  cooling_type: string;       // legacy — kept for backward compat
   custom_cooling: string;
+  heating_system: string;
+  heating_fuel: string;
+  heating_features: string[];
+  cooling_system: string;
   fireplace: boolean;
   elevator: boolean;
   security_door: boolean;
@@ -174,6 +178,10 @@ const INITIAL: FormState = {
   custom_heating: "",
   cooling_type: "",
   custom_cooling: "",
+  heating_system: "",
+  heating_fuel: "",
+  heating_features: [],
+  cooling_system: "",
   fireplace: false,
   elevator: false,
   security_door: false,
@@ -268,6 +276,37 @@ async function findUniqueSlug(base: string): Promise<string> {
   return `${base}-${Date.now()}`;
 }
 
+/** Returns true if any level has the given boolean field set to true. */
+function someLevelTrue(
+  levels: LevelDetail[],
+  key: keyof Pick<LevelDetail, "wardrobe_room" | "balcony" | "veranda" | "awnings" | "private_roof_terrace" | "loft" | "internal_staircase" | "fireplace" | "jacuzzi" | "home_cinema">
+): boolean {
+  return levels.some((l) => l[key] === true);
+}
+
+/** Sum a numeric field across all levels.
+ *  Returns null only when no level has any meaningful input (all empty / blank).
+ *  Returns 0 when at least one level has an explicit "0" entry.
+ */
+function sumLevels(
+  levels: LevelDetail[],
+  key: keyof Pick<LevelDetail, "bedrooms" | "bathrooms" | "wc" | "kitchens" | "living_rooms" | "storage_rooms">
+): number | null {
+  let total = 0;
+  let hasValue = false;
+  for (const l of levels) {
+    const raw = l[key] as string;
+    if (raw !== "" && raw != null) {
+      const v = Number(raw);
+      if (!isNaN(v)) {
+        total += v;
+        hasValue = true;
+      }
+    }
+  }
+  return hasValue ? total : null;
+}
+
 function buildPayload(form: FormState, resolveSlug = false) {
   return {
     title: form.title,
@@ -284,9 +323,9 @@ function buildPayload(form: FormState, resolveSlug = false) {
     location_text: form.location_text || null,
     size_sqm: form.size_sqm ? Number(form.size_sqm) : null,
     size:     form.size_sqm  ? Number(form.size_sqm)  : null, // legacy column kept in sync
-    // Legacy flat columns — synced from level 1 so existing queries/AI/catalog still work
-    bedrooms: form.levels[0]?.bedrooms ? Number(form.levels[0].bedrooms) : (form.bedrooms ? Number(form.bedrooms) : null),
-    bathrooms: form.levels[0]?.bathrooms ? Number(form.levels[0].bathrooms) : (form.bathrooms ? Number(form.bathrooms) : null),
+    // Legacy flat columns — summed across all levels so existing queries/AI/catalog still work
+    bedrooms: form.levels.length > 0 ? sumLevels(form.levels, "bedrooms") : (form.bedrooms ? Number(form.bedrooms) : null),
+    bathrooms: form.levels.length > 0 ? sumLevels(form.levels, "bathrooms") : (form.bathrooms ? Number(form.bathrooms) : null),
     floor: form.floor ? Number(form.floor) : null,
     total_property_area_sqm: form.total_property_area_sqm ? Number(form.total_property_area_sqm) : null,
     total_building_floors: form.total_building_floors ? Number(form.total_building_floors) : null,
@@ -296,11 +335,26 @@ function buildPayload(form: FormState, resolveSlug = false) {
     year_renovated: form.year_renovated ? Number(form.year_renovated) : null,
     building_condition: form.building_condition || null,
     energy_class: form.energy_class || null,
-    heating_type: form.heating_type || null,
+    heating_type: form.heating_type || null,   // legacy — kept for DB compat
     custom_heating: form.custom_heating.trim() || null,
-    cooling_type: form.cooling_type || null,
+    cooling_type: form.cooling_type || null,   // legacy — kept for DB compat
     custom_cooling: form.custom_cooling.trim() || null,
-    fireplace: form.fireplace,
+    heating_system: form.heating_system || null,
+    heating_fuel: form.heating_fuel || null,
+    heating_features: form.heating_features.length > 0 ? form.heating_features : null,
+    cooling_system: form.cooling_system || null,
+    // Level-derived booleans: OR across all levels when levels exist; fallback to global form field for legacy properties.
+    fireplace:            form.levels.length > 0 ? someLevelTrue(form.levels, "fireplace")            : form.fireplace,
+    wardrobe_room:        form.levels.length > 0 ? someLevelTrue(form.levels, "wardrobe_room")        : form.wardrobe_room,
+    balcony:              form.levels.length > 0 ? someLevelTrue(form.levels, "balcony")              : form.balcony,
+    veranda:              form.levels.length > 0 ? someLevelTrue(form.levels, "veranda")              : form.veranda,
+    awnings:              form.levels.length > 0 ? someLevelTrue(form.levels, "awnings")              : form.awnings,
+    jacuzzi:              form.levels.length > 0 ? someLevelTrue(form.levels, "jacuzzi")              : form.jacuzzi,
+    private_roof_terrace: form.levels.length > 0 ? someLevelTrue(form.levels, "private_roof_terrace") : form.private_roof_terrace,
+    loft:                 form.levels.length > 0 ? someLevelTrue(form.levels, "loft")                 : form.loft,
+    internal_staircase:   form.levels.length > 0 ? someLevelTrue(form.levels, "internal_staircase")   : form.internal_staircase,
+    home_cinema:          form.levels.length > 0 ? someLevelTrue(form.levels, "home_cinema")          : form.home_cinema,
+    // Global-only fields (no level equivalent):
     elevator: form.elevator,
     security_door: form.security_door,
     alarm_system: form.alarm_system,
@@ -308,25 +362,16 @@ function buildPayload(form: FormState, resolveSlug = false) {
     smart_home: form.smart_home,
     satellite_tv: form.satellite_tv,
     internet_ready: form.internet_ready,
-    wardrobe_room: form.wardrobe_room,
     sea_view: form.sea_view,
     mountain_view: form.mountain_view,
-    balcony: form.balcony,
-    veranda: form.veranda,
-    awnings: form.awnings,
     garden: form.garden,
     pool: form.pool,
     parking: form.parking,
-    jacuzzi: form.jacuzzi,
     close_to_beaches: form.close_to_beaches,
     panoramic_view: form.panoramic_view,
     acropolis_view: form.acropolis_view,
     duplex: form.duplex,
-    private_roof_terrace: form.private_roof_terrace,
-    loft: form.loft,
-    internal_staircase: form.internal_staircase,
     barbeque: form.barbeque,
-    home_cinema: form.home_cinema,
     smoke_detection: form.smoke_detection,
     frames_type: form.frames_type || null,
     double_glazing: form.double_glazing,
@@ -335,10 +380,10 @@ function buildPayload(form: FormState, resolveSlug = false) {
     thermal_insulation: form.thermal_insulation,
     sound_insulation: form.sound_insulation,
     flooring_type: form.flooring_type || null,
-    living_rooms: form.levels[0]?.living_rooms ? Number(form.levels[0].living_rooms) : (form.living_rooms ? Number(form.living_rooms) : null),
-    kitchens: form.levels[0]?.kitchens ? Number(form.levels[0].kitchens) : (form.kitchens ? Number(form.kitchens) : null),
-    storage_rooms: form.levels[0]?.storage_rooms ? Number(form.levels[0].storage_rooms) : (form.storage_rooms ? Number(form.storage_rooms) : null),
-    wc: form.levels[0]?.wc ? Number(form.levels[0].wc) : (form.wc ? Number(form.wc) : null),
+    living_rooms: form.levels.length > 0 ? sumLevels(form.levels, "living_rooms") : (form.living_rooms ? Number(form.living_rooms) : null),
+    kitchens: form.levels.length > 0 ? sumLevels(form.levels, "kitchens") : (form.kitchens ? Number(form.kitchens) : null),
+    storage_rooms: form.levels.length > 0 ? sumLevels(form.levels, "storage_rooms") : (form.storage_rooms ? Number(form.storage_rooms) : null),
+    wc: form.levels.length > 0 ? sumLevels(form.levels, "wc") : (form.wc ? Number(form.wc) : null),
     furnished: form.furnished.trim() || null,
     custom_furnished: form.custom_furnished.trim() || null,
     summary: form.summary || null,
@@ -1181,10 +1226,9 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
       {/* ── Comfort & Amenities ───────────────────────────────────────────── */}
       <Section title="Comfort & Amenities">
         <div className="grid grid-cols-3 gap-x-6 gap-y-3">
-          {/* Column 1 */}
+          {/* Column 1 — views, outdoor, global flags */}
           <div className="flex flex-col gap-3">
             <Checkbox label="Pool"               checked={form.pool}               onChange={(v) => set("pool", v)} />
-            <Checkbox label="Jacuzzi"            checked={form.jacuzzi}            onChange={(v) => set("jacuzzi", v)} />
             <Checkbox label="Garden"             checked={form.garden}             onChange={(v) => set("garden", v)} />
             <Checkbox label="Sea View"           checked={form.sea_view}           onChange={(v) => set("sea_view", v)} />
             <Checkbox label="Close to Beaches"   checked={form.close_to_beaches}   onChange={(v) => set("close_to_beaches", v)} />
@@ -1193,22 +1237,14 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
             <Checkbox label="Acropolis View"     checked={form.acropolis_view}     onChange={(v) => set("acropolis_view", v)} />
             <Checkbox label="Duplex"             checked={form.duplex}             onChange={(v) => set("duplex", v)} />
           </div>
-          {/* Column 2 */}
+          {/* Column 2 — building access, outdoor extras */}
           <div className="flex flex-col gap-3">
-            <Checkbox label="Balcony"             checked={form.balcony}             onChange={(v) => set("balcony", v)} />
-            <Checkbox label="Veranda"             checked={form.veranda}             onChange={(v) => set("veranda", v)} />
-            <Checkbox label="Awnings"             checked={form.awnings}             onChange={(v) => set("awnings", v)} />
-            <Checkbox label="Private Roof Terrace" checked={form.private_roof_terrace} onChange={(v) => set("private_roof_terrace", v)} />
-            <Checkbox label="Loft"                checked={form.loft}                onChange={(v) => set("loft", v)} />
-            <Checkbox label="Internal Staircase"  checked={form.internal_staircase}  onChange={(v) => set("internal_staircase", v)} />
-            <Checkbox label="Elevator"            checked={form.elevator}            onChange={(v) => set("elevator", v)} />
-            <Checkbox label="Fireplace"           checked={form.fireplace}           onChange={(v) => set("fireplace", v)} />
-            <Checkbox label="Barbeque"            checked={form.barbeque}            onChange={(v) => set("barbeque", v)} />
+            <Checkbox label="Elevator"   checked={form.elevator}   onChange={(v) => set("elevator", v)} />
+            <Checkbox label="Parking"    checked={form.parking}    onChange={(v) => set("parking", v)} />
+            <Checkbox label="Barbeque"   checked={form.barbeque}   onChange={(v) => set("barbeque", v)} />
           </div>
-          {/* Column 3 */}
+          {/* Column 3 — security & tech */}
           <div className="flex flex-col gap-3">
-            <Checkbox label="Wardrobe Room"   checked={form.wardrobe_room}   onChange={(v) => set("wardrobe_room", v)} />
-            <Checkbox label="Home Cinema"     checked={form.home_cinema}     onChange={(v) => set("home_cinema", v)} />
             <Checkbox label="Security Door"   checked={form.security_door}   onChange={(v) => set("security_door", v)} />
             <Checkbox label="Alarm System"    checked={form.alarm_system}    onChange={(v) => set("alarm_system", v)} />
             <Checkbox label="Smoke Detection" checked={form.smoke_detection} onChange={(v) => set("smoke_detection", v)} />
@@ -1362,63 +1398,81 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
         </div>
       </Section>
 
-      {/* ── Heating / Cooling ────────────────────────────────────────────── */}
-      <Section title="Heating / Cooling">
+      {/* ── Θέρμανση & Κλιματισμός ───────────────────────────────────────── */}
+      <Section title="Θέρμανση & Κλιματισμός">
         <div className="grid grid-cols-2 gap-4">
-          <div className="flex flex-col gap-2">
-            <Field label="Heating Type">
-              <select
-                value={form.heating_type}
-                onChange={(e) => set("heating_type", e.target.value)}
-                className={inputCls}
-              >
-                <option value="">— select —</option>
-                <option value="central">Central</option>
-                <option value="autonomous">Autonomous</option>
-                <option value="underfloor">Underfloor</option>
-                <option value="heat_pump">Heat Pump</option>
-                <option value="air_conditioning">Air Conditioning</option>
-                <option value="electric">Electric</option>
-                <option value="natural_gas">Natural Gas</option>
-                <option value="oil">Oil</option>
-                <option value="none">None</option>
-              </select>
-            </Field>
-            <Field label="Custom Heating" hint="Overrides dropdown on public page">
-              <input
-                type="text"
-                value={form.custom_heating}
-                onChange={(e) => set("custom_heating", e.target.value)}
-                className={inputCls}
-                placeholder="e.g. Pellet stove + underfloor"
-              />
-            </Field>
-          </div>
-          <div className="flex flex-col gap-2">
-            <Field label="Cooling Type">
-              <select
-                value={form.cooling_type}
-                onChange={(e) => set("cooling_type", e.target.value)}
-                className={inputCls}
-              >
-                <option value="">— select —</option>
-                <option value="central_ac">Central A/C</option>
-                <option value="split_units">Split Units</option>
-                <option value="fan">Fan</option>
-                <option value="underfloor">Underfloor Cooling</option>
-                <option value="none">None</option>
-              </select>
-            </Field>
-            <Field label="Custom Cooling" hint="Overrides dropdown on public page">
-              <input
-                type="text"
-                value={form.custom_cooling}
-                onChange={(e) => set("custom_cooling", e.target.value)}
-                className={inputCls}
-                placeholder="e.g. VRF system"
-              />
-            </Field>
-          </div>
+          {/* Row 1 left — Σύστημα θέρμανσης */}
+          <Field label="Σύστημα θέρμανσης">
+            <select value={form.heating_system} onChange={(e) => set("heating_system", e.target.value)} className={inputCls}>
+              <option value="">— επιλογή —</option>
+              <option value="central">Κεντρική θέρμανση</option>
+              <option value="central_autonomous">Κεντρική με αυτονομία</option>
+              <option value="autonomous">Αυτόνομη θέρμανση</option>
+              <option value="none">Χωρίς θέρμανση</option>
+            </select>
+          </Field>
+          {/* Row 1 right — Μέσο θέρμανσης */}
+          <Field label="Μέσο θέρμανσης">
+            <select value={form.heating_fuel} onChange={(e) => set("heating_fuel", e.target.value)} className={inputCls}>
+              <option value="">— επιλογή —</option>
+              <option value="oil">Πετρέλαιο</option>
+              <option value="natural_gas">Φυσικό αέριο</option>
+              <option value="electric">Ηλεκτρικό ρεύμα</option>
+              <option value="none">Χωρίς</option>
+            </select>
+          </Field>
+          {/* Row 2 left — Κλιματισμός */}
+          <Field label="Κλιματισμός">
+            <select value={form.cooling_system} onChange={(e) => set("cooling_system", e.target.value)} className={inputCls}>
+              <option value="">— επιλογή —</option>
+              <option value="central_ac">Κεντρικός κλιματισμός</option>
+              <option value="split_units">Split units</option>
+              <option value="fan_coil">Fan coil</option>
+              <option value="none">Χωρίς</option>
+            </select>
+          </Field>
+          {/* Row 2 right — Επιπλέον χαρακτηριστικά (multi-select chips) */}
+          <Field label="Επιπλέον χαρακτηριστικά">
+            <div className="flex flex-wrap gap-2 pt-1">
+              {([
+                { value: "air_conditioning",   label: "Κλιματισμός" },
+                { value: "heat_pump",          label: "Αντλία θερμότητας" },
+                { value: "underfloor",         label: "Ενδοδαπέδια θέρμανση" },
+                { value: "fan_coil",           label: "Fan coil" },
+                { value: "solar_water_heater", label: "Ηλιακός θερμοσίφωνας" },
+                { value: "storage_heaters",    label: "Θερμοσυσσωρευτές" },
+              ] as const).map(({ value, label }) => {
+                const active = form.heating_features.includes(value);
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => {
+                      const next = active
+                        ? form.heating_features.filter((f) => f !== value)
+                        : [...form.heating_features, value];
+                      set("heating_features", next);
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                      active
+                        ? "bg-[#1E1E1E] text-white border-[#1E1E1E]"
+                        : "bg-white text-[#888888] border-[#E8E8E8] hover:border-[#1E1E1E] hover:text-[#1E1E1E]"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
+          {/* Row 3 left — Προσαρμοσμένη θέρμανση */}
+          <Field label="Προσαρμοσμένη θέρμανση" hint="Αντικαθιστά την επιλογή στη δημόσια σελίδα">
+            <input type="text" value={form.custom_heating} onChange={(e) => set("custom_heating", e.target.value)} className={inputCls} placeholder="π.χ. Σόμπα pellet + ενδοδαπέδια" />
+          </Field>
+          {/* Row 3 right — Προσαρμοσμένος κλιματισμός */}
+          <Field label="Προσαρμοσμένος κλιματισμός" hint="Αντικαθιστά την επιλογή στη δημόσια σελίδα">
+            <input type="text" value={form.custom_cooling} onChange={(e) => set("custom_cooling", e.target.value)} className={inputCls} placeholder="π.χ. Σύστημα VRF" />
+          </Field>
         </div>
       </Section>
 

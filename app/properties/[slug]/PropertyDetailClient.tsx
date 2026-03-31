@@ -402,30 +402,30 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
 
   // ── Heating / Cooling label maps ─────────────────────────────────────────
   const HEATING_SYSTEM_LABEL: Record<string, string> = {
-    central:            "Κεντρική θέρμανση",
-    central_autonomous: "Κεντρική με αυτονομία",
-    autonomous:         "Αυτόνομη θέρμανση",
-    none:               "Χωρίς θέρμανση",
+    central:            "Central Heating",
+    central_autonomous: "Central with Autonomy",
+    autonomous:         "Autonomous Heating",
+    none:               "No Heating",
   };
   const HEATING_FUEL_LABEL: Record<string, string> = {
-    oil:         "Πετρέλαιο",
-    natural_gas: "Φυσικό αέριο",
-    electric:    "Ηλεκτρικό ρεύμα",
-    none:        "Χωρίς",
+    oil:         "Oil",
+    natural_gas: "Natural Gas",
+    electric:    "Electric",
+    none:        "None",
   };
   const HEATING_FEATURE_LABEL: Record<string, string> = {
-    air_conditioning:   "Κλιματισμός",
-    heat_pump:          "Αντλία θερμότητας",
-    underfloor:         "Ενδοδαπέδια θέρμανση",
-    fan_coil:           "Fan coil",
-    solar_water_heater: "Ηλιακός θερμοσίφωνας",
-    storage_heaters:    "Θερμοσυσσωρευτές",
+    air_conditioning:   "Air Conditioning",
+    heat_pump:          "Heat Pump",
+    underfloor:         "Underfloor Heating",
+    fan_coil:           "Fan Coil",
+    solar_water_heater: "Solar Water Heater",
+    storage_heaters:    "Storage Heaters",
   };
   const COOLING_SYSTEM_LABEL: Record<string, string> = {
-    central_ac:  "Κεντρικός κλιματισμός",
-    split_units: "Split units",
-    fan_coil:    "Fan coil",
-    none:        "Χωρίς",
+    central_ac:  "Central AC",
+    split_units: "Split Units",
+    fan_coil:    "Fan Coil",
+    none:        "None",
   };
 
   // Build derived heating display: system + fuel joined, e.g. "Αυτόνομη θέρμανση / Φυσικό αέριο"

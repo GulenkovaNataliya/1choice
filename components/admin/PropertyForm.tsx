@@ -1516,49 +1516,49 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
         </div>
       </Section>
 
-      {/* ── Θέρμανση & Κλιματισμός ───────────────────────────────────────── */}
-      <Section title="Θέρμανση & Κλιματισμός">
+      {/* ── Heating & Cooling ────────────────────────────────────────────── */}
+      <Section title="Heating & Cooling">
         <div className="grid grid-cols-2 gap-4">
-          {/* Row 1 left — Σύστημα θέρμανσης */}
-          <Field label="Σύστημα θέρμανσης">
+          {/* Row 1 left — Heating System */}
+          <Field label="Heating System">
             <select value={form.heating_system} onChange={(e) => set("heating_system", e.target.value)} className={inputCls}>
-              <option value="">— επιλογή —</option>
-              <option value="central">Κεντρική θέρμανση</option>
-              <option value="central_autonomous">Κεντρική με αυτονομία</option>
-              <option value="autonomous">Αυτόνομη θέρμανση</option>
-              <option value="none">Χωρίς θέρμανση</option>
+              <option value="">— select —</option>
+              <option value="central">Central Heating</option>
+              <option value="central_autonomous">Central with Autonomy</option>
+              <option value="autonomous">Autonomous Heating</option>
+              <option value="none">No Heating</option>
             </select>
           </Field>
-          {/* Row 1 right — Μέσο θέρμανσης */}
-          <Field label="Μέσο θέρμανσης">
+          {/* Row 1 right — Heating Fuel */}
+          <Field label="Heating Fuel">
             <select value={form.heating_fuel} onChange={(e) => set("heating_fuel", e.target.value)} className={inputCls}>
-              <option value="">— επιλογή —</option>
-              <option value="oil">Πετρέλαιο</option>
-              <option value="natural_gas">Φυσικό αέριο</option>
-              <option value="electric">Ηλεκτρικό ρεύμα</option>
-              <option value="none">Χωρίς</option>
+              <option value="">— select —</option>
+              <option value="oil">Oil</option>
+              <option value="natural_gas">Natural Gas</option>
+              <option value="electric">Electric</option>
+              <option value="none">None</option>
             </select>
           </Field>
-          {/* Row 2 left — Κλιματισμός */}
-          <Field label="Κλιματισμός">
+          {/* Row 2 left — Cooling System */}
+          <Field label="Cooling / AC">
             <select value={form.cooling_system} onChange={(e) => set("cooling_system", e.target.value)} className={inputCls}>
-              <option value="">— επιλογή —</option>
-              <option value="central_ac">Κεντρικός κλιματισμός</option>
-              <option value="split_units">Split units</option>
-              <option value="fan_coil">Fan coil</option>
-              <option value="none">Χωρίς</option>
+              <option value="">— select —</option>
+              <option value="central_ac">Central AC</option>
+              <option value="split_units">Split Units</option>
+              <option value="fan_coil">Fan Coil</option>
+              <option value="none">None</option>
             </select>
           </Field>
-          {/* Row 2 right — Επιπλέον χαρακτηριστικά (multi-select chips) */}
-          <Field label="Επιπλέον χαρακτηριστικά">
+          {/* Row 2 right — Additional Features (multi-select chips) */}
+          <Field label="Additional Features">
             <div className="flex flex-wrap gap-2 pt-1">
               {([
-                { value: "air_conditioning",   label: "Κλιματισμός" },
-                { value: "heat_pump",          label: "Αντλία θερμότητας" },
-                { value: "underfloor",         label: "Ενδοδαπέδια θέρμανση" },
-                { value: "fan_coil",           label: "Fan coil" },
-                { value: "solar_water_heater", label: "Ηλιακός θερμοσίφωνας" },
-                { value: "storage_heaters",    label: "Θερμοσυσσωρευτές" },
+                { value: "air_conditioning",   label: "Air Conditioning" },
+                { value: "heat_pump",          label: "Heat Pump" },
+                { value: "underfloor",         label: "Underfloor Heating" },
+                { value: "fan_coil",           label: "Fan Coil" },
+                { value: "solar_water_heater", label: "Solar Water Heater" },
+                { value: "storage_heaters",    label: "Storage Heaters" },
               ] as const).map(({ value, label }) => {
                 const active = form.heating_features.includes(value);
                 return (
@@ -1583,13 +1583,13 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
               })}
             </div>
           </Field>
-          {/* Row 3 left — Προσαρμοσμένη θέρμανση */}
-          <Field label="Προσαρμοσμένη θέρμανση" hint="Αντικαθιστά την επιλογή στη δημόσια σελίδα">
-            <input type="text" value={form.custom_heating} onChange={(e) => set("custom_heating", e.target.value)} className={inputCls} placeholder="π.χ. Σόμπα pellet + ενδοδαπέδια" />
+          {/* Row 3 left — Custom Heating */}
+          <Field label="Custom Heating" hint="Overrides the selected value on the public page">
+            <input type="text" value={form.custom_heating} onChange={(e) => set("custom_heating", e.target.value)} className={inputCls} placeholder="e.g. Pellet stove + underfloor" />
           </Field>
-          {/* Row 3 right — Προσαρμοσμένος κλιματισμός */}
-          <Field label="Προσαρμοσμένος κλιματισμός" hint="Αντικαθιστά την επιλογή στη δημόσια σελίδα">
-            <input type="text" value={form.custom_cooling} onChange={(e) => set("custom_cooling", e.target.value)} className={inputCls} placeholder="π.χ. Σύστημα VRF" />
+          {/* Row 3 right — Custom Cooling */}
+          <Field label="Custom Cooling" hint="Overrides the selected value on the public page">
+            <input type="text" value={form.custom_cooling} onChange={(e) => set("custom_cooling", e.target.value)} className={inputCls} placeholder="e.g. VRF system" />
           </Field>
         </div>
       </Section>

@@ -248,7 +248,7 @@ function openCompareChat(props: CompareProperty[], intent: ChatIntent) {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatPrice(n: number) {
-  return "€" + n.toLocaleString("en-EU");
+  return "€" + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────

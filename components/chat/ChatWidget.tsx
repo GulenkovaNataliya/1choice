@@ -750,7 +750,7 @@ export default function ChatWidget() {
                             )}
                             {p.price != null && (
                               <span className="text-xs font-medium text-[#1E1E1E]">
-                                €{p.price.toLocaleString()}
+                                €{Math.round(p.price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                               </span>
                             )}
                             {p.property_code && (

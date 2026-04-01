@@ -14,6 +14,12 @@ export type AdminUser = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function fmtDate(iso: string) {
+  const d = new Date(iso);
+  return `${String(d.getUTCDate()).padStart(2,"0")} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
 function StatusBadge({ status }: { status: AdminUser["status"] }) {
   const cls =
     status === "active"
@@ -242,11 +248,7 @@ export default function UsersManager({
                       <td className="px-4 py-3 text-[#1E1E1E] font-medium">{user.email}</td>
                       <td className="px-4 py-3"><StatusBadge status={user.status} /></td>
                       <td className="px-4 py-3 text-[#888888] whitespace-nowrap">
-                        {user.created_at
-                          ? new Date(user.created_at).toLocaleDateString("en-GB", {
-                              day: "2-digit", month: "short", year: "numeric",
-                            })
-                          : "—"}
+                        {user.created_at ? fmtDate(user.created_at) : "—"}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">

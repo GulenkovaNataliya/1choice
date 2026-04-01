@@ -165,7 +165,7 @@ type Props = {
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 function formatPrice(price: number) {
-  return "€" + price.toLocaleString("en-EU");
+  return "€" + Math.round(price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
 function titleCase(s: string) {

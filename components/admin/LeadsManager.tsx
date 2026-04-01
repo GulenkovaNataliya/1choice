@@ -55,6 +55,12 @@ const STATUS_OPTIONS = [
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function fmtDate(iso: string) {
+  const d = new Date(iso);
+  return `${String(d.getUTCDate()).padStart(2,"0")} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
 function sourceLabel(source: string | null): string {
   if (!source) return "Unknown";
   return SOURCE_LABELS[source] ?? source;
@@ -585,9 +591,7 @@ export default function LeadsManager({
                       }`}
                     >
                       <td className="px-4 py-3 text-[#888888] whitespace-nowrap">
-                        {new Date(lead.created_at).toLocaleDateString("en-GB", {
-                          day: "2-digit", month: "short", year: "numeric",
-                        })}
+                        {fmtDate(lead.created_at)}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5">

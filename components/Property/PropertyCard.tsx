@@ -69,7 +69,7 @@ function Badge({ label }: { label: string }) {
 }
 
 function formatPrice(price: number) {
-  return "€" + price.toLocaleString("en-EU");
+  return "€" + Math.round(price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────

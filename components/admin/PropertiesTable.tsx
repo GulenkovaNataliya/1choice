@@ -221,8 +221,8 @@ function PropertyRow({
     setBusy(false);
 
     if (insertError) {
-      console.error("[duplicate] insert failed:", insertError);
-      alert(`Duplicate failed: ${insertError.message}`);
+      console.error("[duplicate] insert failed:", insertError.message, insertError.code, insertError.details, insertError.hint);
+      alert(`Duplicate failed:\n${insertError.message}\n${insertError.details ?? ""}\n${insertError.hint ?? ""}`);
       return;
     }
 

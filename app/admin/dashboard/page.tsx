@@ -49,7 +49,7 @@ export default async function AdminDashboardPage() {
           href="https://analytics.google.com"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm font-medium text-[#888888] border border-[#E8E8E8] rounded-lg px-4 py-2 hover:border-[#1E1E1E] hover:text-[#1E1E1E] transition-colors"
+          className="text-sm font-medium text-[#C1121F] border border-[#C1121F] rounded-lg px-4 py-2 hover:bg-[#C1121F] hover:text-white transition-colors"
         >
           Open Analytics ↗
         </a>

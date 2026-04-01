@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect } from "react";
+import { Fragment, useEffect, useState } from "react";
 import Link from "next/link";
 import { MapPin, Tag, Home, LayoutGrid } from "lucide-react";
 import PropertyGalleryClient from "@/components/Property/PropertyGalleryClient";
@@ -21,6 +21,12 @@ import {
 } from "@/lib/landPlotOptions";
 import FavoriteButton from "@/components/Property/FavoriteButton";
 import { getBadgeStyle } from "@/lib/badgeColors";
+import dynamic from "next/dynamic";
+
+const ApproximateLocationMap = dynamic(
+  () => import("@/components/Property/ApproximateLocationMap"),
+  { ssr: false }
+);
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -331,11 +337,6 @@ function LocationBlock({
     const cLat = lat + latJitter;
     const cLng = lng + lngJitter;
 
-    const d = 0.015; // ~1.5 km radius — wide enough to obscure exact location
-    const bbox = `${cLng - d},${cLat - d},${cLng + d},${cLat + d}`;
-    // No &marker= — exact pin is intentionally omitted
-    const osmUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik`;
-
     return (
       <section className="mt-16">
         <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -344,24 +345,8 @@ function LocationBlock({
             Approximate
           </span>
         </div>
-        <div className="rounded-2xl overflow-hidden border border-[#E8E8E8] relative">
-          <iframe
-            src={osmUrl}
-            title="Approximate property location map"
-            className="w-full h-64"
-            style={{ border: 0 }}
-            loading="lazy"
-          />
-          {/* Privacy circle overlay — visually marks the general search area */}
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 flex items-center justify-center pointer-events-none"
-          >
-            <div
-              className="rounded-full border-2 border-[#3A2E4F]/50 bg-[#3A2E4F]/10"
-              style={{ width: 180, height: 180 }}
-            />
-          </div>
+        <div className="rounded-2xl overflow-hidden border border-[#E8E8E8]">
+          <ApproximateLocationMap lat={cLat} lng={cLng} />
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm text-[#888888]">
@@ -406,6 +391,8 @@ function LocationBlock({
 // ── Main component ───────────────────────────────────────────────────────────
 
 export default function PropertyDetailClient({ property, coverUrl, locationProperties, locationPageUrl, similarProperties }: Props) {
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+
   useEffect(() => {
     if (property?.id) {
       trackEvent("property_view", { property_id: property.id });
@@ -585,8 +572,24 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
 
             {/* Description */}
             {description && (
-              <div className="text-[#404040] text-sm leading-relaxed whitespace-pre-line">
-                {description}
+              <div className="mt-4">
+                <div
+                  className={
+                    descriptionExpanded
+                      ? "whitespace-pre-line text-[15px] leading-7 text-[#404040]"
+                      : "whitespace-pre-line text-[15px] leading-7 text-[#404040] line-clamp-6"
+                  }
+                >
+                  {description}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setDescriptionExpanded((v) => !v)}
+                  className="mt-3 text-sm font-medium text-[#3A2E4F] hover:opacity-80 transition-opacity"
+                >
+                  {descriptionExpanded ? "Show less" : "Show more"}
+                </button>
               </div>
             )}
 

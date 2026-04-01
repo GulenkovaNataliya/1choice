@@ -61,6 +61,12 @@ function ActionButton({
   );
 }
 
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function fmtDate(iso: string) {
+  const d = new Date(iso);
+  return `${String(d.getUTCDate()).padStart(2,"0")} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
 // ── Toggle switch ─────────────────────────────────────────────────────────────
 
 function Toggle({
@@ -205,7 +211,7 @@ function PropertyRow({
       publish_1choice: _p1, publish_deals: _pd, private_collection: _pc,
       featured: _feat, is_golden_visa: _gv, created_at: _ca, ...rest } = source;
 
-    const { data: inserted } = await supabase
+    const { data: inserted, error: insertError } = await supabase
       .from("properties")
       .insert({ ...rest, property_code: newCode, slug: null, status: "draft",
         publish_1choice: false, publish_deals: false, private_collection: false,
@@ -213,6 +219,12 @@ function PropertyRow({
       .select("id").single();
 
     setBusy(false);
+
+    if (insertError) {
+      console.error("[duplicate] insert failed:", insertError);
+      alert(`Duplicate failed: ${insertError.message}`);
+      return;
+    }
 
     if (inserted?.id) {
       logActivity(inserted.id, "property_duplicated", { source_property_id: property.id, source_property_code: property.property_code });
@@ -307,7 +319,7 @@ function PropertyRow({
         />
       </td>
       <td className="px-4 py-3 text-[#888888] whitespace-nowrap text-xs">
-        {new Date(dateLabel).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+        {fmtDate(dateLabel)}
       </td>
       <td className="px-4 py-3">
         <div className="flex flex-col gap-1.5">

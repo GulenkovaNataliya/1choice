@@ -159,6 +159,8 @@ type FormState = {
   show_address: boolean;
   custom_badge: string;
   custom_badge_color: string;
+  // Electricity
+  electricity: string[];
   // Land / Plot
   land_area_sqm: string;
   building_coefficient: string;
@@ -270,6 +272,8 @@ const INITIAL: FormState = {
   show_address: false,
   custom_badge: "",
   custom_badge_color: "red",
+  // Electricity
+  electricity: [],
   // Land / Plot
   land_area_sqm: "",
   building_coefficient: "",
@@ -474,6 +478,8 @@ function buildPayload(form: FormState, resolveSlug = false) {
     show_address: form.show_address,
     custom_badge: form.custom_badge || null,
     custom_badge_color: form.custom_badge ? (form.custom_badge_color || "red") : null,
+    // Electricity
+    electricity: form.electricity.length > 0 ? form.electricity : null,
     // Land / Plot
     land_area_sqm:                form.land_area_sqm ? Number(form.land_area_sqm) : null,
     building_coefficient:         form.building_coefficient ? Number(form.building_coefficient) : null,
@@ -1750,6 +1756,39 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
               <input type="text" value={form.custom_cooling} onChange={(e) => set("custom_cooling", e.target.value)} className={inputCls} placeholder="e.g. VRF system" />
             </Field>
           </div>
+        </div>
+      </Section>
+
+      {/* ── Electricity ──────────────────────────────────────────────────── */}
+      <Section title="Electricity">
+        <div className="flex flex-wrap gap-2">
+          {([
+            { value: "night_tariff",     label: "Night Tariff"     },
+            { value: "single_phase",     label: "Single Phase"     },
+            { value: "three_phase",      label: "Three Phase"      },
+            { value: "industrial_power", label: "Industrial Power" },
+          ] as const).map(({ value, label }) => {
+            const active = form.electricity.includes(value);
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => {
+                  const next = active
+                    ? form.electricity.filter((v) => v !== value)
+                    : [...form.electricity, value];
+                  set("electricity", next);
+                }}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                  active
+                    ? "bg-[#1E1E1E] text-white border-[#1E1E1E]"
+                    : "bg-white text-[#888888] border-[#E8E8E8] hover:border-[#1E1E1E] hover:text-[#1E1E1E]"
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
       </Section>
 

@@ -64,6 +64,9 @@ function parseParamsToFilter(params: ReadonlyURLSearchParams): Partial<FilterSta
   const transaction = params.get("transaction");
   if (transaction) f.transaction = TRANSACTION_FROM_URL[transaction] ?? "";
 
+  const category = params.get("category");
+  if (category) f.propertyCategories = category.split(",").map(c => c.charAt(0).toUpperCase() + c.slice(1));
+
   const type = params.get("type");
   if (type) f.propertyTypes = type.split(",").map(t => t.charAt(0).toUpperCase() + t.slice(1));
 
@@ -111,6 +114,10 @@ function buildChips(params: ReadonlyURLSearchParams): Chip[] {
   const transaction = params.get("transaction");
   if (transaction)
     chips.push({ label: `Transaction: ${titleCase(transaction)}`, removes: ["transaction"] });
+
+  const category = params.get("category");
+  if (category)
+    chips.push({ label: `Category: ${category.split(",").map(titleCase).join(", ")}`, removes: ["category"] });
 
   const type = params.get("type");
   if (type)
@@ -250,10 +257,11 @@ function applyFilters(properties: PropertyRow[], params: ReadonlyURLSearchParams
     if (baths && (p.bathrooms === null || p.bathrooms < Number(baths))) return false;
 
     const sizeMin = params.get("sizeMin");
-    if (sizeMin && (p.size_sqm === null || p.size_sqm < Number(sizeMin))) return false;
-
     const sizeMax = params.get("sizeMax");
-    if (sizeMax && (p.size_sqm === null || p.size_sqm > Number(sizeMax))) return false;
+    const categoryParam = params.get("category");
+    const sizeValue = categoryParam === "land" ? p.land_area_sqm : p.size_sqm;
+    if (sizeMin && (sizeValue === null || sizeValue < Number(sizeMin))) return false;
+    if (sizeMax && (sizeValue === null || sizeValue > Number(sizeMax))) return false;
 
     const transaction = params.get("transaction");
     if (transaction) {
@@ -263,6 +271,12 @@ function applyFilters(properties: PropertyRow[], params: ReadonlyURLSearchParams
 
     if (params.get("gv") === "1") {
       if (p.is_golden_visa !== true) return false;
+    }
+
+    const category = params.get("category");
+    if (category) {
+      const cats = category.split(",").map(c => c.toLowerCase());
+      if (!cats.some(c => (p.category ?? "").toLowerCase() === c)) return false;
     }
 
     const type = params.get("type");

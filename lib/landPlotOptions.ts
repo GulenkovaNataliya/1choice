@@ -1,7 +1,10 @@
 /**
- * Land / Plot Options — single source of truth for land-specific UI chips.
+ * Land / Plot Options — single source of truth for land-specific UI chips and labels.
  *
- * Used in: components/admin/PropertyForm.tsx
+ * Used in:
+ *   - components/admin/PropertyForm.tsx  (admin UI chips)
+ *   - app/properties/[slug]/PropertyDetailClient.tsx  (public display)
+ *   - lib/chat/propertySearch.ts  (AI search criteria)
  *
  * Rules:
  *   - Values map to DB columns: land_slope text, land_features text[], town_planning_status text
@@ -58,3 +61,26 @@ export const LAND_FEATURE_OPTIONS: LandOption[] = [
   { value: "even_and_buildable", label: "Even & Buildable",    icon: Layers   },
   { value: "building_permit",    label: "Building Permit",     icon: FileText },
 ];
+
+// ── Label-only lookup maps (for public display, no icon required) ─────────────
+
+export const TOWN_PLANNING_LABEL: Record<string, string> = {
+  within_city_plan:  "Within City Plan",
+  outside_city_plan: "Outside City Plan",
+  within_settlement: "Within Settlement",
+};
+
+export const LAND_SLOPE_LABEL: Record<string, string> = {
+  flat:            "Flat",
+  sloped:          "Sloped",
+  amphitheatrical: "Amphitheatrical",
+};
+
+export const LAND_FEATURE_LABEL: Record<string, string> = {
+  fenced:             "Fenced",
+  borehole:           "Borehole",
+  existing_building:  "Existing Building",
+  buildable:          "Buildable",
+  even_and_buildable: "Even & Buildable",
+  building_permit:    "Building Permit",
+};

@@ -13,6 +13,11 @@ import {
   formatFeatureValue,
   type PropertyFeature,
 } from "@/lib/propertyFeatures";
+import {
+  TOWN_PLANNING_LABEL,
+  LAND_SLOPE_LABEL,
+  LAND_FEATURE_LABEL,
+} from "@/lib/landPlotOptions";
 import FavoriteButton from "@/components/Property/FavoriteButton";
 import { getBadgeStyle } from "@/lib/badgeColors";
 
@@ -66,11 +71,14 @@ export type PropertyData = {
   // Windows & Construction
   frames_type: string | null;
   flooring_type: string | null;
+  single_glazing: boolean | null;
   double_glazing: boolean | null;
   triple_glazing: boolean | null;
   mosquito_screens: boolean | null;
   thermal_insulation: boolean | null;
   sound_insulation: boolean | null;
+  blinds: boolean | null;
+  electric_shutters: boolean | null;
   // Amenities
   fireplace: boolean | null;
   elevator: boolean | null;
@@ -108,6 +116,15 @@ export type PropertyData = {
   // Badge
   custom_badge: string | null;
   custom_badge_color: string | null;
+  // Land / Plot
+  land_area_sqm: number | null;
+  building_coefficient: number | null;
+  coverage_ratio: number | null;
+  frontage_m: number | null;
+  remaining_buildable_area_sqm: number | null;
+  town_planning_status: string | null;
+  land_slope: string | null;
+  land_features: string[] | null;
 };
 
 type SimilarProperty = {
@@ -467,8 +484,20 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
   const amenityFeatures  = DETAIL_FEATURES.filter(f => f.group === "amenities" && shouldRenderFeature(f, featureRecord[f.field]));
 
   const showOverview   = !!(transactionLabel || category || subtype || coreFeatures.length > 0);
+
+  const hasLandPlot = !!(
+    property.land_area_sqm ||
+    property.building_coefficient ||
+    property.coverage_ratio ||
+    property.frontage_m ||
+    property.remaining_buildable_area_sqm ||
+    property.town_planning_status ||
+    property.land_slope ||
+    (property.land_features && property.land_features.length > 0)
+  );
+
   const hasCharacteristics = showOverview || layoutFeatures.length > 0 || buildingFeatures.length > 0
-    || windowsValues.length > 0 || windowsBools.length > 0 || amenityFeatures.length > 0;
+    || windowsValues.length > 0 || windowsBools.length > 0 || amenityFeatures.length > 0 || hasLandPlot;
 
   const youtubeId = youtube_video_url ? extractYouTubeId(youtube_video_url) : null;
 
@@ -690,6 +719,78 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                         );
                       })}
                     </div>
+                  </div>
+                )}
+
+                {/* ── Group 6: Land / Plot ── */}
+                {hasLandPlot && (
+                  <div className="border-t border-[#F0F0F0] pt-5">
+                    <p className="text-xs font-semibold text-[#888888] uppercase tracking-widest mb-3">
+                      Land / Plot
+                    </p>
+
+                    {/* Numeric fields grid */}
+                    {(property.land_area_sqm || property.building_coefficient || property.coverage_ratio || property.frontage_m || property.remaining_buildable_area_sqm) && (
+                      <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm mb-3">
+                        {property.land_area_sqm != null && (
+                          <Fragment>
+                            <span className="text-[#888888]">Land Area</span>
+                            <span className="text-[#1E1E1E] font-medium">{property.land_area_sqm} m²</span>
+                          </Fragment>
+                        )}
+                        {property.building_coefficient != null && (
+                          <Fragment>
+                            <span className="text-[#888888]">Building Coefficient</span>
+                            <span className="text-[#1E1E1E] font-medium">{property.building_coefficient}</span>
+                          </Fragment>
+                        )}
+                        {property.coverage_ratio != null && (
+                          <Fragment>
+                            <span className="text-[#888888]">Coverage Ratio</span>
+                            <span className="text-[#1E1E1E] font-medium">{property.coverage_ratio}</span>
+                          </Fragment>
+                        )}
+                        {property.frontage_m != null && (
+                          <Fragment>
+                            <span className="text-[#888888]">Frontage</span>
+                            <span className="text-[#1E1E1E] font-medium">{property.frontage_m} m</span>
+                          </Fragment>
+                        )}
+                        {property.remaining_buildable_area_sqm != null && (
+                          <Fragment>
+                            <span className="text-[#888888]">Remaining Buildable Area</span>
+                            <span className="text-[#1E1E1E] font-medium">{property.remaining_buildable_area_sqm} m²</span>
+                          </Fragment>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Town Planning Status + Land Slope — inline chips */}
+                    {(property.town_planning_status || property.land_slope) && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {property.town_planning_status && (
+                          <span className="bg-[#F4F4F4] text-[#404040] text-xs px-3 py-1.5 rounded-full">
+                            {TOWN_PLANNING_LABEL[property.town_planning_status] ?? property.town_planning_status}
+                          </span>
+                        )}
+                        {property.land_slope && (
+                          <span className="bg-[#F4F4F4] text-[#404040] text-xs px-3 py-1.5 rounded-full">
+                            {LAND_SLOPE_LABEL[property.land_slope] ?? property.land_slope}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Land Features — multi-value chips */}
+                    {property.land_features && property.land_features.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {property.land_features.map((feat) => (
+                          <span key={feat} className="bg-[#F4F4F4] text-[#404040] text-xs px-3 py-1.5 rounded-full">
+                            {LAND_FEATURE_LABEL[feat] ?? feat}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 

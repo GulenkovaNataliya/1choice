@@ -13,7 +13,8 @@ type MobileAccKey = Row1Key | Row2Key | "goldenVisa" | null;
 
 export type FilterState = {
   transaction: string;
-  propertyTypes: string[];
+  propertyCategories: string[];  // category-level: Residential, Commercial, Land, Hotel
+  propertyTypes: string[];       // subtype-level: Apartment, Maisonette, House, Villa
   location: string;
   priceMin: string;
   priceMax: string;
@@ -31,14 +32,15 @@ export type FilterState = {
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 const INITIAL: FilterState = {
-  transaction: "", propertyTypes: [], location: "",
+  transaction: "", propertyCategories: [], propertyTypes: [], location: "",
   priceMin: "", priceMax: "", bedrooms: "", goldenVisa: false,
   sizeMin: "", sizeMax: "", bathrooms: "",
   conditions: [], features: [], yearMin: "", yearMax: "",
 };
 
-const TRANSACTIONS   = ["Buy", "Rent", "Antiparochi"];
-const PROPERTY_TYPES = ["Apartment", "Maisonette", "House", "Villa", "Land", "Commercial", "Investment"];
+const TRANSACTIONS        = ["Buy", "Rent", "Antiparochi"];
+const PROPERTY_CATEGORIES = ["Residential", "Commercial", "Land", "Hotel"];
+const PROPERTY_TYPES      = ["Apartment", "Maisonette", "House", "Villa"];
 const BEDROOMS_OPTS  = ["1+", "2+", "3+", "4+", "5+"];
 const BATHROOMS_OPTS = ["1+", "2+", "3+", "4+"];
 const CONDITIONS     = ["Renovated", "Needs Renovation", "Under Construction"];
@@ -57,10 +59,12 @@ function getPillLabel(key: PanelKey, f: FilterState, areas: Area[]): string {
   if (!key) return "";
   switch (key) {
     case "transaction": return f.transaction || "Transaction";
-    case "type":
-      if (!f.propertyTypes.length) return "Property Type";
-      if (f.propertyTypes.length === 1) return f.propertyTypes[0];
-      return `Type (${f.propertyTypes.length})`;
+    case "type": {
+      const all = [...f.propertyCategories, ...f.propertyTypes];
+      if (!all.length) return "Property Type";
+      if (all.length === 1) return all[0];
+      return `Type (${all.length})`;
+    }
     case "location": {
       if (!f.location) return "Location";
       return areas.find(a => a.slug === f.location)?.name ?? f.location;
@@ -92,7 +96,7 @@ function toggleMulti(arr: string[], v: string): string[] {
 function hasValue(key: PanelKey, f: FilterState): boolean {
   switch (key) {
     case "transaction": return f.transaction !== "";
-    case "type":        return f.propertyTypes.length > 0;
+    case "type":        return f.propertyTypes.length > 0 || f.propertyCategories.length > 0;
     case "location":    return f.location !== "";
     case "price":       return f.priceMin !== "" || f.priceMax !== "";
     case "bedrooms":    return f.bedrooms !== "";
@@ -124,7 +128,9 @@ const CONDITION_SLUG: Record<string, string> = {
 function buildParams(f: FilterState): URLSearchParams {
   const p = new URLSearchParams();
 
-  if (f.transaction)        p.set("transaction", f.transaction.toLowerCase());
+  if (f.transaction)             p.set("transaction", f.transaction.toLowerCase());
+  if (f.propertyCategories.length)
+    p.set("category", f.propertyCategories.map(c => c.toLowerCase()).join(","));
   if (f.propertyTypes.length)
     p.set("type", f.propertyTypes.map(t => t.toLowerCase()).join(","));
   if (f.location)
@@ -209,7 +215,7 @@ const PANEL_STYLE: React.CSSProperties = {
   borderRadius: 12,
   padding: "16px 20px",
   marginTop: 8,
-  height: 120,
+  minHeight: 120,
   overflowY: "auto",
 };
 
@@ -220,7 +226,11 @@ function InlinePanel({ openPanel, filter, setFilter, onClose, areas }: {
   onClose: () => void;
   areas: Area[];
 }) {
-  const areaGroups = Array.from(new Set(areas.map(a => a.group_name)));
+  const [locationSearch, setLocationSearch] = useState("");
+  const filteredAreas = locationSearch
+    ? areas.filter(a => a.name.toLowerCase().includes(locationSearch.toLowerCase()))
+    : areas;
+  const visibleGroups = Array.from(new Set(filteredAreas.map(a => a.group_name)));
   if (!openPanel) return null;
   return (
     <div style={PANEL_STYLE}>
@@ -236,18 +246,39 @@ function InlinePanel({ openPanel, filter, setFilter, onClose, areas }: {
         </div>
       )}
       {openPanel === "type" && (
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {PROPERTY_TYPES.map(opt => (
-            <button key={opt} type="button"
-              className={`chip${filter.propertyTypes.includes(opt) ? " chip-on" : ""}`}
-              onClick={() => setFilter(f => ({ ...f, propertyTypes: toggleMulti(f.propertyTypes, opt) }))}>
-              {opt}
-            </button>
-          ))}
+        <div>
+          {/* Row 1 — Category level */}
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+            {PROPERTY_CATEGORIES.map(opt => (
+              <button key={opt} type="button"
+                className={`chip${filter.propertyCategories.includes(opt) ? " chip-on" : ""}`}
+                onClick={() => setFilter(f => ({ ...f, propertyCategories: toggleMulti(f.propertyCategories, opt) }))}>
+                {opt}
+              </button>
+            ))}
+          </div>
+          {/* Row 2 — Subtype level */}
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {PROPERTY_TYPES.map(opt => (
+              <button key={opt} type="button"
+                className={`chip${filter.propertyTypes.includes(opt) ? " chip-on" : ""}`}
+                onClick={() => setFilter(f => ({ ...f, propertyTypes: toggleMulti(f.propertyTypes, opt) }))}>
+                {opt}
+              </button>
+            ))}
+          </div>
         </div>
       )}
       {openPanel === "location" && (
         <div>
+          <input
+            type="text"
+            placeholder="Search area"
+            value={locationSearch}
+            onChange={e => setLocationSearch(e.target.value)}
+            className="fp-inp"
+            style={{ ...INP, width: "100%", marginBottom: 10, boxSizing: "border-box" }}
+          />
           <div style={{ marginBottom: 10 }}>
             <button type="button"
               className={`chip${!filter.location ? " chip-on" : ""}`}
@@ -255,7 +286,7 @@ function InlinePanel({ openPanel, filter, setFilter, onClose, areas }: {
               Any
             </button>
           </div>
-          {areaGroups.map(group => (
+          {visibleGroups.map(group => (
             <div key={group} style={{ marginBottom: 10 }}>
               <div style={{
                 fontSize: 10, fontWeight: 700, color: "#1E1E1E",
@@ -264,7 +295,7 @@ function InlinePanel({ openPanel, filter, setFilter, onClose, areas }: {
                 {group}
               </div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {areas.filter(a => a.group_name === group).map(area => (
+                {filteredAreas.filter(a => a.group_name === group).map(area => (
                   <button key={area.slug} type="button"
                     className={`chip${filter.location === area.slug ? " chip-on" : ""}`}
                     onClick={() => { setFilter(f => ({ ...f, location: area.slug })); onClose(); }}>
@@ -390,7 +421,11 @@ function MobileDrawer({ open, filter, setFilter, onClose, onApply, onClear, area
   areas: Area[];
 }) {
   const [acc, setAcc] = useState<MobileAccKey>(null);
-  const areaGroups = Array.from(new Set(areas.map(a => a.group_name)));
+  const [locationSearch, setLocationSearch] = useState("");
+  const filteredAreas = locationSearch
+    ? areas.filter(a => a.name.toLowerCase().includes(locationSearch.toLowerCase()))
+    : areas;
+  const visibleGroups = Array.from(new Set(filteredAreas.map(a => a.group_name)));
 
   useEffect(() => {
     if (!open) return;
@@ -434,24 +469,45 @@ function MobileDrawer({ open, filter, setFilter, onClose, onApply, onClear, area
           </MobAccordion>
 
           <MobAccordion title="Property Type" id="type" open={acc === "type"} onToggle={setAcc}>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {PROPERTY_TYPES.map(opt => (
-                <button key={opt} type="button"
-                  className={`chip${filter.propertyTypes.includes(opt) ? " chip-on" : ""}`}
-                  onClick={() => setFilter(f => ({ ...f, propertyTypes: toggleMulti(f.propertyTypes, opt) }))}>
-                  {opt}
-                </button>
-              ))}
+            <div>
+              {/* Row 1 — Category level */}
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+                {PROPERTY_CATEGORIES.map(opt => (
+                  <button key={opt} type="button"
+                    className={`chip${filter.propertyCategories.includes(opt) ? " chip-on" : ""}`}
+                    onClick={() => setFilter(f => ({ ...f, propertyCategories: toggleMulti(f.propertyCategories, opt) }))}>
+                    {opt}
+                  </button>
+                ))}
+              </div>
+              {/* Row 2 — Subtype level */}
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {PROPERTY_TYPES.map(opt => (
+                  <button key={opt} type="button"
+                    className={`chip${filter.propertyTypes.includes(opt) ? " chip-on" : ""}`}
+                    onClick={() => setFilter(f => ({ ...f, propertyTypes: toggleMulti(f.propertyTypes, opt) }))}>
+                    {opt}
+                  </button>
+                ))}
+              </div>
             </div>
           </MobAccordion>
 
           <MobAccordion title="Location" id="location" open={acc === "location"} onToggle={setAcc}>
             <div>
+              <input
+                type="text"
+                placeholder="Search area"
+                value={locationSearch}
+                onChange={e => setLocationSearch(e.target.value)}
+                className="fp-inp"
+                style={{ ...INP, width: "100%", marginBottom: 10, boxSizing: "border-box" }}
+              />
               <div style={{ marginBottom: 8 }}>
                 <button type="button" className={`chip${!filter.location ? " chip-on" : ""}`}
                   onClick={() => setFilter(f => ({ ...f, location: "" }))}>Any</button>
               </div>
-              {areaGroups.map(group => (
+              {visibleGroups.map(group => (
                 <div key={group} style={{ marginBottom: 10 }}>
                   <div style={{
                     fontSize: 10, fontWeight: 700, color: "#AAAAAA",
@@ -460,7 +516,7 @@ function MobileDrawer({ open, filter, setFilter, onClose, onApply, onClear, area
                     {group}
                   </div>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {areas.filter(a => a.group_name === group).map(area => (
+                    {filteredAreas.filter(a => a.group_name === group).map(area => (
                       <button key={area.slug} type="button"
                         className={`chip${filter.location === area.slug ? " chip-on" : ""}`}
                         onClick={() => setFilter(f => ({ ...f, location: area.slug }))}>

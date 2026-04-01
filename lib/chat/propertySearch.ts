@@ -67,6 +67,12 @@ export type SearchCriteria = {
   internal_staircase:  boolean;
   jacuzzi:             boolean;
   barbeque:            boolean;
+  // ── 290: Land / Plot ───────────────────────────────────────────────────────
+  townPlanningStatus:  string | null;
+  landFeatures:        string[];
+  landSlope:           string | null;
+  // ── 296: Electricity ───────────────────────────────────────────────────────
+  electricity:         string[];
 };
 
 // ── Dynamic location map ───────────────────────────────────────────────────────
@@ -464,6 +470,111 @@ function extractGoldenVisa(message: string): boolean {
   return /golden\s*visa|золотой?\s+виз[аы]|χρυσή\s+βίζα|ויזת\s+(?:ה)?זהב|(?:ال)?تأشيرة\s+(?:ال)?ذهبية/i.test(message);
 }
 
+// ── Land / Plot extractors ────────────────────────────────────────────────────
+// town_planning_status: within_city_plan | outside_city_plan | within_settlement
+// land_slope:           flat | sloped | amphitheatrical
+// land_features:        fenced | borehole | existing_building | buildable | even_and_buildable | building_permit
+
+function extractTownPlanningStatus(message: string): string | null {
+  // within_city_plan
+  // EN: within/in city plan | EL: εντός σχεδίου
+  // RU: в черте/плане/пределах/границах города | HE: בתוך תוכנית/התוכנית/בתחום העיר | AR: داخل/ضمن المخطط
+  if (
+    /within\s+city\s+plan|in\s+city\s+plan|εντός\s+σχεδίου|в\s+(?:черте|плане|пределах|границах)\s+города|в\s+городской\s+черте|бתוך\s+(?:תוכנית\s+עיר|התוכנית)|בתחום\s+העיר|داخل\s+(?:المخطط|مخطط\s+المدينة)|ضمن\s+المخطط/i
+    .test(message)
+  ) return "within_city_plan";
+  // outside_city_plan
+  // EN: outside city plan | EL: εκτός σχεδίου
+  // RU: вне плана/городской черты / за чертой города | HE: מחוץ לתוכנית/תכנית העיר | AR: خارج المخطط
+  if (
+    /outside\s+city\s+plan|out(?:side)?\s+of\s+city\s+plan|εκτός\s+σχεδίου|вне\s+(?:плана|городской\s+черты)|за\s+чертой\s+города|מחוץ\s+ל(?:תוכנית|תכנית\s+העיר)|خارج\s+(?:المخطط|مخطط\s+المدينة)/i
+    .test(message)
+  ) return "outside_city_plan";
+  // within_settlement
+  // EN: within/in settlement | EL: εντός οικισμού
+  // RU: в поселении/границах поселения | HE: בתוך יישוב/בתחום היישוב | AR: داخل المستوطنة/ضمن التجمع/النطاق السكني
+  if (
+    /within\s+settlement|in\s+settlement|εντός\s+οικισμού|в\s+(?:поселении|границах\s+поселения|пределах\s+поселения)|בתוך\s+יישוב|בתחום\s+היישוב|داخل\s+(?:المستوطنة|النطاق\s+السكني)|ضمن\s+التجمع/i
+    .test(message)
+  ) return "within_settlement";
+  return null;
+}
+
+function extractLandSlope(message: string): string | null {
+  // flat
+  // EN: flat land/plot/terrain | EL: επίπεδο
+  // RU: ровный/плоский | HE: שטוח | AR: مسطح
+  if (
+    /\bflat\b.*(?:land|plot|terrain)|\bflat\s+(?:land|plot|terrain)|επίπεδο|ровн(?:ый|ый\s+участок)|плоск(?:ий|ой)|שטוח|مسطح/i
+    .test(message)
+  ) return "flat";
+  // amphitheatrical — check before sloped (more specific)
+  // EN: amphitheatrical/c | EL: αμφιθεατρικ
+  // RU: амфитеатральн/амфитеатром | HE: אמפיתיאטרלי/אמפיתיאטרון | AR: مدرج/أمفيثياتري
+  if (
+    /\bamphitheatri(?:cal|c)\b|αμφιθεατρικ|амфитеатрал|амфитеатром|אמפיתיאטרל|אמפיתיאטרון|مدرج|أمفيثياتري/i
+    .test(message)
+  ) return "amphitheatrical";
+  // sloped
+  // EN: sloped/sloping | EL: κεκλιμένο
+  // RU: наклонный/с уклоном | HE: משופע/בשיפוע | AR: منحدر/بميل
+  if (
+    /\bsloped?\b|\bsloping\b|κεκλιμένο|наклонн|с\s+уклоном|משופע|בשיפוע|منحدر|بميل/i
+    .test(message)
+  ) return "sloped";
+  return null;
+}
+
+function extractLandFeatures(message: string): string[] {
+  const features: string[] = [];
+  // fenced — EN + EL + RU + HE + AR
+  if (/\bfenced\b|\bwith\s+fence|περιφραγμένο|огорожен|с\s+забором|מגודר|مسور/i.test(message))
+    features.push("fenced");
+  // borehole — EN + EL + RU + HE + AR
+  if (/\bborehole\b|\bwater\s+well|γεώτρηση|скважин|со\s+скважиной|קידוח|באר\s+קידוח|بئر|حفر\s+بئر/i.test(message))
+    features.push("borehole");
+  // existing_building — EN + RU + HE + AR
+  if (/\bexisting\s+building|\bexisting\s+structure|существующ(?:ее\s+здание|ая\s+постройка)|есть\s+строение|מבנה\s+קיים|בניין\s+קיים|مبنى\s+قائم|بناء\s+قائم/i.test(message))
+    features.push("existing_building");
+  // even_and_buildable must be before buildable — EN + EL + RU + HE + AR
+  if (
+    /\beven\s+and\s+buildable|άρτιο\s+και\s+οικοδομήσιμο|ровный\s+и\s+(?:под\s+застройку|застраиваемый)|מישורי\s+וניתן\s+לבנייה|שטוח\s+וניתן\s+לבנייה|مستوٍ\s+وقابل\s+للبناء|مسطح\s+وقابل\s+للبناء/i
+    .test(message)
+  ) {
+    features.push("even_and_buildable");
+  } else if (
+    /\bbuildable\b|\bcan\s+build|οικοδομήσιμο|под\s+застройку|застраиваем|можно\s+строить|ניתן\s+לבנייה|מגרש\s+לבנייה|قابل\s+للبناء|للبناء/i
+    .test(message)
+  ) {
+    features.push("buildable");
+  }
+  // building_permit — EN + EL + RU + HE + AR
+  if (/\bbuilding\s+permit|άδεια\s+οικοδομής|разрешение\s+на\s+строительство|היתר\s+בנייה|עם\s+היתר\s+בנייה|رخصة\s+بناء|لديه\s+رخصة\s+بناء/i.test(message))
+    features.push("building_permit");
+  return features;
+}
+
+// ── Electricity extraction ────────────────────────────────────────────────────
+// DB values: night_tariff | single_phase | three_phase | industrial_power
+// EN + RU + EL + HE + AR
+
+function extractElectricity(message: string): string[] {
+  const values: string[] = [];
+  // night_tariff
+  if (/\bnight\s+tariff\b|\bnight\s+rate\b|\boff[-\s]?peak\s+elect|ночной\s+тариф|ночное\s+электрич|ночной\s+ток|νυχτερινό\s+(?:ρεύμα|τιμολόγιο)|תעריף\s+לילה|חשמל\s+לילי|تعرفة\s+ليلية|كهرباء\s+ليلية/i.test(message))
+    values.push("night_tariff");
+  // single_phase
+  if (/\bsingle[-\s]phase\b|однофазн|одна\s+фаза|μονοφασικ|חד\s+פאזי|أحادي\s+الطور/i.test(message))
+    values.push("single_phase");
+  // three_phase
+  if (/\bthree[-\s]phase\b|\b3[-\s]phase\b|тр[её]хфазн|три\s+фазы|τριφασικ|תלת\s+פאזי|ثلاثي\s+الطور/i.test(message))
+    values.push("three_phase");
+  // industrial_power
+  if (/\bindustrial\s+(?:power|electricity)\b|промышленн(?:ый\s+ток|ое\s+электрич)|βιομηχανικό\s+ρεύμα|חשמל\s+תעשייתי|كهرباء\s+صناعية/i.test(message))
+    values.push("industrial_power");
+  return values;
+}
+
 // ── Parse all criteria ────────────────────────────────────────────────────────
 
 export async function parseCriteria(message: string): Promise<SearchCriteria> {
@@ -499,6 +610,10 @@ export async function parseCriteria(message: string): Promise<SearchCriteria> {
     internal_staircase:   extractInternalStaircase(message),
     jacuzzi:              extractJacuzzi(message),
     barbeque:             extractBarbeque(message),
+    townPlanningStatus:   extractTownPlanningStatus(message),
+    landFeatures:         extractLandFeatures(message),
+    landSlope:            extractLandSlope(message),
+    electricity:          extractElectricity(message),
   };
 }
 
@@ -535,7 +650,11 @@ export function hasCriteria(criteria: SearchCriteria): boolean {
     criteria.internal_staircase   ||
     criteria.jacuzzi              ||
     criteria.barbeque             ||
-    criteria.category
+    criteria.category             ||
+    criteria.townPlanningStatus   ||
+    criteria.landFeatures.length > 0 ||
+    criteria.landSlope            ||
+    criteria.electricity.length > 0
   );
 }
 
@@ -586,8 +705,10 @@ function buildQuery(
   if (criteria.goldenVisa)      q = q.eq("is_golden_visa",   true);
   if (criteria.minBedrooms)     q = q.gte("bedrooms",        criteria.minBedrooms);
   if (criteria.subtype)         q = q.ilike("subtype",       `%${criteria.subtype}%`);
-  if (criteria.minSize)         q = q.gte("size_sqm",        criteria.minSize);
-  if (criteria.maxSize)         q = q.lte("size_sqm",        criteria.maxSize);
+  // For land category, size refers to land_area_sqm; otherwise to size_sqm.
+  const sizeField = criteria.category === "land" ? "land_area_sqm" : "size_sqm";
+  if (criteria.minSize)         q = q.gte(sizeField,         criteria.minSize);
+  if (criteria.maxSize)         q = q.lte(sizeField,         criteria.maxSize);
   if (criteria.minBathrooms)    q = q.gte("bathrooms",       criteria.minBathrooms);
 
   // ── Secondary / feature filters (dropped in relaxed mode) ─────────────────
@@ -617,6 +738,16 @@ function buildQuery(
     if (criteria.cooling) {
       q = q.not("cooling_type", "is", null);
       q = q.neq("cooling_type", "none");
+    }
+    // Land / Plot secondary filters
+    if (criteria.townPlanningStatus) q = q.eq("town_planning_status", criteria.townPlanningStatus);
+    if (criteria.landSlope)          q = q.eq("land_slope", criteria.landSlope);
+    for (const feat of criteria.landFeatures) {
+      q = q.contains("land_features", [feat]);
+    }
+    // Electricity secondary filters
+    for (const val of criteria.electricity) {
+      q = q.contains("electricity", [val]);
     }
   }
 
@@ -669,7 +800,8 @@ export async function searchProperties(
     criteria.balcony || criteria.veranda || criteria.private_roof_terrace ||
     criteria.close_to_beaches || criteria.panoramic_view || criteria.mountain_view ||
     criteria.acropolis_view || criteria.loft ||
-    criteria.internal_staircase || criteria.jacuzzi || criteria.barbeque;
+    criteria.internal_staircase || criteria.jacuzzi || criteria.barbeque ||
+    criteria.townPlanningStatus || criteria.landFeatures.length > 0 || criteria.landSlope;
 
   if (!hasSecondary) {
     // No secondary criteria to drop — no point running a second query.

@@ -21,6 +21,7 @@ export type PropertyRow = {
   pool: boolean | null;
   elevator: boolean | null;
   transaction_type: string | null;
+  category: string | null;
   subtype: string | null;
   garden: boolean | null;
   balcony: boolean | null;
@@ -35,6 +36,15 @@ export type PropertyRow = {
   gallery_image_urls: string[] | null;
   custom_badge: string | null;
   custom_badge_color: string | null;
+  // Land / Plot
+  land_area_sqm: number | null;
+  building_coefficient: number | null;
+  coverage_ratio: number | null;
+  frontage_m: number | null;
+  remaining_buildable_area_sqm: number | null;
+  town_planning_status: string | null;
+  land_slope: string | null;
+  land_features: string[] | null;
 };
 
 type FetchArgs = {
@@ -47,7 +57,7 @@ export async function fetchProperties(args: FetchArgs = {}): Promise<PropertyRow
   let q = supabase
     .from("properties")
     .select(
-      "id,property_code,title,slug,price_eur,location,location_text,bedrooms,bathrooms,size_sqm,floor,year_built,featured,private_collection,is_golden_visa,publish_deals,sea_view,pool,elevator,transaction_type,created_at,cover_image_url,gallery_image_urls,custom_badge,custom_badge_color,balcony,veranda,private_roof_terrace,close_to_beaches,panoramic_view,parking"
+      "id,property_code,title,slug,price_eur,location,location_text,bedrooms,bathrooms,size_sqm,floor,year_built,featured,private_collection,is_golden_visa,publish_deals,sea_view,pool,elevator,transaction_type,category,created_at,cover_image_url,gallery_image_urls,custom_badge,custom_badge_color,balcony,veranda,private_roof_terrace,close_to_beaches,panoramic_view,parking,land_area_sqm,building_coefficient,coverage_ratio,frontage_m,remaining_buildable_area_sqm,town_planning_status,land_slope,land_features"
     )
     .order("featured", { ascending: false })
     .order("created_at", { ascending: false });

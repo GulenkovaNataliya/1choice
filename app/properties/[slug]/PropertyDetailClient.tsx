@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useEffect } from "react";
 import Link from "next/link";
 import { MapPin, Tag, Home, LayoutGrid } from "lucide-react";
 import PropertyGalleryClient from "@/components/Property/PropertyGalleryClient";
@@ -13,6 +13,7 @@ import {
   formatFeatureValue,
   type PropertyFeature,
 } from "@/lib/propertyFeatures";
+import { trackEvent } from "@/lib/analytics";
 import {
   TOWN_PLANNING_LABEL,
   LAND_SLOPE_LABEL,
@@ -405,6 +406,12 @@ function LocationBlock({
 // ── Main component ───────────────────────────────────────────────────────────
 
 export default function PropertyDetailClient({ property, coverUrl, locationProperties, locationPageUrl, similarProperties }: Props) {
+  useEffect(() => {
+    if (property?.id) {
+      trackEvent("property_view", { property_id: property.id });
+    }
+  }, [property?.id]);
+
   const {
     title, price_eur, location, location_text, property_code,
     is_golden_visa, publish_deals, featured,

@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
+import { Suspense } from "react";
 import "./globals.css";
 import { ChatPropertyProvider } from "@/components/chat/ChatPropertyContext";
 import ChatWidget from "@/components/chat/ChatWidget";
 import PublicHeader from "@/components/Layout/PublicHeader";
+import AnalyticsRouteTracker from "@/components/AnalyticsRouteTracker";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -50,6 +52,9 @@ export default function RootLayout({
             </Script>
           </>
         )}
+        <Suspense fallback={null}>
+          <AnalyticsRouteTracker />
+        </Suspense>
         <ChatPropertyProvider>
           <PublicHeader />
           {children}

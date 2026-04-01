@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { ReadonlyURLSearchParams } from "next/navigation";
@@ -8,6 +8,7 @@ import type { PropertyRow } from "@/lib/properties/fetchProperties";
 import PropertyCard from "@/components/Property/PropertyCard";
 import HorizontalFilter, { type FilterState } from "@/components/Home/HorizontalFilter";
 import type { Area } from "@/lib/areas";
+import { trackEvent } from "@/lib/analytics";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -366,6 +367,14 @@ export default function PropertiesClient({
 }) {
   const params = useSearchParams();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!params) return;
+    const filters = Object.fromEntries(params.entries());
+    if (Object.keys(filters).length === 0) return;
+    trackEvent("search_used", { filters: JSON.stringify(filters) });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.toString()]);
 
   const sort = (params.get("sort") ?? "curated") as SortKey;
   const chips = buildChips(params);

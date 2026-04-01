@@ -43,8 +43,16 @@ export default async function AdminDashboardPage() {
 
   return (
     <div>
-      <div className="mb-8">
+      <div className="mb-8 flex items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-[#1E1E1E]">Dashboard</h1>
+        <a
+          href="https://analytics.google.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm font-medium text-[#888888] border border-[#E8E8E8] rounded-lg px-4 py-2 hover:border-[#1E1E1E] hover:text-[#1E1E1E] transition-colors"
+        >
+          Open Analytics ↗
+        </a>
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">

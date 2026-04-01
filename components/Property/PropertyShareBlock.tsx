@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Copy, Check } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
 
 type Props = {
   url: string;
@@ -55,6 +56,7 @@ export default function PropertyShareBlock({ url, title }: Props) {
         target="_blank"
         rel="noopener noreferrer"
         className="text-xs text-[#555555] hover:text-[#1E1E1E] transition-colors"
+        onClick={() => trackEvent("whatsapp_click")}
       >
         WhatsApp
       </a>

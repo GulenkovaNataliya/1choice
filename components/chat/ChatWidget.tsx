@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { useChatProperty } from "./ChatPropertyContext";
 import { detectLang, getFormStrings } from "@/lib/chat/chatI18n";
+import { trackEvent } from "@/lib/analytics";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -637,6 +638,10 @@ export default function ChatWidget() {
 
     setSubmitting(false);
     setSubmitted(true);
+    trackEvent("lead_submit", {
+      source:      leadPayload.source,
+      property_id: leadPayload.property_id ?? undefined,
+    });
   }
 
   // Return null only when neither the launcher nor the modal should render.

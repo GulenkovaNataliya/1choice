@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { fetchSettings } from "@/lib/settings/fetchSettings";
+import PhoneLink from "@/components/PhoneLink";
 
 export const metadata: Metadata = {
   title: "Contact | 1Choice",
@@ -44,9 +45,7 @@ export default async function ContactPage() {
             {phone && (
               <li className="flex items-start gap-3">
                 <span className="text-[#3A2E4F] font-medium w-24 flex-shrink-0">Phone</span>
-                <a href={`tel:${phone.replace(/\s/g, "")}`} className="text-[#404040] hover:text-[#3A2E4F] transition">
-                  {phone}
-                </a>
+                <PhoneLink phone={phone} />
               </li>
             )}
             <li className="flex items-start gap-3">

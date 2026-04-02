@@ -114,8 +114,8 @@ export const PROPERTY_FEATURES: PropertyFeature[] = [
     label: "Bedrooms",
     icon: BedDouble,
     valueType: "number",
-    showOnCard: true,
-    showOnDetail: true,
+    showOnCard: false,
+    showOnDetail: false,
     group: "core",
   },
   {
@@ -123,8 +123,8 @@ export const PROPERTY_FEATURES: PropertyFeature[] = [
     label: "Bathrooms",
     icon: Bath,
     valueType: "number",
-    showOnCard: true,
-    showOnDetail: true,
+    showOnCard: false,
+    showOnDetail: false,
     group: "core",
   },
   {
@@ -230,7 +230,7 @@ export const PROPERTY_FEATURES: PropertyFeature[] = [
     icon: Sofa,
     valueType: "number",
     showOnCard: false,
-    showOnDetail: true,
+    showOnDetail: false,
     group: "layout",
   },
   {
@@ -239,7 +239,7 @@ export const PROPERTY_FEATURES: PropertyFeature[] = [
     icon: UtensilsCrossed,
     valueType: "number",
     showOnCard: false,
-    showOnDetail: true,
+    showOnDetail: false,
     group: "layout",
   },
   {
@@ -248,7 +248,7 @@ export const PROPERTY_FEATURES: PropertyFeature[] = [
     icon: Package,
     valueType: "number",
     showOnCard: false,
-    showOnDetail: true,
+    showOnDetail: false,
     group: "layout",
   },
   {
@@ -256,8 +256,8 @@ export const PROPERTY_FEATURES: PropertyFeature[] = [
     label: "Versatile Rooms",
     icon: DoorOpen,
     valueType: "number",
-    showOnCard: true,
-    showOnDetail: true,
+    showOnCard: false,
+    showOnDetail: false,
     group: "layout",
   },
   {
@@ -266,7 +266,7 @@ export const PROPERTY_FEATURES: PropertyFeature[] = [
     icon: DropletOff,
     valueType: "number",
     showOnCard: false,
-    showOnDetail: true,
+    showOnDetail: false,
     group: "layout",
   },
   {

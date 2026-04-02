@@ -946,8 +946,6 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
               {/* Quick facts */}
               <div className="flex flex-col gap-2 text-sm text-[#404040] border-b border-[#F0F0F0] pb-5">
                 {property.size_sqm    && <span>{property.size_sqm} m²</span>}
-                {property.bedrooms    && <span>{property.bedrooms} bedrooms</span>}
-                {property.bathrooms   && <span>{property.bathrooms} bathrooms</span>}
                 {property.floor       && <span>Floor {FLOOR_LABEL[property.floor] ?? property.floor}</span>}
                 <span>{areaLabel}</span>
                 {property.show_address && property.address

@@ -366,9 +366,6 @@ function buildPayload(form: FormState, resolveSlug = false) {
     // size_sqm / size derived from total_property_area_sqm — keeps AI, filters, cards, catalog working
     size_sqm: form.total_property_area_sqm ? Number(form.total_property_area_sqm) : null,
     size:     form.total_property_area_sqm ? Number(form.total_property_area_sqm) : null,
-    // Legacy flat columns — summed across all levels so existing queries/AI/catalog still work
-    bedrooms: form.levels.length > 0 ? sumLevels(form.levels, "bedrooms") : (form.bedrooms ? Number(form.bedrooms) : null),
-    bathrooms: form.levels.length > 0 ? sumLevels(form.levels, "bathrooms") : (form.bathrooms ? Number(form.bathrooms) : null),
     floor: form.floor || null,
     total_property_area_sqm: form.total_property_area_sqm ? Number(form.total_property_area_sqm) : null,
     total_building_floors: form.total_building_floors ? Number(form.total_building_floors) : null,
@@ -454,11 +451,6 @@ function buildPayload(form: FormState, resolveSlug = false) {
     blinds: form.blinds,
     electric_shutters: form.electric_shutters,
     flooring_type: form.flooring_type || null,
-    living_rooms: form.levels.length > 0 ? sumLevels(form.levels, "living_rooms") : (form.living_rooms ? Number(form.living_rooms) : null),
-    kitchens: form.levels.length > 0 ? sumLevels(form.levels, "kitchens") : (form.kitchens ? Number(form.kitchens) : null),
-    storage_rooms: form.levels.length > 0 ? sumLevels(form.levels, "storage_rooms") : (form.storage_rooms ? Number(form.storage_rooms) : null),
-    wc: form.levels.length > 0 ? sumLevels(form.levels, "wc") : (form.wc ? Number(form.wc) : null),
-    versatile_rooms: form.levels.length > 0 ? sumLevels(form.levels, "versatile_rooms") : null,
     furnished: form.furnished.trim() || null,
     custom_furnished: form.custom_furnished.trim() || null,
     summary: form.summary || null,

@@ -575,11 +575,8 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
             {description && (
               <div className="mt-4">
                 <div
-                  className={
-                    descriptionExpanded
-                      ? "whitespace-pre-line text-[15px] leading-7 text-[#404040]"
-                      : "text-[15px] leading-7 text-[#404040] line-clamp-6"
-                  }
+                  className="whitespace-pre-line text-[15px] leading-7 text-[#404040] overflow-hidden"
+                  style={{ maxHeight: descriptionExpanded ? "none" : "10.5rem" }}
                 >
                   {description}
                 </div>

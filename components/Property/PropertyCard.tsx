@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CARD_FEATURES, shouldRenderFeature, formatFeatureValue } from "@/lib/propertyFeatures";
+import { CARD_FEATURES, formatFeatureValue } from "@/lib/propertyFeatures";
 import { renderImageUrl } from "@/lib/storage/imageUrl";
 import FavoriteButton from "@/components/Property/FavoriteButton";
 import { getBadgeStyle } from "@/lib/badgeColors";

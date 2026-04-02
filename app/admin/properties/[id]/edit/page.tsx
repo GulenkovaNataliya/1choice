@@ -80,6 +80,7 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
         living_rooms: property.living_rooms != null ? String(property.living_rooms) : "",
         hall: "",
         storage_rooms: property.storage_rooms != null ? String(property.storage_rooms) : "",
+        versatile_rooms: "",
         // Prefill from global DB fields so legacy properties are not visually empty
         wardrobe_room:        (property as { wardrobe_room?: boolean | null }).wardrobe_room ?? false,
         balcony:              (property as { balcony?: boolean | null }).balcony ?? false,

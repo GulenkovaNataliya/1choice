@@ -134,6 +134,33 @@ export type PropertyData = {
   town_planning_status: string | null;
   land_slope: string | null;
   land_features: string[] | null;
+  // Multi-level
+  number_of_levels: number | null;
+  level_details: LevelDetail[] | null;
+};
+
+type LevelDetail = {
+  level_size_sqm: string;
+  is_maisonette: boolean;
+  bedrooms: string;
+  bathrooms: string;
+  wc: string;
+  kitchens: string;
+  living_rooms: string;
+  versatile_rooms: string;
+  hall: string;
+  storage_rooms: string;
+  wardrobe_room: boolean;
+  balcony: boolean;
+  veranda: boolean;
+  awnings: boolean;
+  private_roof_terrace: boolean;
+  loft: boolean;
+  internal_staircase: boolean;
+  internal_elevator: boolean;
+  fireplace: boolean;
+  jacuzzi: boolean;
+  home_cinema: boolean;
 };
 
 type SimilarProperty = {
@@ -809,6 +836,73 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
 
               </div>
             )}
+
+            {/* Level Details — shown only for multi-level properties */}
+            {Array.isArray(property.level_details) && property.level_details.length >= 2 && (() => {
+              const LEVEL_NUM_FIELDS: { key: keyof LevelDetail; label: string }[] = [
+                { key: "level_size_sqm",   label: "Size (sqm)" },
+                { key: "bedrooms",         label: "Bedrooms" },
+                { key: "bathrooms",        label: "Bathrooms" },
+                { key: "wc",              label: "WC" },
+                { key: "kitchens",        label: "Kitchens" },
+                { key: "living_rooms",    label: "Living Rooms" },
+                { key: "versatile_rooms", label: "Versatile Rooms" },
+                { key: "hall",            label: "Hall" },
+                { key: "storage_rooms",   label: "Storage Rooms" },
+              ];
+              const LEVEL_BOOL_FIELDS: { key: keyof LevelDetail; label: string }[] = [
+                { key: "is_maisonette",        label: "Maisonette" },
+                { key: "wardrobe_room",        label: "Wardrobe Room" },
+                { key: "balcony",              label: "Balcony" },
+                { key: "veranda",              label: "Veranda" },
+                { key: "awnings",              label: "Awnings" },
+                { key: "private_roof_terrace", label: "Private Roof Terrace" },
+                { key: "loft",                 label: "Loft" },
+                { key: "internal_staircase",   label: "Internal Staircase" },
+                { key: "internal_elevator",    label: "Internal Elevator" },
+                { key: "fireplace",            label: "Fireplace" },
+                { key: "jacuzzi",              label: "Jacuzzi" },
+                { key: "home_cinema",          label: "Home Cinema" },
+              ];
+              return (
+                <div>
+                  <h2 className="text-base font-semibold text-[#1E1E1E] mb-4">Level Details</h2>
+                  <div className="flex flex-col gap-6">
+                    {property.level_details!.map((lvl, i) => {
+                      const numRows = LEVEL_NUM_FIELDS.filter(f => Number(lvl[f.key]) > 0);
+                      const boolChips = LEVEL_BOOL_FIELDS.filter(f => lvl[f.key] === true);
+                      if (numRows.length === 0 && boolChips.length === 0) return null;
+                      return (
+                        <div key={i} className="border border-[#E8E8E8] rounded-xl p-5">
+                          <p className="text-xs font-semibold text-[#888888] uppercase tracking-widest mb-4">
+                            Level {i + 1}
+                          </p>
+                          {numRows.length > 0 && (
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm mb-4">
+                              {numRows.map(f => (
+                                <Fragment key={String(f.key)}>
+                                  <span className="text-[#888888]">{f.label}</span>
+                                  <span className="text-[#1E1E1E] font-medium">{lvl[f.key]}</span>
+                                </Fragment>
+                              ))}
+                            </div>
+                          )}
+                          {boolChips.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {boolChips.map(f => (
+                                <span key={String(f.key)} className="bg-[#F4F4F4] text-[#404040] text-xs px-3 py-1.5 rounded-full">
+                                  {f.label}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Media block — YouTube */}
             {youtubeId && (

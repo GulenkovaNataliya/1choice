@@ -21,7 +21,7 @@ function titleCase(s: string) {
 
 function SpecPill({ value, label }: { value: string; label: string }) {
   return (
-    <div className="flex flex-col items-center bg-[#F4F4F4] rounded-xl px-5 py-3 min-w-[80px]">
+    <div className="flex flex-col items-center bg-[#F4F4F4] rounded-xl px-5 py-3 min-w-20">
       <span className="text-lg font-bold text-[#1E1E1E]">{value}</span>
       <span className="text-xs text-[#888888] uppercase tracking-wide mt-0.5">{label}</span>
     </div>

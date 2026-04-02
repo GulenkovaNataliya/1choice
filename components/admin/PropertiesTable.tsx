@@ -30,14 +30,6 @@ export type AdminProperty = {
 
 // ── Shared UI ─────────────────────────────────────────────────────────────────
 
-function Badge({ active }: { active: boolean | null }) {
-  if (!active) return <span className="text-[#AAAAAA]">—</span>;
-  return (
-    <span className="inline-block px-2 py-0.5 text-xs font-semibold bg-[#1E1E1E] text-white rounded">
-      Yes
-    </span>
-  );
-}
 
 function ActionButton({
   onClick,
@@ -257,7 +249,7 @@ function PropertyRow({
         />
       </td>
       <td className="px-4 py-3 text-[#1E1E1E] font-mono text-xs">{property.property_code ?? "—"}</td>
-      <td className="px-4 py-3 text-[#1E1E1E] font-medium max-w-[220px] truncate">{property.title}</td>
+      <td className="px-4 py-3 text-[#1E1E1E] font-medium max-w-55 truncate">{property.title}</td>
       <td className="px-4 py-3">
         {property.status
           ? <span className="capitalize text-[#555555]">{property.status}</span>

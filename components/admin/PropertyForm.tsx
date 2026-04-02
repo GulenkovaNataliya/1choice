@@ -23,6 +23,7 @@ export type LevelDetail = {
   wc: string;
   kitchens: string;
   living_rooms: string;
+  versatile_rooms: string;
   hall: string;
   storage_rooms: string;
   wardrobe_room: boolean;
@@ -46,6 +47,7 @@ const EMPTY_LEVEL: LevelDetail = {
   wc: "",
   kitchens: "",
   living_rooms: "",
+  versatile_rooms: "",
   hall: "",
   storage_rooms: "",
   wardrobe_room: false,
@@ -1566,6 +1568,11 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
                 <input type="number" value={level.living_rooms}
                   onChange={(e) => setLevel(idx, "living_rooms", e.target.value)}
                   className={inputCls} placeholder="1" min={0} />
+              </Field>
+              <Field label="Versatile Rooms">
+                <input type="number" value={level.versatile_rooms}
+                  onChange={(e) => setLevel(idx, "versatile_rooms", e.target.value)}
+                  className={inputCls} placeholder="0" min={0} />
               </Field>
               <Field label="Hall">
                 <input type="number" value={level.hall}

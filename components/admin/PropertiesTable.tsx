@@ -213,7 +213,7 @@ function PropertyRow({
 
     const { data: inserted, error: insertError } = await supabase
       .from("properties")
-      .insert({ ...rest, property_code: newCode, slug: null, status: "draft",
+      .insert({ ...rest, property_code: newCode, slug: newCode, status: "draft",
         publish_1choice: false, publish_deals: false, private_collection: false,
         featured: false, is_golden_visa: false })
       .select("id").single();

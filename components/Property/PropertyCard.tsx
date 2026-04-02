@@ -48,6 +48,7 @@ type Props = {
 // ── UI helpers ─────────────────────────────────────────────────────────────────
 
 function Badge({ label }: { label: string }) {
+  const isGoldenVisa = label === "Golden Visa";
   return (
     <span
       style={{
@@ -55,12 +56,13 @@ function Badge({ label }: { label: string }) {
         alignItems: "center",
         height: 22,
         padding: "0 10px",
-        background: "#1E1E1E",
+        background: isGoldenVisa ? "#C9972A" : "#1E1E1E",
         borderRadius: 12,
         fontSize: 11,
-        fontWeight: 500,
-        color: "#F4F4F4",
+        fontWeight: 600,
+        color: isGoldenVisa ? "#FFFDF0" : "#F4F4F4",
         whiteSpace: "nowrap",
+        ...(isGoldenVisa ? { border: "1px solid #B8860B" } : {}),
       }}
     >
       {label}

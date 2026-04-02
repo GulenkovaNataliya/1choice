@@ -53,7 +53,7 @@ function PublicHeaderInner() {
           <img
             src="/logo/logo-main.png"
             alt="1Choice"
-            style={{ height: 28, width: "auto" }}
+            className="h-10 sm:h-14 w-auto"
           />
         </Link>
 

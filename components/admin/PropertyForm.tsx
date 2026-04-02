@@ -1071,6 +1071,35 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
         </div>
       )}
 
+      {/* ── Publishing ────────────────────────────────────────────────────── */}
+      <Section title="Publishing">
+        <div className="flex flex-col gap-3 mb-2">
+          <Checkbox
+            label="Publish on 1Choice"
+            checked={form.publish_1choice}
+            onChange={(v) => set("publish_1choice", v)}
+            hint="Listing appears in the public catalogue when status is Published"
+          />
+          <Checkbox
+            label="Publish on 1ChoiceDeals"
+            checked={form.publish_deals}
+            onChange={(v) => set("publish_deals", v)}
+            hint="Shown in the Deals section with special visibility and export access"
+          />
+        </div>
+        <Field label="Status">
+          <select
+            value={form.status}
+            onChange={(e) => set("status", e.target.value as FormState["status"])}
+            className={inputCls}
+          >
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+            <option value="archived">Archived</option>
+          </select>
+        </Field>
+      </Section>
+
       {/* ── Main Block ─────────────────────────────────────────────────────── */}
       <Section title="Main Block">
         <Field label="Title">
@@ -2145,35 +2174,6 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
             </div>
           </Field>
         )}
-      </Section>
-
-      {/* ── Publishing ────────────────────────────────────────────────────── */}
-      <Section title="Publishing">
-        <div className="flex flex-col gap-3 mb-2">
-          <Checkbox
-            label="Publish on 1Choice"
-            checked={form.publish_1choice}
-            onChange={(v) => set("publish_1choice", v)}
-            hint="Listing appears in the public catalogue when status is Published"
-          />
-          <Checkbox
-            label="Publish on 1ChoiceDeals"
-            checked={form.publish_deals}
-            onChange={(v) => set("publish_deals", v)}
-            hint="Shown in the Deals section with special visibility and export access"
-          />
-        </div>
-        <Field label="Status">
-          <select
-            value={form.status}
-            onChange={(e) => set("status", e.target.value as FormState["status"])}
-            className={inputCls}
-          >
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-            <option value="archived">Archived</option>
-          </select>
-        </Field>
       </Section>
 
       {/* ── Additional Information ────────────────────────────────────────── */}

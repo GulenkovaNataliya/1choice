@@ -578,19 +578,21 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                   className={
                     descriptionExpanded
                       ? "whitespace-pre-line text-[15px] leading-7 text-[#404040]"
-                      : "whitespace-pre-line text-[15px] leading-7 text-[#404040] line-clamp-6"
+                      : "text-[15px] leading-7 text-[#404040] line-clamp-6"
                   }
                 >
                   {description}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setDescriptionExpanded((v) => !v)}
-                  className="mt-3 text-sm font-medium text-[#3A2E4F] hover:opacity-80 transition-opacity"
-                >
-                  {descriptionExpanded ? "Show less" : "Show more"}
-                </button>
+                {description.length > 350 && (
+                  <button
+                    type="button"
+                    onClick={() => setDescriptionExpanded((v) => !v)}
+                    className="mt-3 text-sm font-medium text-[#3A2E4F] hover:opacity-80 transition-opacity"
+                  >
+                    {descriptionExpanded ? "Show less" : "Show more"}
+                  </button>
+                )}
               </div>
             )}
 

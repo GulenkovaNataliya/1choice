@@ -231,7 +231,7 @@ export async function POST(request: NextRequest) {
       code:    error.code,
       message: error.message?.slice(0, 120),
     }));
-    return NextResponse.json({ error: `DB error: ${error.code} — ${error.message?.slice(0, 200)}` }, { status: 500 });
+    return NextResponse.json({ error: "Failed to save lead" }, { status: 500 });
   }
 
   // ── Notifications — run after response is returned ────────────────────────

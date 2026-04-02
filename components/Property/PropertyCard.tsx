@@ -31,6 +31,7 @@ type CardProperty = {
   elevator?: boolean | null;
   custom_badge?: string | null;
   custom_badge_color?: string | null;
+  versatile_rooms?: number | null;
 };
 
 const TRANSACTION_LABELS: Record<string, string> = {
@@ -107,7 +108,12 @@ export default function PropertyCard({ property, testId }: Props) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       formatted: formatFeatureValue(f, (property as any)[f.field]),
     }))
-    .filter(({ formatted }) => formatted !== null);
+    .filter(({ feature, formatted }) => {
+      if (formatted === null) return false;
+      // versatile_rooms: show only when > 0
+      if (feature.field === "versatile_rooms") return Number(formatted) > 0;
+      return true;
+    });
 
   return (
     <Link

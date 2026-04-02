@@ -72,6 +72,7 @@ export type PropertyData = {
   living_rooms: number | null;
   kitchens: number | null;
   storage_rooms: number | null;
+  versatile_rooms: number | null;
   wc: number | null;
   furnished: string | null;
   custom_furnished: string | null;

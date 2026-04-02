@@ -243,6 +243,15 @@ export const PROPERTY_FEATURES: PropertyFeature[] = [
     group: "layout",
   },
   {
+    field: "versatile_rooms",
+    label: "Versatile Rooms",
+    icon: DoorOpen,
+    valueType: "number",
+    showOnCard: true,
+    showOnDetail: true,
+    group: "layout",
+  },
+  {
     field: "wc",
     label: "WC",
     icon: DropletOff,

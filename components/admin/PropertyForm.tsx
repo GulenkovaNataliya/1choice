@@ -332,7 +332,7 @@ function someLevelTrue(
  */
 function sumLevels(
   levels: LevelDetail[],
-  key: keyof Pick<LevelDetail, "bedrooms" | "bathrooms" | "wc" | "kitchens" | "living_rooms" | "storage_rooms">
+  key: keyof Pick<LevelDetail, "bedrooms" | "bathrooms" | "wc" | "kitchens" | "living_rooms" | "storage_rooms" | "versatile_rooms">
 ): number | null {
   let total = 0;
   let hasValue = false;
@@ -458,6 +458,7 @@ function buildPayload(form: FormState, resolveSlug = false) {
     kitchens: form.levels.length > 0 ? sumLevels(form.levels, "kitchens") : (form.kitchens ? Number(form.kitchens) : null),
     storage_rooms: form.levels.length > 0 ? sumLevels(form.levels, "storage_rooms") : (form.storage_rooms ? Number(form.storage_rooms) : null),
     wc: form.levels.length > 0 ? sumLevels(form.levels, "wc") : (form.wc ? Number(form.wc) : null),
+    versatile_rooms: form.levels.length > 0 ? sumLevels(form.levels, "versatile_rooms") : null,
     furnished: form.furnished.trim() || null,
     custom_furnished: form.custom_furnished.trim() || null,
     summary: form.summary || null,

@@ -227,12 +227,12 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) {
-    // Log only code + truncated message — details/hint may reflect inserted values
     console.error("[POST /api/leads] insert error:", JSON.stringify({
       code:    error.code,
       message: error.message?.slice(0, 120),
     }));
-    return NextResponse.json({ error: "Failed to save lead" }, { status: 500 });
+    // TODO: remove debug detail before release
+    return NextResponse.json({ error: "Failed to save lead", _debug: { code: error.code, message: error.message?.slice(0, 200) } }, { status: 500 });
   }
 
   // ── Notifications — run after response is returned ────────────────────────

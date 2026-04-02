@@ -81,7 +81,7 @@ export type SearchCriteria = {
 // Each location row contributes up to 3 entries: name, name_he, name_ar.
 // Sorted longest-first so "vouliagmeni" beats "voula" on partial overlap.
 
-type LocationRow = { name: string; slug: string; name_he: string | null; name_ar: string | null };
+type LocationRow = { name: string; slug: string; name_he: string | null; name_ar: string | null; name_ru: string | null };
 let _locationMapCache: [string, string][] | null = null;
 
 async function getLocationMap(): Promise<[string, string][]> {
@@ -89,7 +89,7 @@ async function getLocationMap(): Promise<[string, string][]> {
   const admin = createSupabaseAdminClient();
   const { data, error } = await admin
     .from("locations")
-    .select("name,slug,name_he,name_ar")
+    .select("name,slug,name_he,name_ar,name_ru")
     .eq("is_active", true);
   if (error || !data) {
     console.error("[chat/propertySearch] location map fetch error:", error?.message);
@@ -100,6 +100,7 @@ async function getLocationMap(): Promise<[string, string][]> {
     entries.push([r.name.toLowerCase(), r.slug]);
     if (r.name_he) entries.push([r.name_he.toLowerCase(), r.slug]);
     if (r.name_ar) entries.push([r.name_ar.toLowerCase(), r.slug]);
+    if (r.name_ru) entries.push([r.name_ru.toLowerCase(), r.slug]);
   }
   const map = entries.sort((a, b) => b[0].length - a[0].length);
   _locationMapCache = map;

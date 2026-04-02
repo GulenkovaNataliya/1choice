@@ -42,18 +42,18 @@ function PublicHeaderInner() {
           maxWidth: 1360,
           margin: "0 auto",
           padding: "0 24px",
-          height: 56,
+          height: 72,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
         }}
       >
         {/* Logo */}
-        <Link href="/" style={{ display: "block", flexShrink: 0 }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
           <img
             src="/logo/logo-main.png"
             alt="1Choice"
-            className="h-10 sm:h-14 w-auto"
+            style={{ height: "clamp(40px, 5vw, 56px)", width: "auto", display: "block" }}
           />
         </Link>
 

@@ -11,7 +11,7 @@ export type PropertyRow = {
   bedrooms: number | null;
   bathrooms: number | null;
   size_sqm: number | null;
-  floor: number | null;
+  floor: string | null;
   year_built: number | null;
   featured: boolean | null;
   private_collection: boolean | null;

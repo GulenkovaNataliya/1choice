@@ -1,6 +1,7 @@
 import PropertyGalleryClient from "@/components/Property/PropertyGalleryClient";
 import PropertyAccordionsClient from "@/components/Property/PropertyAccordionsClient";
 import Link from "next/link";
+import { FLOOR_LABEL } from "@/lib/propertyFeatures";
 
 // Accepts the raw Supabase row — handles both legacy and current column names.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,7 +41,7 @@ export default function PrivatePropertyDetail({
   const sizeSqm: number | null  = property.size_sqm     ?? property.size     ?? null;
   const bedrooms: number | null = property.bedrooms      ?? null;
   const bathrooms: number | null= property.bathrooms     ?? null;
-  const floor: number | null    = property.floor         ?? null;
+  const floor: string | null    = property.floor         ?? null;
   const isGoldenVisa            = property.is_golden_visa === true;
   const description: string | null = property.description ?? null;
   const areaLabel = titleCase(location);
@@ -87,7 +88,7 @@ export default function PrivatePropertyDetail({
               {sizeSqm   && <SpecPill value={`${sizeSqm}`}   label="sqm" />}
               {bedrooms  && <SpecPill value={`${bedrooms}`}  label="bedrooms" />}
               {bathrooms && <SpecPill value={`${bathrooms}`} label="bathrooms" />}
-              {floor     && <SpecPill value={`${floor}`}     label="floor" />}
+              {floor     && <SpecPill value={FLOOR_LABEL[floor] ?? floor} label="floor" />}
             </div>
 
             {/* Golden Visa badge */}
@@ -113,7 +114,7 @@ export default function PrivatePropertyDetail({
                 {sizeSqm   && <><span className="text-[#888888]">Size</span>      <span className="text-[#1E1E1E] font-medium">{sizeSqm} sqm</span></>}
                 {bedrooms  && <><span className="text-[#888888]">Bedrooms</span>  <span className="text-[#1E1E1E] font-medium">{bedrooms}</span></>}
                 {bathrooms && <><span className="text-[#888888]">Bathrooms</span> <span className="text-[#1E1E1E] font-medium">{bathrooms}</span></>}
-                {floor     && <><span className="text-[#888888]">Floor</span>     <span className="text-[#1E1E1E] font-medium">{floor}</span></>}
+                {floor     && <><span className="text-[#888888]">Floor</span>     <span className="text-[#1E1E1E] font-medium">{FLOOR_LABEL[floor] ?? floor}</span></>}
                 <span className="text-[#888888]">Location</span>
                 <span className="text-[#1E1E1E] font-medium">{areaLabel}</span>
               </div>

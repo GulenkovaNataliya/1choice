@@ -37,7 +37,7 @@ function mapRow(p: DbRow) {
     bedrooms:           (p.bedrooms           as number  | null) ?? null,
     bathrooms:          (p.bathrooms          as number  | null) ?? null,
     size_sqm:           (p.size_sqm           as number  | null) ?? null,
-    floor:              (p.floor              as number  | null) ?? null,
+    floor:              (p.floor              as string  | null) ?? null,
     year_built:         (p.year_built         as number  | null) ?? null,
     sea_view:           (p.sea_view           as boolean | null) ?? null,
     pool:               (p.pool               as boolean | null) ?? null,

@@ -19,7 +19,7 @@ type CardProperty = {
   bedrooms?: number | null;
   bathrooms?: number | null;
   size_sqm?: number | null;
-  floor?: number | null;
+  floor?: string | null;
   year_built?: number | null;
   sea_view?: boolean | null;
   pool?: boolean | null;

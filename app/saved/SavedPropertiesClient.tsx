@@ -26,7 +26,7 @@ type CardProperty = {
   bedrooms: number | null;
   bathrooms: number | null;
   size_sqm: number | null;
-  floor: number | null;
+  floor: string | null;
   year_built: number | null;
   sea_view: boolean | null;
   pool: boolean | null;
@@ -68,7 +68,7 @@ function mapRow(p: Record<string, unknown>): CardProperty {
     bedrooms: (p.bedrooms as number | null) ?? null,
     bathrooms: (p.bathrooms as number | null) ?? null,
     size_sqm: (p.size_sqm as number | null) ?? null,
-    floor: (p.floor as number | null) ?? null,
+    floor: (p.floor as string | null) ?? null,
     year_built: (p.year_built as number | null) ?? null,
     sea_view: (p.sea_view as boolean | null) ?? null,
     pool: (p.pool as boolean | null) ?? null,

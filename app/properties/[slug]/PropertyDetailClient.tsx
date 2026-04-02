@@ -9,6 +9,7 @@ import PropertyCTAButtons from "@/components/Property/PropertyCTAButtons";
 import PropertyShareBlock from "@/components/Property/PropertyShareBlock";
 import {
   DETAIL_FEATURES,
+  FLOOR_LABEL,
   shouldRenderFeature,
   formatFeatureValue,
   type PropertyFeature,
@@ -41,7 +42,7 @@ export type PropertyData = {
   bedrooms: number | null;
   bathrooms: number | null;
   size_sqm: number | null;
-  floor: number | null;
+  floor: string | null;
   featured: boolean | null;
   cover_image_url: string | null;
   gallery_image_urls: string[] | null;
@@ -227,6 +228,7 @@ function renderFeatureValue(f: PropertyFeature, value: unknown): string | null {
     if (f.field === "building_condition") return CONDITION_LABELS[value] ?? value;
     if (f.field === "frames_type")        return FRAMES_LABELS[value]    ?? value;
     if (f.field === "flooring_type")      return FLOORING_LABELS[value]  ?? value;
+    if (f.field === "floor")              return FLOOR_LABEL[value]       ?? value;
   }
   return formatFeatureValue(f, value);
 }
@@ -852,7 +854,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                 {property.size_sqm    && <span>{property.size_sqm} m²</span>}
                 {property.bedrooms    && <span>{property.bedrooms} bedrooms</span>}
                 {property.bathrooms   && <span>{property.bathrooms} bathrooms</span>}
-                {property.floor       && <span>Floor {property.floor}</span>}
+                {property.floor       && <span>Floor {FLOOR_LABEL[property.floor] ?? property.floor}</span>}
                 <span>{areaLabel}</span>
                 {property.show_address && property.address
                   ? <span>{property.address}</span>

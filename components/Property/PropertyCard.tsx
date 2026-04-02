@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CARD_FEATURES, formatFeatureValue } from "@/lib/propertyFeatures";
+import { CARD_FEATURES, FLOOR_LABEL, formatFeatureValue } from "@/lib/propertyFeatures";
 import { renderImageUrl } from "@/lib/storage/imageUrl";
 import FavoriteButton from "@/components/Property/FavoriteButton";
 import { getBadgeStyle } from "@/lib/badgeColors";
@@ -24,7 +24,7 @@ type CardProperty = {
   bedrooms?: number | null;
   bathrooms?: number | null;
   size_sqm?: number | null;
-  floor?: number | null;
+  floor?: string | null;
   year_built?: number | null;
   sea_view?: boolean | null;
   pool?: boolean | null;
@@ -113,7 +113,13 @@ export default function PropertyCard({ property, testId }: Props) {
       // versatile_rooms: show only when > 0
       if (feature.field === "versatile_rooms") return Number(formatted) > 0;
       return true;
-    });
+    })
+    .map(({ feature, formatted }) => ({
+      feature,
+      formatted: feature.field === "floor" && formatted
+        ? (FLOOR_LABEL[formatted] ?? formatted)
+        : formatted,
+    }));
 
   return (
     <Link

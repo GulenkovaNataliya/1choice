@@ -52,6 +52,15 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 
+// ── Floor label map — special + numeric ──────────────────────────────────────
+export const FLOOR_LABEL: Record<string, string> = {
+  basement:            "Basement",
+  semi_basement:       "Semi-Basement",
+  ground_floor:        "Ground Floor",
+  raised_ground_floor: "Raised Ground Floor",
+  mezzanine:           "Mezzanine",
+};
+
 // ── Value types ───────────────────────────────────────────────────────────────
 
 export type FeatureValueType = "boolean" | "number" | "string";
@@ -122,7 +131,7 @@ export const PROPERTY_FEATURES: PropertyFeature[] = [
     field: "floor",
     label: "Floor",
     icon: Layers,
-    valueType: "number",
+    valueType: "string",
     showOnCard: true,
     showOnDetail: true,
     group: "core",

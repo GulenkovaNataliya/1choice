@@ -6,6 +6,7 @@ import { X, ArrowLeft, GitCompareArrows } from "lucide-react";
 import { getSupabase } from "@/lib/supabase/client";
 import { useCompare } from "@/lib/compare/useCompare";
 import { renderImageUrl } from "@/lib/storage/imageUrl";
+import { FLOOR_LABEL } from "@/lib/propertyFeatures";
 
 // ── Layout constants ──────────────────────────────────────────────────────────
 
@@ -29,7 +30,7 @@ type CompareProperty = {
   size_sqm: number | null;
   bedrooms: number | null;
   bathrooms: number | null;
-  floor: number | null;
+  floor: string | null;
   year_built: number | null;
   year_renovated: number | null;
   building_condition: string | null;
@@ -110,7 +111,7 @@ const SECTIONS: SectionDef[] = [
       { label: "Size",        get: p => p.size_sqm != null ? `${p.size_sqm} m²` : null,   type: "text" },
       { label: "Bedrooms",    get: p => p.bedrooms,                                        type: "text" },
       { label: "Bathrooms",   get: p => p.bathrooms,                                       type: "text" },
-      { label: "Floor",       get: p => p.floor,                                           type: "text" },
+      { label: "Floor",       get: p => p.floor ? (FLOOR_LABEL[p.floor] ?? p.floor) : null, type: "text" },
     ],
   },
   {
@@ -203,7 +204,7 @@ function mapRow(p: Record<string, unknown>): CompareProperty {
     size_sqm:           num("size_sqm"),
     bedrooms:           num("bedrooms"),
     bathrooms:          num("bathrooms"),
-    floor:              num("floor"),
+    floor:              str("floor"),
     year_built:         num("year_built"),
     year_renovated:     num("year_renovated"),
     building_condition: str("building_condition"),

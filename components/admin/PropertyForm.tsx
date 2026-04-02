@@ -369,7 +369,7 @@ function buildPayload(form: FormState, resolveSlug = false) {
     // Legacy flat columns — summed across all levels so existing queries/AI/catalog still work
     bedrooms: form.levels.length > 0 ? sumLevels(form.levels, "bedrooms") : (form.bedrooms ? Number(form.bedrooms) : null),
     bathrooms: form.levels.length > 0 ? sumLevels(form.levels, "bathrooms") : (form.bathrooms ? Number(form.bathrooms) : null),
-    floor: form.floor ? Number(form.floor) : null,
+    floor: form.floor || null,
     total_property_area_sqm: form.total_property_area_sqm ? Number(form.total_property_area_sqm) : null,
     total_building_floors: form.total_building_floors ? Number(form.total_building_floors) : null,
     number_of_levels: form.number_of_levels ? Number(form.number_of_levels) : null,
@@ -1291,14 +1291,25 @@ export default function PropertyForm({ mode = "create", propertyCode, propertyId
             />
           </Field>
           <Field label="Property Floor" hint="Floor the property is on">
-            <input
-              type="number"
+            <select
               value={form.floor}
               onChange={(e) => set("floor", e.target.value)}
               className={inputCls}
-              placeholder="3"
-              min={0}
-            />
+            >
+              <option value="">—</option>
+              <optgroup label="Special">
+                <option value="basement">Basement</option>
+                <option value="semi_basement">Semi-Basement</option>
+                <option value="ground_floor">Ground Floor</option>
+                <option value="raised_ground_floor">Raised Ground Floor</option>
+                <option value="mezzanine">Mezzanine</option>
+              </optgroup>
+              <optgroup label="Floor number">
+                {Array.from({ length: 15 }, (_, i) => String(i + 1)).map(n => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </optgroup>
+            </select>
           </Field>
           <Field label="Total Building Floors">
             <input

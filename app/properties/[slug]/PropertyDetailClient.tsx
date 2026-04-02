@@ -564,28 +564,29 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
               <FavoriteButton propertyId={property.id} variant="detail" />
             </div>
 
-            {/* Summary */}
-            {summary && (
-              <p className="text-[#404040] text-sm leading-relaxed font-medium whitespace-pre-line">
-                {summary}
-              </p>
-            )}
+            {/* Summary / Description toggle */}
+            {(summary || description) && (
+              <div>
+                {/* Collapsed: Summary preview (or description fallback if no summary) */}
+                {!descriptionExpanded && (
+                  <p className="text-[#404040] text-sm leading-relaxed font-medium whitespace-pre-line">
+                    {summary || description}
+                  </p>
+                )}
 
-            {/* Description */}
-            {description && (
-              <div className="mt-4">
-                <div
-                  className="whitespace-pre-line text-[15px] leading-7 text-[#404040] overflow-hidden"
-                  style={{ maxHeight: descriptionExpanded ? "none" : "10.5rem" }}
-                >
-                  {description}
-                </div>
+                {/* Expanded: Full Description */}
+                {descriptionExpanded && description && (
+                  <p className="whitespace-pre-line text-[15px] leading-7 text-[#404040]">
+                    {description}
+                  </p>
+                )}
 
-                {description.length > 350 && (
+                {/* Show more / Show less — only when both fields exist and description is long enough */}
+                {summary && description && description.length > 350 && (
                   <button
                     type="button"
                     onClick={() => setDescriptionExpanded((v) => !v)}
-                    className="mt-3 text-sm font-medium text-[#3A2E4F] hover:opacity-80 transition-opacity"
+                    className="mt-3 text-sm font-medium text-[#C1121F] hover:opacity-75 transition-opacity"
                   >
                     {descriptionExpanded ? "Show less" : "Show more"}
                   </button>

@@ -86,8 +86,6 @@ export default function PrivatePropertyDetail({
             {/* Spec pills */}
             <div className="flex flex-wrap gap-3">
               {sizeSqm   && <SpecPill value={`${sizeSqm}`}   label="sqm" />}
-              {bedrooms  && <SpecPill value={`${bedrooms}`}  label="bedrooms" />}
-              {bathrooms && <SpecPill value={`${bathrooms}`} label="bathrooms" />}
               {floor     && <SpecPill value={FLOOR_LABEL[floor] ?? floor} label="floor" />}
             </div>
 
@@ -112,8 +110,6 @@ export default function PrivatePropertyDetail({
               <h2 className="text-base font-semibold text-[#1E1E1E] mb-3">Characteristics</h2>
               <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
                 {sizeSqm   && <><span className="text-[#888888]">Size</span>      <span className="text-[#1E1E1E] font-medium">{sizeSqm} sqm</span></>}
-                {bedrooms  && <><span className="text-[#888888]">Bedrooms</span>  <span className="text-[#1E1E1E] font-medium">{bedrooms}</span></>}
-                {bathrooms && <><span className="text-[#888888]">Bathrooms</span> <span className="text-[#1E1E1E] font-medium">{bathrooms}</span></>}
                 {floor     && <><span className="text-[#888888]">Floor</span>     <span className="text-[#1E1E1E] font-medium">{FLOOR_LABEL[floor] ?? floor}</span></>}
                 <span className="text-[#888888]">Location</span>
                 <span className="text-[#1E1E1E] font-medium">{areaLabel}</span>
@@ -137,8 +133,6 @@ export default function PrivatePropertyDetail({
               {/* Quick facts */}
               <div className="flex flex-col gap-2 text-sm text-[#404040] border-b border-[#F0F0F0] pb-5">
                 {sizeSqm   && <span>{sizeSqm} sqm</span>}
-                {bedrooms  && <span>{bedrooms} bedrooms</span>}
-                {bathrooms && <span>{bathrooms} bathrooms</span>}
                 {floor     && <span>Floor {floor}</span>}
                 <span>{areaLabel}</span>
                 {isGoldenVisa && <span className="text-amber-700 font-medium">Golden Visa Eligible</span>}

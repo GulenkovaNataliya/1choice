@@ -109,8 +109,6 @@ const SECTIONS: SectionDef[] = [
       { label: "Category",    get: p => titleCase(p.category),                             type: "text" },
       { label: "Type",        get: p => titleCase(p.subtype),                              type: "text" },
       { label: "Size",        get: p => p.size_sqm != null ? `${p.size_sqm} m²` : null,   type: "text" },
-      { label: "Bedrooms",    get: p => p.bedrooms,                                        type: "text" },
-      { label: "Bathrooms",   get: p => p.bathrooms,                                       type: "text" },
       { label: "Floor",       get: p => p.floor ? (FLOOR_LABEL[p.floor] ?? p.floor) : null, type: "text" },
     ],
   },

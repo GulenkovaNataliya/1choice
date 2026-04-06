@@ -27,14 +27,12 @@ export interface TelegramLeadData {
   created_at?: string;              // ISO string; defaults to now if omitted
 }
 
-function escape(text: string): string {
-  // Escape special chars for Telegram MarkdownV2
-  return text.replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, "\\$&");
-}
-
-function escapeUrl(url: string): string {
-  // Inside MarkdownV2 link URLs only ) and \ need escaping
-  return url.replace(/[)\\]/g, "\\$&");
+function esc(text: string): string {
+  // Escape special HTML chars for Telegram HTML parse mode
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
 function formatMessage(data: TelegramLeadData): string {
@@ -46,52 +44,52 @@ function formatMessage(data: TelegramLeadData): string {
   const sourceLabel = data.source || "unknown";
 
   const lines: string[] = [
-    `${typeEmoji} *New Lead — ${escape(data.lead_type === "property" ? "Property" : "General")}*`,
+    `${typeEmoji} <b>New Lead — ${esc(data.lead_type === "property" ? "Property" : "General")}</b>`,
     "",
-    `👤 *Name:* ${escape(data.name)}`,
-    `📱 *WhatsApp:* ${escape(data.phone)}`,
+    `👤 <b>Name:</b> ${esc(data.name)}`,
+    `📱 <b>WhatsApp:</b> ${esc(data.phone)}`,
   ];
 
   if (data.email) {
-    lines.push(`📧 *Email:* ${escape(data.email)}`);
+    lines.push(`📧 <b>Email:</b> ${esc(data.email)}`);
   }
 
-  lines.push(`🌐 *Source:* ${escape(sourceLabel)}`);
+  lines.push(`🌐 <b>Source:</b> ${esc(sourceLabel)}`);
 
   if (data.page_url) {
-    lines.push(`🔗 *Page:* ${escape(data.page_url)}`);
+    lines.push(`🔗 <b>Page:</b> ${esc(data.page_url)}`);
   }
 
   if (data.property_title) {
     const propLabel = data.property_code
       ? `${data.property_title} (${data.property_code})`
       : data.property_title;
-    lines.push(`🏡 *Property:* ${escape(propLabel)}`);
+    lines.push(`🏡 <b>Property:</b> ${esc(propLabel)}`);
   } else if (data.property_id) {
-    lines.push(`🏡 *Property ID:* ${escape(data.property_id)}`);
+    lines.push(`🏡 <b>Property ID:</b> ${esc(data.property_id)}`);
   }
 
   if (data.property_location) {
-    lines.push(`📍 *Location:* ${escape(data.property_location)}`);
+    lines.push(`📍 <b>Location:</b> ${esc(data.property_location)}`);
   }
 
   if (data.entry_intent && data.entry_intent !== data.intent) {
-    lines.push(`🚪 *Entry Intent:* ${escape(data.entry_intent)}`);
+    lines.push(`🚪 <b>Entry Intent:</b> ${esc(data.entry_intent)}`);
   }
 
   if (data.intent) {
-    lines.push(`🎯 *Intent:* ${escape(data.intent)}`);
+    lines.push(`🎯 <b>Intent:</b> ${esc(data.intent)}`);
   }
 
   if (data.notes) {
-    lines.push(`💬 *Notes:* ${escape(data.notes)}`);
+    lines.push(`💬 <b>Notes:</b> ${esc(data.notes)}`);
   }
 
   if (data.admin_url) {
-    lines.push(``, `[🔧 Open in Admin](${escapeUrl(data.admin_url)})`);
+    lines.push(``, `<a href="${esc(data.admin_url)}">🔧 Open in Admin</a>`);
   }
 
-  lines.push(``, `🕐 ${escape(ts)}`);
+  lines.push(``, `🕐 ${esc(ts)}`);
 
   return lines.join("\n");
 }
@@ -118,7 +116,7 @@ export async function sendTelegramLeadNotification(
         body: JSON.stringify({
           chat_id: chatId,
           text,
-          parse_mode: "MarkdownV2",
+          parse_mode: "HTML",
           disable_web_page_preview: true,
         }),
       }

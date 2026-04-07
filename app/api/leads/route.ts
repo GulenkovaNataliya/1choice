@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse, after } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/adminClient";
 import { sendTelegramLeadNotification } from "@/lib/telegram/sendTelegramLeadNotification";
 import { sendLeadEmailNotification } from "@/lib/notifications/sendLeadEmailNotification";
@@ -234,10 +234,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Failed to save lead" }, { status: 500 });
   }
 
-  // ── Notifications — run after response is returned ────────────────────────
-  // `after` keeps the serverless function alive until both promises settle,
-  // preventing silent drops on Vercel when the runtime recycles after the
-  // response is sent.
+  // ── Notifications — run synchronously before response ────────────────────
+  // Running before the response ensures Vercel does not kill the function
+  // before notifications complete. A 4-second timeout prevents the lead save
+  // from hanging if Telegram/email APIs are slow or unreachable.
   const siteUrl = process.env.SITE_URL ?? null;
   const adminUrl =
     siteUrl && inserted?.id
@@ -246,8 +246,10 @@ export async function POST(request: NextRequest) {
 
   const createdAt = new Date().toISOString();
 
-  after(async () => {
-    await Promise.allSettled([
+  console.log("[leads] sending notifications for lead:", inserted?.id);
+
+  await Promise.race([
+    Promise.allSettled([
       sendTelegramLeadNotification({
         lead_type,
         source,
@@ -265,7 +267,8 @@ export async function POST(request: NextRequest) {
         notes,
         admin_url: adminUrl,
         created_at: createdAt,
-      }).catch((err) => console.error("[Telegram] unexpected error:", err)),
+      }).then((ok) => console.log("[leads] telegram:", ok ? "sent" : "failed/skipped"))
+        .catch((err) => console.error("[leads] telegram error:", err)),
 
       sendLeadEmailNotification({
         lead_type,
@@ -283,9 +286,11 @@ export async function POST(request: NextRequest) {
         page_url,
         admin_url:         adminUrl,
         created_at:        createdAt,
-      }).catch((err) => console.error("[Email] unexpected error:", err)),
-    ]);
-  });
+      }).then((ok) => console.log("[leads] email:", ok ? "sent" : "failed/skipped"))
+        .catch((err) => console.error("[leads] email error:", err)),
+    ]),
+    new Promise<void>((resolve) => setTimeout(resolve, 4000)),
+  ]);
 
   return NextResponse.json({ ok: true }, { status: 201 });
 }

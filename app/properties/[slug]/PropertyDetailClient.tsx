@@ -598,14 +598,14 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
               <div>
                 {/* Collapsed: Summary preview (or description fallback if no summary) */}
                 {!descriptionExpanded && (
-                  <p className="text-[#404040] text-sm leading-relaxed font-medium whitespace-pre-line">
+                  <p className="text-[#404040] text-[18px] leading-[1.65] font-medium whitespace-pre-line">
                     {summary || description}
                   </p>
                 )}
 
                 {/* Expanded: Full Description */}
                 {descriptionExpanded && description && (
-                  <p className="whitespace-pre-line text-[15px] leading-7 text-[#404040]">
+                  <p className="whitespace-pre-line text-[18px] leading-[1.65] text-[#404040]">
                     {description}
                   </p>
                 )}
@@ -634,7 +634,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                     <p className="text-xs font-semibold text-[#888888] uppercase tracking-widest mb-3">
                       Property Overview
                     </p>
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-4 text-[16px]">
                       {transactionLabel && (
                         <Fragment>
                           <span className="flex items-center gap-1.5 text-[#888888]"><Tag size={14} />Transaction</span>
@@ -675,7 +675,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                     <p className="text-xs font-semibold text-[#888888] uppercase tracking-widest mb-3">
                       Layout & Rooms
                     </p>
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-4 text-[16px]">
                       {layoutFeatures.map((f) => {
                         const Icon = f.icon;
                         return (
@@ -695,7 +695,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                     <p className="text-xs font-semibold text-[#888888] uppercase tracking-widest mb-3">
                       Building Information
                     </p>
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-4 text-[16px]">
                       {buildingFeatures.map((f) => {
                         const Icon = f.icon;
                         return (
@@ -716,7 +716,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                       Windows & Construction
                     </p>
                     {windowsValues.length > 0 && (
-                      <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm mb-3">
+                      <div className="grid grid-cols-2 gap-x-6 gap-y-4 text-[16px] mb-3">
                         {windowsValues.map((f) => {
                           const Icon = f.icon;
                           return (
@@ -771,7 +771,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
 
                     {/* Numeric fields grid */}
                     {(property.land_area_sqm || property.building_coefficient || property.coverage_ratio || property.frontage_m || property.remaining_buildable_area_sqm) && (
-                      <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm mb-3">
+                      <div className="grid grid-cols-2 gap-x-6 gap-y-4 text-[16px] mb-3">
                         {property.land_area_sqm != null && (
                           <Fragment>
                             <span className="text-[#888888]">Land Area</span>
@@ -878,7 +878,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                             Level {i + 1}
                           </p>
                           {numRows.length > 0 && (
-                            <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm mb-4">
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-[16px] mb-4">
                               {numRows.map(f => (
                                 <Fragment key={String(f.key)}>
                                   <span className="text-[#888888]">{f.label}</span>

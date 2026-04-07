@@ -122,7 +122,7 @@ export default function PropertyGalleryClient({
 
       {/* Thumbnails — only when there are multiple images */}
       {total > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="flex gap-3 overflow-x-auto pb-1">
           {slots.map((url, i) => (
             <button
               key={i}
@@ -130,8 +130,10 @@ export default function PropertyGalleryClient({
               onClick={() => setActive(i)}
               aria-label={`Photo ${i + 1}`}
               aria-current={active === i ? "true" : undefined}
-              className={`shrink-0 w-[100px] h-[70px] rounded-lg overflow-hidden border-2 transition-colors ${
-                active === i ? "border-[#3A2E4F]" : "border-transparent hover:border-[#BBBBBB]"
+              className={`shrink-0 w-[138px] h-[97px] rounded-lg overflow-hidden border-2 transition-all ${
+                active === i
+                  ? "border-[#3A2E4F] scale-[1.07] shadow-md"
+                  : "border-transparent hover:border-[#BBBBBB]"
               }`}
               style={{ background: "#E8E8E8" }}
             >

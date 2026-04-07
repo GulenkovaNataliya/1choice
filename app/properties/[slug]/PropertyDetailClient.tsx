@@ -733,8 +733,8 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                         {windowsBools.map((f) => {
                           const Icon = f.icon;
                           return (
-                            <span key={f.field} className="flex items-center gap-1.5 bg-[#F4F4F4] text-[#404040] text-xs px-3 py-1.5 rounded-full">
-                              <Icon size={12} />{f.label}
+                            <span key={f.field} className="flex items-center gap-1.5 bg-[#F4F4F4] text-[#404040] text-[13px] px-4 py-2 rounded-full">
+                              <Icon size={14} />{f.label}
                             </span>
                           );
                         })}
@@ -753,8 +753,8 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                       {amenityFeatures.map((f) => {
                         const Icon = f.icon;
                         return (
-                          <span key={f.field} className="flex items-center gap-1.5 bg-[#F4F4F4] text-[#404040] text-xs px-3 py-1.5 rounded-full">
-                            <Icon size={12} />{f.label}
+                          <span key={f.field} className="flex items-center gap-1.5 bg-[#F4F4F4] text-[#404040] text-[13px] px-4 py-2 rounded-full">
+                            <Icon size={14} />{f.label}
                           </span>
                         );
                       })}

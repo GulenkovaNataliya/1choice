@@ -582,7 +582,8 @@ export default function LeadsManager({
                     <tr
                       key={lead.id}
                       ref={isHighlighted ? highlightedRowRef : null}
-                      className={`transition-colors ${
+                      onClick={() => setDetailLead(lead)}
+                      className={`cursor-pointer transition-colors ${
                         isHighlighted
                           ? "bg-amber-50 ring-2 ring-inset ring-amber-300"
                           : isNewLead(lead.created_at)
@@ -650,7 +651,7 @@ export default function LeadsManager({
                           <span className="text-[#AAAAAA]">General</span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                         <select
                           value={lead.status}
                           disabled={isSavingStatus}
@@ -664,7 +665,7 @@ export default function LeadsManager({
                       </td>
                       <td className="px-4 py-3">
                         <button
-                          onClick={() => setDetailLead(lead)}
+                          onClick={(e) => { e.stopPropagation(); setDetailLead(lead); }}
                           className="text-xs font-medium text-[#1E1E1E] underline underline-offset-2 hover:text-[#555555] transition-colors"
                         >
                           View

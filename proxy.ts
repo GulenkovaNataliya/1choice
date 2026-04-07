@@ -82,8 +82,12 @@ export async function proxy(request: NextRequest) {
   // ── Admin guard (all other /admin/* routes) ───────────────────────────────
 
   // CASE A: user is not authenticated at all → send to login page
+  // Preserve the original URL so the login page can redirect back after auth.
   if (!user) {
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+    const loginUrl = new URL("/admin/login", request.url);
+    const dest = request.nextUrl.pathname + request.nextUrl.search;
+    if (dest !== "/admin/login") loginUrl.searchParams.set("from", dest);
+    return NextResponse.redirect(loginUrl);
   }
 
   // CASE B: user is authenticated but email is absent or not in the allowlist

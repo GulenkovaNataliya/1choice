@@ -38,11 +38,12 @@ export default function AdminLoginPage() {
       return;
     }
 
-    // signInWithPassword sets the session cookie via @supabase/ssr's
-    // createBrowserClient. router.refresh() flushes server-component cache
-    // so middleware sees the new cookie on the very next navigation.
+    // After login, redirect back to the original URL (e.g. /admin/leads?id=XXX)
+    // if a ?from= param was set by middleware, otherwise fall back to /admin.
+    const from = new URLSearchParams(window.location.search).get("from");
+    const dest = from && from.startsWith("/admin") ? from : "/admin";
     router.refresh();
-    router.push("/admin");
+    router.push(dest);
   }
 
   return (

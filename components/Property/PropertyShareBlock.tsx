@@ -34,16 +34,16 @@ export default function PropertyShareBlock({ url, title }: Props) {
 
   return (
     <div className="border-t border-[#F0F0F0] pt-4 flex items-center gap-3 flex-wrap">
-      <span className="text-xs text-[#AAAAAA]">Share</span>
+      <span className="text-sm text-[#AAAAAA]">Share</span>
 
       <button
         type="button"
         onClick={copyLink}
-        className="flex items-center gap-1.5 text-xs text-[#555555] hover:text-[#1E1E1E] transition-colors"
+        className="flex items-center gap-1.5 text-sm text-[#555555] hover:text-[#1E1E1E] transition-colors"
       >
         {copied
-          ? <Check size={13} className="text-green-600" />
-          : <Copy size={13} />}
+          ? <Check size={15} className="text-green-600" />
+          : <Copy size={15} />}
         <span className={copied ? "text-green-600 font-medium" : ""}>
           {copied ? "Copied!" : "Copy link"}
         </span>
@@ -55,7 +55,7 @@ export default function PropertyShareBlock({ url, title }: Props) {
         href={waUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-xs text-[#555555] hover:text-[#1E1E1E] transition-colors"
+        className="text-sm text-[#555555] hover:text-[#1E1E1E] transition-colors"
         onClick={() => trackEvent("whatsapp_click")}
       >
         WhatsApp
@@ -65,7 +65,7 @@ export default function PropertyShareBlock({ url, title }: Props) {
 
       <a
         href={mailUrl}
-        className="text-xs text-[#555555] hover:text-[#1E1E1E] transition-colors"
+        className="text-sm text-[#555555] hover:text-[#1E1E1E] transition-colors"
       >
         Email
       </a>

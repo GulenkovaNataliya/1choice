@@ -549,7 +549,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
             {/* Title + property code + badges */}
             <div>
               {property_code && (
-                <p className="text-xs text-[#888888] font-mono mb-1">{property_code}</p>
+                <p className="text-sm text-[#C1121F] font-mono mb-1">{property_code}</p>
               )}
               <h1 className="text-2xl md:text-3xl font-bold text-[#1E1E1E] leading-tight mb-2">
                 {title}
@@ -559,23 +559,23 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
               {/* Inline badges */}
               <div className="flex flex-wrap gap-2">
                 {featured && (
-                  <span className="bg-[#F4F4F4] text-[#1E1E1E] text-xs font-medium px-3 py-1 rounded-full">
+                  <span className="bg-[#F4F4F4] text-[#1E1E1E] text-[13px] font-medium px-4 py-1.5 rounded-full">
                     Featured
                   </span>
                 )}
                 {is_golden_visa && (
-                  <span className="bg-[#FFF8E1] text-[#B8860B] text-xs font-medium px-3 py-1 rounded-full">
+                  <span className="bg-[#FFF8E1] text-[#B8860B] text-[13px] font-medium px-4 py-1.5 rounded-full">
                     Golden Visa
                   </span>
                 )}
                 {publish_deals && (
-                  <span className="bg-[#FFF0F0] text-[#C1121F] text-xs font-medium px-3 py-1 rounded-full">
+                  <span className="bg-[#FFF0F0] text-[#C1121F] text-[13px] font-medium px-4 py-1.5 rounded-full">
                     1ChoiceDeals
                   </span>
                 )}
                 {property.custom_badge && (
                   <span
-                    className="text-xs font-bold tracking-wider px-3 py-1 rounded-full"
+                    className="text-[13px] font-bold tracking-wider px-4 py-1.5 rounded-full"
                     style={getBadgeStyle(property.custom_badge_color)}
                   >
                     {property.custom_badge}
@@ -809,12 +809,12 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                     {(property.town_planning_status || property.land_slope) && (
                       <div className="flex flex-wrap gap-2 mb-3">
                         {property.town_planning_status && (
-                          <span className="bg-[#F4F4F4] text-[#404040] text-xs px-3 py-1.5 rounded-full">
+                          <span className="bg-[#F4F4F4] text-[#404040] text-[13px] px-4 py-2 rounded-full">
                             {TOWN_PLANNING_LABEL[property.town_planning_status] ?? property.town_planning_status}
                           </span>
                         )}
                         {property.land_slope && (
-                          <span className="bg-[#F4F4F4] text-[#404040] text-xs px-3 py-1.5 rounded-full">
+                          <span className="bg-[#F4F4F4] text-[#404040] text-[13px] px-4 py-2 rounded-full">
                             {LAND_SLOPE_LABEL[property.land_slope] ?? property.land_slope}
                           </span>
                         )}
@@ -825,7 +825,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                     {property.land_features && property.land_features.length > 0 && (
                       <div className="flex flex-wrap gap-2">
                         {property.land_features.map((feat) => (
-                          <span key={feat} className="bg-[#F4F4F4] text-[#404040] text-xs px-3 py-1.5 rounded-full">
+                          <span key={feat} className="bg-[#F4F4F4] text-[#404040] text-[13px] px-4 py-2 rounded-full">
                             {LAND_FEATURE_LABEL[feat] ?? feat}
                           </span>
                         ))}
@@ -890,7 +890,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                           {boolChips.length > 0 && (
                             <div className="flex flex-wrap gap-2">
                               {boolChips.map(f => (
-                                <span key={String(f.key)} className="bg-[#F4F4F4] text-[#404040] text-xs px-3 py-1.5 rounded-full">
+                                <span key={String(f.key)} className="bg-[#F4F4F4] text-[#404040] text-[13px] px-4 py-2 rounded-full">
                                   {f.label}
                                 </span>
                               ))}

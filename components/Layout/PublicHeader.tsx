@@ -42,7 +42,7 @@ function PublicHeaderInner() {
           maxWidth: 1360,
           margin: "0 auto",
           padding: "0 24px",
-          height: 72,
+          height: 92,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -53,17 +53,17 @@ function PublicHeaderInner() {
           <img
             src="/logo/logo-main.png"
             alt="1Choice"
-            style={{ height: "clamp(40px, 5vw, 56px)", width: "auto", display: "block" }}
+            style={{ height: "clamp(52px, 5.5vw, 72px)", width: "auto", display: "block" }}
           />
         </Link>
 
         {/* Right nav */}
-        <nav style={{ display: "flex", alignItems: "center", gap: 24 }}>
+        <nav style={{ display: "flex", alignItems: "center", gap: 32 }}>
           <Link
             href="/properties"
             style={{
-              fontSize: 13,
-              fontWeight: pathname.startsWith("/properties") ? 600 : 400,
+              fontSize: 16,
+              fontWeight: pathname.startsWith("/properties") ? 700 : 400,
               color: pathname.startsWith("/properties") ? "#3A2E4F" : "#404040",
               textDecoration: "none",
             }}
@@ -77,15 +77,15 @@ function PublicHeaderInner() {
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 5,
-              fontSize: 13,
-              fontWeight: pathname === "/favorites" ? 600 : 400,
+              gap: 6,
+              fontSize: 16,
+              fontWeight: pathname === "/favorites" ? 700 : 400,
               color: pathname === "/favorites" ? "#3A2E4F" : "#404040",
               textDecoration: "none",
             }}
           >
             <Heart
-              size={16}
+              size={22}
               style={{
                 fill: savedCount > 0 ? "#E53E3E" : "none",
                 stroke: savedCount > 0 ? "#E53E3E" : "currentColor",
@@ -99,13 +99,13 @@ function PublicHeaderInner() {
                   display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  minWidth: 18,
-                  height: 18,
-                  padding: "0 5px",
-                  borderRadius: 9,
+                  minWidth: 22,
+                  height: 22,
+                  padding: "0 6px",
+                  borderRadius: 11,
                   background: "#3A2E4F",
                   color: "#FFFFFF",
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: 700,
                   lineHeight: 1,
                 }}

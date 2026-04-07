@@ -130,10 +130,10 @@ export default function PropertyGalleryClient({
               onClick={() => setActive(i)}
               aria-label={`Photo ${i + 1}`}
               aria-current={active === i ? "true" : undefined}
-              className={`shrink-0 w-[138px] h-[97px] rounded-lg overflow-hidden border-2 transition-all ${
+              className={`shrink-0 w-[138px] h-[97px] rounded-lg overflow-hidden border-2 transition-all duration-200 ${
                 active === i
-                  ? "border-[#3A2E4F] scale-[1.07] shadow-md"
-                  : "border-transparent hover:border-[#BBBBBB]"
+                  ? "border-[#888888] scale-[1.07] shadow-md"
+                  : "border-transparent hover:border-[#BBBBBB] hover:scale-[1.04]"
               }`}
               style={{ background: "#E8E8E8" }}
             >

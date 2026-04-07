@@ -42,7 +42,7 @@ function PublicHeaderInner() {
           maxWidth: 1360,
           margin: "0 auto",
           padding: "0 24px",
-          height: 92,
+          height: 108,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -53,7 +53,7 @@ function PublicHeaderInner() {
           <img
             src="/logo/logo-main.png"
             alt="1Choice"
-            style={{ height: "clamp(52px, 5.5vw, 72px)", width: "auto", display: "block" }}
+            style={{ height: "clamp(70px, 8vw, 100px)", width: "auto", display: "block" }}
           />
         </Link>
 

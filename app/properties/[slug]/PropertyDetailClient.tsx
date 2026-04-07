@@ -554,7 +554,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
               <h1 className="text-2xl md:text-3xl font-bold text-[#1E1E1E] leading-tight mb-2">
                 {title}
               </h1>
-              <p className="text-[#3A2E4F] text-sm mb-3">{areaLabel}</p>
+              <p className="text-[#C1121F] text-sm mb-3">{areaLabel}</p>
 
               {/* Inline badges */}
               <div className="flex flex-wrap gap-2">

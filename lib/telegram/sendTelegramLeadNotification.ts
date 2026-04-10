@@ -85,10 +85,6 @@ function formatMessage(data: TelegramLeadData): string {
     lines.push(`💬 <b>Notes:</b> ${esc(data.notes)}`);
   }
 
-  if (data.admin_url) {
-    lines.push(``, `<a href="${esc(data.admin_url)}">🔧 Open in Admin</a>`);
-  }
-
   lines.push(``, `🕐 ${esc(ts)}`);
 
   return lines.join("\n");
@@ -118,6 +114,15 @@ export async function sendTelegramLeadNotification(
           text,
           parse_mode: "HTML",
           disable_web_page_preview: true,
+          ...(data.admin_url
+            ? {
+                reply_markup: {
+                  inline_keyboard: [[
+                    { text: "🔧 Open in Admin", url: data.admin_url },
+                  ]],
+                },
+              }
+            : {}),
         }),
       }
     );

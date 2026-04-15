@@ -10,6 +10,7 @@ import {
 import { getAiClient } from "@/lib/chat/aiClient";
 import { detectLang, getFormStrings } from "@/lib/chat/chatI18n";
 import { buildSystemPrompt } from "@/lib/chat/systemPrompt";
+import { sendChatAlertNotification } from "@/lib/telegram/sendChatAlertNotification";
 
 /*
  * POST /api/chat
@@ -137,6 +138,63 @@ const RATE_WINDOW = 60_000;  // 1-minute window
 
 const ABUSE_STRIKE_THRESHOLD = 3;
 const ABUSE_BLOCK_DURATION   = 60 * 60_000;
+
+// ── Chat-alert anti-spam ──────────────────────────────────────────────────────
+// One alert per IP per CHAT_ALERT_COOLDOWN_MS. Prevents Telegram spam when
+// a user sends multiple high-intent messages in the same session.
+
+const CHAT_ALERT_COOLDOWN_MS = 20 * 60_000; // 20 minutes
+const chatAlertCooldownMap   = new Map<string, number>(); // ip → lastAlertAt
+
+function canSendChatAlert(ip: string): boolean {
+  const last = chatAlertCooldownMap.get(ip);
+  if (last === undefined) return true;
+  return Date.now() - last > CHAT_ALERT_COOLDOWN_MS;
+}
+
+function recordChatAlert(ip: string): void {
+  chatAlertCooldownMap.set(ip, Date.now());
+}
+
+// ── High-intent signal detection ──────────────────────────────────────────────
+
+const VIEWING_RE = /\b(viewing|schedule\s+a\s+visit|want\s+to\s+(see|visit)|can\s+i\s+see|arrange\s+(a\s+)?viewing|book\s+(a\s+)?viewing|come\s+and\s+see|private\s+showing)\b/i;
+const CONTACT_RE = /\b(call\s+me|contact\s+me|speak\s+with\s+(someone|an?\s+advisor)|advisor|consultation|someone\s+call|get\s+in\s+touch|reach\s+out|want\s+to\s+talk)\b/i;
+const PHONE_RE   = /(?<!\d)(\+\d{7,15}|\b\d{3}[\s.\-]\d{3,4}[\s.\-]\d{4})\b/;
+const EMAIL_RE   = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/;
+const HINTKEY_RE = /\b(interested\s+in\s+(this|the)\s+property|ready\s+to\s+buy|want\s+more\s+details?\s+(now|today)|serious(ly)?\s+interested|next\s+steps?|how\s+(do\s+i|can\s+i)\s+(proceed|start|buy|purchase)|i('?ll?\s+take|want\s+to\s+buy))\b/i;
+
+const HIGH_INTENT_QUICK_ACTIONS = new Set([
+  "viewing_request",
+  "contact_advisor",
+  "property_viewing",
+]);
+
+function detectContactInMessage(message: string): boolean {
+  return PHONE_RE.test(message) || EMAIL_RE.test(message);
+}
+
+function isHighIntentSignal(opts: {
+  triggerLeadForm: boolean;
+  intent:          string | null;
+  message:         string | null;
+}): { isHigh: boolean; reason: string } {
+  if (opts.triggerLeadForm) {
+    return { isHigh: true, reason: "trigger_lead_form" };
+  }
+  if (opts.intent && HIGH_INTENT_QUICK_ACTIONS.has(opts.intent)) {
+    return { isHigh: true, reason: "intent_action" };
+  }
+  if (!opts.message) return { isHigh: false, reason: "no_signal" };
+
+  if (PHONE_RE.test(opts.message))   return { isHigh: true, reason: "phone_in_message" };
+  if (EMAIL_RE.test(opts.message))   return { isHigh: true, reason: "email_in_message" };
+  if (VIEWING_RE.test(opts.message)) return { isHigh: true, reason: "viewing_signal" };
+  if (CONTACT_RE.test(opts.message)) return { isHigh: true, reason: "contact_signal" };
+  if (HINTKEY_RE.test(opts.message)) return { isHigh: true, reason: "high_intent_keywords" };
+
+  return { isHigh: false, reason: "no_signal" };
+}
 
 const strikeMap = new Map<string, number>();
 const blockMap  = new Map<string, number>();
@@ -429,6 +487,33 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       text:            fallback.text,
       triggerLeadForm: fallback.triggerLeadForm,
+    });
+  }
+
+  // ── High-intent chat alert ────────────────────────────────────────────────
+
+  const { isHigh, reason } = isHighIntentSignal({
+    triggerLeadForm: aiResult.triggerLeadForm,
+    intent,
+    message,
+  });
+
+  if (isHigh && canSendChatAlert(ip)) {
+    recordChatAlert(ip);
+
+    void sendChatAlertNotification({
+      intent,
+      reason,
+      source: sttLang,
+      page_url: pathname,
+      message,
+      property_title: propertyTitle,
+      property_code: propertyCode,
+      property_location: propertyLocation,
+      contact_found: detectContactInMessage(message ?? ""),
+      admin_url: process.env.NEXT_PUBLIC_APP_URL
+        ? `${process.env.NEXT_PUBLIC_APP_URL}/admin/leads`
+        : null,
     });
   }
 

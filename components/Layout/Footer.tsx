@@ -47,6 +47,8 @@ export default function Footer({ companyName }: { companyName?: string }) {
       >
         <span style={{ fontSize: 14, color: "#404040" }}>
           © {year} {name}
+          <span style={{ marginLeft: 16, color: "#888" }}>·</span>
+          <span style={{ marginLeft: 16, color: "#888" }}>Built by Nataliya Gulenkova</span>
         </span>
 
         <nav

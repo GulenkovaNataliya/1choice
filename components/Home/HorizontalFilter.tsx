@@ -289,7 +289,7 @@ function InlinePanel({ openPanel, filter, setFilter, onClose, areas }: {
           {visibleGroups.map(group => (
             <div key={group} style={{ marginBottom: 10 }}>
               <div style={{
-                fontSize: 10, fontWeight: 700, color: "#1E1E1E",
+                fontSize: 12, fontWeight: 700, color: "#1E1E1E",
                 textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 6,
               }}>
                 {group}
@@ -510,7 +510,7 @@ function MobileDrawer({ open, filter, setFilter, onClose, onApply, onClear, area
               {visibleGroups.map(group => (
                 <div key={group} style={{ marginBottom: 10 }}>
                   <div style={{
-                    fontSize: 10, fontWeight: 700, color: "#AAAAAA",
+                    fontSize: 12, fontWeight: 700, color: "#AAAAAA",
                     textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 6,
                   }}>
                     {group}
@@ -721,7 +721,7 @@ export default function HorizontalFilter({ initialFilter, onSearch, areas = [] }
       {isMobile && (
         <div style={{ padding: "12px 16px" }}>
           <button type="button" className="mob-filters-btn" onClick={() => setDrawerOpen(true)}>
-            Filters <span style={{ fontSize: 11, opacity: 0.5 }}>▾</span>
+            Filters <span style={{ fontSize: 13, opacity: 0.5 }}>▾</span>
           </button>
           <MobileDrawer
             open={drawerOpen} filter={filter} setFilter={setFilter}
@@ -740,31 +740,31 @@ export default function HorizontalFilter({ initialFilter, onSearch, areas = [] }
             <button type="button" data-testid="filterTransaction"
               className={`fp${(openPanel === "transaction" || hasValue("transaction", filter)) ? " fp-on" : ""}`}
               onClick={() => togglePanel("transaction")}>
-              {getPillLabel("transaction", filter, areas)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
+              {getPillLabel("transaction", filter, areas)} <span style={{ fontSize: 12, opacity: 0.4 }}>▾</span>
             </button>
 
             <button type="button" data-testid="filterPropertyType"
               className={`fp${(openPanel === "type" || hasValue("type", filter)) ? " fp-on" : ""}`}
               onClick={() => togglePanel("type")}>
-              {getPillLabel("type", filter, areas)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
+              {getPillLabel("type", filter, areas)} <span style={{ fontSize: 12, opacity: 0.4 }}>▾</span>
             </button>
 
             <button type="button" data-testid="filterLocation"
               className={`fp${(openPanel === "location" || hasValue("location", filter)) ? " fp-on" : ""}`}
               onClick={() => togglePanel("location")}>
-              {getPillLabel("location", filter, areas)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
+              {getPillLabel("location", filter, areas)} <span style={{ fontSize: 12, opacity: 0.4 }}>▾</span>
             </button>
 
             <button type="button" data-testid="filterPrice"
               className={`fp${(openPanel === "price" || hasValue("price", filter)) ? " fp-on" : ""}`}
               onClick={() => togglePanel("price")}>
-              {getPillLabel("price", filter, areas)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
+              {getPillLabel("price", filter, areas)} <span style={{ fontSize: 12, opacity: 0.4 }}>▾</span>
             </button>
 
             <button type="button" data-testid="filterBedrooms"
               className={`fp${(openPanel === "bedrooms" || hasValue("bedrooms", filter)) ? " fp-on" : ""}`}
               onClick={() => togglePanel("bedrooms")}>
-              {getPillLabel("bedrooms", filter, areas)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
+              {getPillLabel("bedrooms", filter, areas)} <span style={{ fontSize: 12, opacity: 0.4 }}>▾</span>
             </button>
 
             {/* Golden Visa — direct toggle, no panel */}
@@ -778,7 +778,7 @@ export default function HorizontalFilter({ initialFilter, onSearch, areas = [] }
             <button type="button" data-testid="filterMore"
               className={`fp fp-more${showMore ? " fp-on" : ""}`}
               onClick={toggleMore}>
-              More… <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
+              More… <span style={{ fontSize: 12, opacity: 0.4 }}>▾</span>
             </button>
 
             <div style={{ flex: 1 }} />
@@ -820,31 +820,31 @@ export default function HorizontalFilter({ initialFilter, onSearch, areas = [] }
                 <button type="button" data-testid="filterFeatures"
                   className={`fp${(openPanel === "features" || hasValue("features", filter)) ? " fp-on" : ""}`}
                   onClick={() => togglePanel("features")}>
-                  {getPillLabel("features", filter, areas)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
+                  {getPillLabel("features", filter, areas)} <span style={{ fontSize: 12, opacity: 0.4 }}>▾</span>
                 </button>
 
                 <button type="button" data-testid="filterBathrooms"
                   className={`fp${(openPanel === "bathrooms" || hasValue("bathrooms", filter)) ? " fp-on" : ""}`}
                   onClick={() => togglePanel("bathrooms")}>
-                  {getPillLabel("bathrooms", filter, areas)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
+                  {getPillLabel("bathrooms", filter, areas)} <span style={{ fontSize: 12, opacity: 0.4 }}>▾</span>
                 </button>
 
                 <button type="button" data-testid="filterSize"
                   className={`fp${(openPanel === "size" || hasValue("size", filter)) ? " fp-on" : ""}`}
                   onClick={() => togglePanel("size")}>
-                  {getPillLabel("size", filter, areas)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
+                  {getPillLabel("size", filter, areas)} <span style={{ fontSize: 12, opacity: 0.4 }}>▾</span>
                 </button>
 
                 <button type="button" data-testid="filterYearBuilt"
                   className={`fp${(openPanel === "yearBuilt" || hasValue("yearBuilt", filter)) ? " fp-on" : ""}`}
                   onClick={() => togglePanel("yearBuilt")}>
-                  {getPillLabel("yearBuilt", filter, areas)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
+                  {getPillLabel("yearBuilt", filter, areas)} <span style={{ fontSize: 12, opacity: 0.4 }}>▾</span>
                 </button>
 
                 <button type="button" data-testid="filterCondition"
                   className={`fp${(openPanel === "condition" || hasValue("condition", filter)) ? " fp-on" : ""}`}
                   onClick={() => togglePanel("condition")}>
-                  {getPillLabel("condition", filter, areas)} <span style={{ fontSize: 9, opacity: 0.4 }}>▾</span>
+                  {getPillLabel("condition", filter, areas)} <span style={{ fontSize: 12, opacity: 0.4 }}>▾</span>
                 </button>
               </div>
 

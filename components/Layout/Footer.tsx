@@ -45,7 +45,7 @@ export default function Footer({ companyName }: { companyName?: string }) {
           gap: 16,
         }}
       >
-        <span className="footer-credit" style={{ fontSize: 14, color: "#404040" }}>
+        <span className="footer-credit" style={{ fontSize: 15, color: "#404040" }}>
           <span className="footer-copyright">©{year} {name}</span>
           <span className="footer-separator" style={{ marginLeft: 16, color: "#888" }}>·</span>
           <span className="footer-built" style={{ marginLeft: 16, color: "#888" }}>Built by Nataliya Gulenkova</span>

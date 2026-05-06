@@ -334,12 +334,12 @@ function LocationBlock({
           />
         </div>
         <div className="mt-3 flex items-center justify-between">
-          <p className="text-sm text-[#888888]">{areaLabel}</p>
+          <p className="text-base text-[#888888]">{areaLabel}</p>
           <a
             href={`https://maps.google.com?q=${lat},${lng}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm font-medium text-[#3A2E4F] hover:opacity-70 transition underline underline-offset-2 shrink-0 ml-4"
+            className="text-base font-medium text-[#3A2E4F] hover:opacity-70 transition underline underline-offset-2 shrink-0 ml-4"
           >
             Open in Google Maps
           </a>
@@ -371,7 +371,7 @@ function LocationBlock({
       <section className="mt-16">
         <div className="flex flex-wrap items-center gap-2 mb-4">
           <h2 className="text-xl font-semibold text-[#1E1E1E]">Approximate location</h2>
-          <span className="text-xs text-[#888888] bg-[#F4F4F4] px-2 py-0.5 rounded-full">
+          <span className="text-sm text-[#888888] bg-[#F4F4F4] px-2 py-0.5 rounded-full">
             Approximate
           </span>
         </div>
@@ -379,14 +379,14 @@ function LocationBlock({
           <ApproximateLocationMap lat={cLat} lng={cLng} />
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-sm text-[#888888]">
+          <p className="text-base text-[#888888]">
             Exact address not publicly disclosed — shown area is approximate
           </p>
           <a
             href={`https://maps.google.com?q=${mapsQuery}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm font-medium text-[#3A2E4F] hover:opacity-70 transition underline underline-offset-2 shrink-0"
+            className="text-base font-medium text-[#3A2E4F] hover:opacity-70 transition underline underline-offset-2 shrink-0"
           >
             Open in Google Maps
           </a>
@@ -402,14 +402,14 @@ function LocationBlock({
       <div className="bg-[#F4F4F4] rounded-2xl h-64 flex flex-col items-center justify-center gap-4 border border-[#E8E8E8]">
         <MapPin size={32} className="text-[#3A2E4F] opacity-40" />
         <div className="text-center">
-          <p className="text-[#404040] text-sm font-medium">{areaLabel}</p>
-          <p className="text-[#888888] text-xs mt-1">Area reference only</p>
+          <p className="text-[#404040] text-base font-medium">{areaLabel}</p>
+          <p className="text-[#888888] text-sm mt-1">Area reference only</p>
         </div>
         <a
           href={`https://maps.google.com?q=${mapsQuery}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm font-medium text-[#3A2E4F] hover:opacity-70 transition underline underline-offset-2"
+          className="text-base font-medium text-[#3A2E4F] hover:opacity-70 transition underline underline-offset-2"
         >
           Open in Google Maps
         </a>
@@ -554,28 +554,28 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
               <h1 className="text-2xl md:text-3xl font-bold text-[#1E1E1E] leading-tight mb-2">
                 {title}
               </h1>
-              <p className="text-[#C1121F] text-sm mb-3">{areaLabel}</p>
+              <p className="text-[#C1121F] text-base mb-3">{areaLabel}</p>
 
               {/* Inline badges */}
               <div className="flex flex-wrap gap-2">
                 {featured && (
-                  <span className="bg-[#F4F4F4] text-[#1E1E1E] text-[13px] font-medium px-4 py-1.5 rounded-full">
+                  <span className="bg-[#F4F4F4] text-[#1E1E1E] text-sm font-medium px-4 py-1.5 rounded-full">
                     Featured
                   </span>
                 )}
                 {is_golden_visa && (
-                  <span className="bg-[#FFF8E1] text-[#B8860B] text-[13px] font-medium px-4 py-1.5 rounded-full">
+                  <span className="bg-[#FFF8E1] text-[#B8860B] text-sm font-medium px-4 py-1.5 rounded-full">
                     Golden Visa
                   </span>
                 )}
                 {publish_deals && (
-                  <span className="bg-[#FFF0F0] text-[#C1121F] text-[13px] font-medium px-4 py-1.5 rounded-full">
+                  <span className="bg-[#FFF0F0] text-[#C1121F] text-sm font-medium px-4 py-1.5 rounded-full">
                     1ChoiceDeals
                   </span>
                 )}
                 {property.custom_badge && (
                   <span
-                    className="text-[13px] font-bold tracking-wider px-4 py-1.5 rounded-full"
+                    className="text-sm font-bold tracking-wider px-4 py-1.5 rounded-full"
                     style={getBadgeStyle(property.custom_badge_color)}
                   >
                     {property.custom_badge}
@@ -615,7 +615,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                   <button
                     type="button"
                     onClick={() => setDescriptionExpanded((v) => !v)}
-                    className="mt-3 text-sm font-medium text-[#C1121F] hover:opacity-75 transition-opacity"
+                    className="mt-3 text-base font-medium text-[#C1121F] hover:opacity-75 transition-opacity"
                   >
                     {descriptionExpanded ? "Show less" : "Show more"}
                   </button>
@@ -631,7 +631,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                 {/* ── Group 1: Property Overview ── */}
                 {showOverview && (
                   <div>
-                    <p className="text-xs font-semibold text-[#888888] uppercase tracking-widest mb-3">
+                    <p className="text-sm font-semibold text-[#888888] uppercase tracking-widest mb-3">
                       Property Overview
                     </p>
                     <div className="grid grid-cols-2 gap-x-6 gap-y-4 text-[16px]">
@@ -672,7 +672,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                 {/* ── Group 2: Layout & Rooms ── */}
                 {layoutFeatures.length > 0 && (
                   <div className="border-t border-[#F0F0F0] pt-5">
-                    <p className="text-xs font-semibold text-[#888888] uppercase tracking-widest mb-3">
+                    <p className="text-sm font-semibold text-[#888888] uppercase tracking-widest mb-3">
                       Layout & Rooms
                     </p>
                     <div className="grid grid-cols-2 gap-x-6 gap-y-4 text-[16px]">
@@ -692,7 +692,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                 {/* ── Group 3: Building Information ── */}
                 {buildingFeatures.length > 0 && (
                   <div className="border-t border-[#F0F0F0] pt-5">
-                    <p className="text-xs font-semibold text-[#888888] uppercase tracking-widest mb-3">
+                    <p className="text-sm font-semibold text-[#888888] uppercase tracking-widest mb-3">
                       Building Information
                     </p>
                     <div className="grid grid-cols-2 gap-x-6 gap-y-4 text-[16px]">
@@ -712,7 +712,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                 {/* ── Group 4: Windows & Construction ── */}
                 {(windowsValues.length > 0 || windowsBools.length > 0) && (
                   <div className="border-t border-[#F0F0F0] pt-5">
-                    <p className="text-xs font-semibold text-[#888888] uppercase tracking-widest mb-3">
+                    <p className="text-sm font-semibold text-[#888888] uppercase tracking-widest mb-3">
                       Windows & Construction
                     </p>
                     {windowsValues.length > 0 && (
@@ -733,7 +733,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                         {windowsBools.map((f) => {
                           const Icon = f.icon;
                           return (
-                            <span key={f.field} className="flex items-center gap-1.5 bg-[#F4F4F4] text-[#404040] text-[13px] px-4 py-2 rounded-full">
+                            <span key={f.field} className="flex items-center gap-1.5 bg-[#F4F4F4] text-[#404040] text-sm px-4 py-2 rounded-full">
                               <Icon size={14} />{f.label}
                             </span>
                           );
@@ -746,14 +746,14 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                 {/* ── Group 5: Comfort & Amenities ── */}
                 {amenityFeatures.length > 0 && (
                   <div className="border-t border-[#F0F0F0] pt-5">
-                    <p className="text-xs font-semibold text-[#888888] uppercase tracking-widest mb-3">
+                    <p className="text-sm font-semibold text-[#888888] uppercase tracking-widest mb-3">
                       Comfort & Amenities
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {amenityFeatures.map((f) => {
                         const Icon = f.icon;
                         return (
-                          <span key={f.field} className="flex items-center gap-1.5 bg-[#F4F4F4] text-[#404040] text-[13px] px-4 py-2 rounded-full">
+                          <span key={f.field} className="flex items-center gap-1.5 bg-[#F4F4F4] text-[#404040] text-sm px-4 py-2 rounded-full">
                             <Icon size={14} />{f.label}
                           </span>
                         );
@@ -765,7 +765,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                 {/* ── Group 6: Land / Plot ── */}
                 {hasLandPlot && (
                   <div className="border-t border-[#F0F0F0] pt-5">
-                    <p className="text-xs font-semibold text-[#888888] uppercase tracking-widest mb-3">
+                    <p className="text-sm font-semibold text-[#888888] uppercase tracking-widest mb-3">
                       Land / Plot
                     </p>
 
@@ -809,12 +809,12 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                     {(property.town_planning_status || property.land_slope) && (
                       <div className="flex flex-wrap gap-2 mb-3">
                         {property.town_planning_status && (
-                          <span className="bg-[#F4F4F4] text-[#404040] text-[13px] px-4 py-2 rounded-full">
+                          <span className="bg-[#F4F4F4] text-[#404040] text-sm px-4 py-2 rounded-full">
                             {TOWN_PLANNING_LABEL[property.town_planning_status] ?? property.town_planning_status}
                           </span>
                         )}
                         {property.land_slope && (
-                          <span className="bg-[#F4F4F4] text-[#404040] text-[13px] px-4 py-2 rounded-full">
+                          <span className="bg-[#F4F4F4] text-[#404040] text-sm px-4 py-2 rounded-full">
                             {LAND_SLOPE_LABEL[property.land_slope] ?? property.land_slope}
                           </span>
                         )}
@@ -825,7 +825,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                     {property.land_features && property.land_features.length > 0 && (
                       <div className="flex flex-wrap gap-2">
                         {property.land_features.map((feat) => (
-                          <span key={feat} className="bg-[#F4F4F4] text-[#404040] text-[13px] px-4 py-2 rounded-full">
+                          <span key={feat} className="bg-[#F4F4F4] text-[#404040] text-sm px-4 py-2 rounded-full">
                             {LAND_FEATURE_LABEL[feat] ?? feat}
                           </span>
                         ))}
@@ -874,7 +874,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                       if (numRows.length === 0 && boolChips.length === 0) return null;
                       return (
                         <div key={i} className="border border-[#E8E8E8] rounded-xl p-5">
-                          <p className="text-xs font-semibold text-[#888888] uppercase tracking-widest mb-4">
+                          <p className="text-sm font-semibold text-[#888888] uppercase tracking-widest mb-4">
                             Level {i + 1}
                           </p>
                           {numRows.length > 0 && (
@@ -890,7 +890,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                           {boolChips.length > 0 && (
                             <div className="flex flex-wrap gap-2">
                               {boolChips.map(f => (
-                                <span key={String(f.key)} className="bg-[#F4F4F4] text-[#404040] text-[13px] px-4 py-2 rounded-full">
+                                <span key={String(f.key)} className="bg-[#F4F4F4] text-[#404040] text-sm px-4 py-2 rounded-full">
                                   {f.label}
                                 </span>
                               ))}
@@ -928,7 +928,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                   href={virtual_tour_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-[#3A2E4F] text-[#3A2E4F] text-sm font-medium hover:bg-[#F0EDF7] transition-colors"
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-[#3A2E4F] text-[#3A2E4F] text-base font-medium hover:bg-[#F0EDF7] transition-colors"
                 >
                   Open Virtual Tour →
                 </a>
@@ -944,14 +944,14 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
               </p>
 
               {/* Quick facts */}
-              <div className="flex flex-col gap-2 text-sm text-[#404040] border-b border-[#F0F0F0] pb-5">
+              <div className="flex flex-col gap-2 text-base text-[#404040] border-b border-[#F0F0F0] pb-5">
                 {property.size_sqm    && <span>{property.size_sqm} m²</span>}
                 {property.floor       && <span>Floor {FLOOR_LABEL[property.floor] ?? property.floor}</span>}
                 <span>{areaLabel}</span>
                 {property.show_address && property.address
                   ? <span>{property.address}</span>
                   : property.address
-                    ? <span className="text-[#888888] text-xs italic">Exact address available upon request.</span>
+                    ? <span className="text-[#888888] text-sm italic">Exact address available upon request.</span>
                     : null
                 }
               </div>
@@ -989,7 +989,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
               {locationPageUrl && (
                 <Link
                   href={locationPageUrl}
-                  className="text-sm text-[#3A2E4F] underline underline-offset-2 hover:opacity-70 transition-opacity whitespace-nowrap shrink-0"
+                  className="text-base text-[#3A2E4F] underline underline-offset-2 hover:opacity-70 transition-opacity whitespace-nowrap shrink-0"
                 >
                   View all →
                 </Link>
@@ -1028,7 +1028,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
               })
             );
           }}
-          className="w-full py-3 rounded-xl bg-[#3A2E4F] text-white font-semibold text-sm hover:opacity-90 transition-opacity"
+          className="w-full py-3 rounded-xl bg-[#3A2E4F] text-white font-semibold text-base hover:opacity-90 transition-opacity"
         >
           Request Viewing
         </button>

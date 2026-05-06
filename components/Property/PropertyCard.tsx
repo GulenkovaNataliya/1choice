@@ -59,7 +59,7 @@ function Badge({ label }: { label: string }) {
         padding: "0 10px",
         background: isGoldenVisa ? "#C9972A" : "#1E1E1E",
         borderRadius: 12,
-        fontSize: 11,
+        fontSize: 13,
         fontWeight: 600,
         color: isGoldenVisa ? "#FFFDF0" : "#F4F4F4",
         whiteSpace: "nowrap",
@@ -172,7 +172,7 @@ export default function PropertyCard({ property, testId }: Props) {
             style={{
               position: "absolute", inset: 0,
               display: "flex", alignItems: "center", justifyContent: "center",
-              color: "#BBBBBB", fontSize: 13,
+              color: "#BBBBBB", fontSize: 14,
             }}
           >
             No image
@@ -196,7 +196,7 @@ export default function PropertyCard({ property, testId }: Props) {
                   height: 22,
                   padding: "0 10px",
                   borderRadius: 12,
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: 700,
                   whiteSpace: "nowrap",
                   letterSpacing: "0.04em",
@@ -225,7 +225,7 @@ export default function PropertyCard({ property, testId }: Props) {
       >
         {/* Property code */}
         {property_code && (
-          <div style={{ fontSize: 11, color: "#C1121F", fontFamily: "monospace" }}>
+          <div style={{ fontSize: 13, color: "#C1121F", fontFamily: "monospace" }}>
             {property_code}
           </div>
         )}
@@ -247,11 +247,11 @@ export default function PropertyCard({ property, testId }: Props) {
         </div>
 
         {/* Location */}
-        <div style={{ fontSize: 13, color: "#C1121F" }}>{area}</div>
+        <div style={{ fontSize: 14, color: "#C1121F" }}>{area}</div>
 
         {/* Transaction type */}
         {transactionLabel && (
-          <div style={{ fontSize: 11, color: "#888888" }}>{transactionLabel}</div>
+          <div style={{ fontSize: 13, color: "#888888" }}>{transactionLabel}</div>
         )}
 
         {/* Feature icons row — hidden when no renderable features */}
@@ -262,7 +262,7 @@ export default function PropertyCard({ property, testId }: Props) {
               return (
                 <span
                   key={feature.field}
-                  style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#666666" }}
+                  style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 14, color: "#666666" }}
                 >
                   <Icon size={13} strokeWidth={1.8} />
                   {formatted}

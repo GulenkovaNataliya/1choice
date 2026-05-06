@@ -46,20 +46,20 @@ export default function HeroVideo() {
   }, [menuOpen]);
 
   return (
-    <section className="relative h-screen w-full overflow-hidden">
+    <section className="relative h-screen w-full max-w-full overflow-hidden">
       {/* Top bar */}
-      <div className="absolute top-0 left-0 z-20 w-full px-12 pt-10 flex items-start justify-between">
-        <a href="/" className="block">
+      <div className="absolute top-0 left-0 z-20 w-full max-w-full box-border px-4 sm:px-6 lg:px-12 pt-6 lg:pt-10 flex items-start justify-between gap-4">
+        <a href="/" className="block min-w-0">
           <img
             src="/logo/logo-main.png"
             alt="1Choice"
-            className="w-[320px] h-auto"
+            className="w-[min(240px,calc(100vw-120px))] sm:w-[280px] lg:w-[320px] max-w-full h-auto"
           />
         </a>
 
-        <div className="flex items-center gap-8 text-black text-lg font-medium">
-          <a href="/about" className="hover:opacity-70 transition">About 1Choice</a>
-          <a href="/contact" className="hover:opacity-70 transition">Contact</a>
+        <div className="flex shrink-0 items-center gap-4 lg:gap-8 text-black text-base lg:text-lg font-medium">
+          <a href="/about" className="hidden sm:inline hover:opacity-70 transition">About 1Choice</a>
+          <a href="/contact" className="hidden sm:inline hover:opacity-70 transition">Contact</a>
           <a
             href="/favorites"
             className="hover:opacity-70 transition"
@@ -130,7 +130,8 @@ export default function HeroVideo() {
               top: 0,
               right: 0,
               height: "100%",
-              width: 300,
+              width: "min(300px, 100vw)",
+              boxSizing: "border-box",
               background: "transparent",
               backdropFilter: "blur(2px)",
               display: "flex",
@@ -215,7 +216,8 @@ export default function HeroVideo() {
             fontSize: 17,
             color: "#3A2E4F",
             margin: 0,
-            whiteSpace: "nowrap",
+            whiteSpace: "normal",
+            maxWidth: "calc(100vw - 48px)",
             background: "rgba(255,255,255,0.75)",
             padding: "6px 12px",
             borderRadius: 6,

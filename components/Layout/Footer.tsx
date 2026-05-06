@@ -45,10 +45,10 @@ export default function Footer({ companyName }: { companyName?: string }) {
           gap: 16,
         }}
       >
-        <span style={{ fontSize: 14, color: "#404040" }}>
-          © {year} {name}
-          <span style={{ marginLeft: 16, color: "#888" }}>·</span>
-          <span style={{ marginLeft: 16, color: "#888" }}>Built by Nataliya Gulenkova</span>
+        <span className="footer-credit" style={{ fontSize: 14, color: "#404040" }}>
+          <span className="footer-copyright">©{year} {name}</span>
+          <span className="footer-separator" style={{ marginLeft: 16, color: "#888" }}>·</span>
+          <span className="footer-built" style={{ marginLeft: 16, color: "#888" }}>Built by Nataliya Gulenkova</span>
         </span>
 
         <nav
@@ -83,6 +83,18 @@ export default function Footer({ companyName }: { companyName?: string }) {
           footer > div {
             flex-direction: column !important;
             align-items: flex-start !important;
+          }
+          .footer-credit {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+          }
+          .footer-separator {
+            display: none;
+          }
+          .footer-built {
+            margin-left: 0 !important;
+            white-space: nowrap;
           }
         }
       `}</style>

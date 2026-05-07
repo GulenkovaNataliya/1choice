@@ -51,7 +51,7 @@ export default function PropertyGalleryClient({
     <div>
       {/* Main image — 4:3 */}
       <div
-        className="relative w-full rounded-xl overflow-hidden mb-3"
+        className="relative w-full rounded-xl overflow-hidden mb-4"
         style={{ paddingTop: "75%", background: "#E8E8E8" }}
       >
         {activeUrl ? (
@@ -122,7 +122,7 @@ export default function PropertyGalleryClient({
 
       {/* Thumbnails — only when there are multiple images */}
       {total > 1 && (
-        <div className="flex gap-3 overflow-x-auto pb-1">
+        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
           {slots.map((url, i) => (
             <button
               key={i}
@@ -130,10 +130,10 @@ export default function PropertyGalleryClient({
               onClick={() => setActive(i)}
               aria-label={`Photo ${i + 1}`}
               aria-current={active === i ? "true" : undefined}
-              className={`shrink-0 w-[138px] h-[97px] rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+              className={`aspect-[4/3] rounded-lg overflow-hidden border-2 transition-all duration-200 ${
                 active === i
-                  ? "border-[#888888] scale-[1.07] shadow-md"
-                  : "border-transparent hover:border-[#BBBBBB] hover:scale-[1.04]"
+                  ? "border-[#888888] scale-[1.03] shadow-sm"
+                  : "border-transparent hover:border-[#BBBBBB] hover:scale-[1.02]"
               }`}
               style={{ background: "#E8E8E8" }}
             >

@@ -129,7 +129,7 @@ export default function PropertyGalleryClient({
               onClick={() => setActive(i)}
               aria-label={`Photo ${i + 1}`}
               aria-current={active === i ? "true" : undefined}
-              className={`inline-flex shrink-0 h-[68px] sm:h-[72px] w-auto items-center justify-center rounded-lg overflow-hidden border-2 transition-colors duration-200 ${
+              className={`inline-flex shrink-0 h-[120px] sm:h-[140px] w-auto items-center justify-center rounded-lg overflow-hidden border-2 transition-colors duration-200 ${
                 active === i
                   ? "border-[#888888] shadow-sm"
                   : "border-transparent hover:border-[#BBBBBB]"

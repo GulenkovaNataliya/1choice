@@ -84,15 +84,39 @@ function PublicHeaderInner() {
           </Link>
 
           <Link
-            href="/favorites"
+            href="/golden-visa-greece"
+            style={{
+              fontSize: 16,
+              fontWeight: pathname === "/golden-visa-greece" ? 700 : 400,
+              color: pathname === "/golden-visa-greece" ? "#3A2E4F" : "#404040",
+              textDecoration: "none",
+            }}
+          >
+            Golden Visa
+          </Link>
+
+          <Link
+            href="/investment-ownership-guide"
+            style={{
+              fontSize: 16,
+              fontWeight: pathname === "/investment-ownership-guide" ? 700 : 400,
+              color: pathname === "/investment-ownership-guide" ? "#3A2E4F" : "#404040",
+              textDecoration: "none",
+            }}
+          >
+            Investment Guide
+          </Link>
+
+          <Link
+            href="/saved"
             aria-label="Saved properties"
             style={{
               display: "inline-flex",
               alignItems: "center",
               gap: 6,
               fontSize: 16,
-              fontWeight: pathname === "/favorites" ? 700 : 400,
-              color: pathname === "/favorites" ? "#3A2E4F" : "#404040",
+              fontWeight: pathname === "/saved" || pathname === "/favorites" ? 700 : 400,
+              color: pathname === "/saved" || pathname === "/favorites" ? "#3A2E4F" : "#404040",
               textDecoration: "none",
             }}
           >

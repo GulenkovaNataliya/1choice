@@ -225,7 +225,7 @@ export default function PropertyCard({ property, testId }: Props) {
       >
         {/* Property code */}
         {property_code && (
-          <div style={{ fontSize: 13, color: "#C1121F", fontFamily: "monospace" }}>
+          <div style={{ fontSize: 14, color: "#C1121F", fontFamily: "monospace" }}>
             {property_code}
           </div>
         )}
@@ -247,11 +247,11 @@ export default function PropertyCard({ property, testId }: Props) {
         </div>
 
         {/* Location */}
-        <div style={{ fontSize: 14, color: "#C1121F" }}>{area}</div>
+        <div style={{ fontSize: 15, color: "#C1121F" }}>{area}</div>
 
         {/* Transaction type */}
         {transactionLabel && (
-          <div style={{ fontSize: 13, color: "#888888" }}>{transactionLabel}</div>
+          <div style={{ fontSize: 15, color: "#888888" }}>{transactionLabel}</div>
         )}
 
         {/* Feature icons row — hidden when no renderable features */}

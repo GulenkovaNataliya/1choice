@@ -1,4 +1,5 @@
 import AccordionClient from "./AccordionClient";
+import InvestmentGuideCTAButton from "@/components/chat/InvestmentGuideCTAButton";
 
 const COLUMNS = [
   {
@@ -108,14 +109,11 @@ export default function InvestmentGuidePage() {
         <h2 className="text-2xl font-bold text-[#1E1E1E] mb-6">
           Need help choosing the right investment strategy?
         </h2>
-        {/* TODO: wire to chat/advisory system when available */}
-        <button
-          type="button"
-          disabled
-          className="bg-[#3A2E4F] text-[#D9D9D9] px-8 py-4 rounded-xl text-base font-medium opacity-50 cursor-default pointer-events-none"
+        <InvestmentGuideCTAButton
+          className="bg-[#3A2E4F] text-[#D9D9D9] px-8 py-4 rounded-xl text-base font-medium"
         >
           Start Advisory Consultation
-        </button>
+        </InvestmentGuideCTAButton>
       </section>
     </main>
   );

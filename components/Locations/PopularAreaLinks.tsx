@@ -11,7 +11,7 @@ export default function PopularAreaLinks({ title }: Props) {
       <div style={{ maxWidth: 1360, margin: "0 auto", padding: "40px 24px" }}>
         <h2
           style={{
-            fontSize: 13,
+            fontSize: 16,
             fontWeight: 600,
             color: "#888888",
             textTransform: "uppercase",
@@ -36,7 +36,7 @@ export default function PopularAreaLinks({ title }: Props) {
                   borderRadius: 99,
                   border: "1px solid #D9D9D9",
                   background: "#FFFFFF",
-                  fontSize: 13,
+                  fontSize: 16,
                   fontWeight: 500,
                   color: "#1E1E1E",
                   textDecoration: "none",

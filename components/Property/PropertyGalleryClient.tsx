@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { renderImageUrl } from "@/lib/storage/imageUrl";
 
 type Props = {
   title: string;
@@ -139,7 +138,7 @@ export default function PropertyGalleryClient({
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={renderImageUrl(url, "thumb") ?? url}
+                src={url}
                 alt=""
                 className="block h-full w-auto max-w-none object-contain"
                 loading="lazy"

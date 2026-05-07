@@ -112,7 +112,7 @@ export default function InvestmentGuidePage() {
         <button
           type="button"
           disabled
-          className="bg-[#3A2E4F] text-[#D9D9D9] px-8 py-4 rounded-xl font-medium opacity-50 cursor-default pointer-events-none"
+          className="bg-[#3A2E4F] text-[#D9D9D9] px-8 py-4 rounded-xl text-base font-medium opacity-50 cursor-default pointer-events-none"
         >
           Start Advisory Consultation
         </button>

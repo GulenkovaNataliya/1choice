@@ -14,7 +14,7 @@ export default function AccordionClient({ items }: { items: Item[] }) {
           <button
             type="button"
             onClick={() => setOpen(open === i ? null : i)}
-            className="w-full flex items-center justify-between px-5 py-4 text-left text-sm font-medium text-[#1E1E1E] bg-white hover:bg-[#F4F4F4] transition"
+            className="w-full flex items-center justify-between px-5 py-4 text-left text-base font-medium text-[#1E1E1E] bg-white hover:bg-[#F4F4F4] transition"
           >
             <span>{item.question}</span>
             <span className="ml-4 text-[#3A2E4F] text-lg leading-none flex-shrink-0">
@@ -22,7 +22,7 @@ export default function AccordionClient({ items }: { items: Item[] }) {
             </span>
           </button>
           {open === i && (
-            <div className="px-5 pb-5 pt-1 text-sm text-[#404040] bg-white whitespace-pre-line">
+            <div className="px-5 pb-5 pt-1 text-base text-[#404040] bg-white whitespace-pre-line leading-relaxed">
               {item.answer}
             </div>
           )}

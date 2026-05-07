@@ -103,16 +103,16 @@ export default async function GoldenVisaPage({
           <div className="w-full md:w-[65%]">
             {properties.length === 0 ? (
               <div className="border border-[#D9D9D9] rounded-2xl p-8 flex flex-col gap-4 bg-white">
-                <h2 className="text-lg font-semibold text-[#1E1E1E]">
+                <h2 className="text-xl font-semibold text-[#1E1E1E]">
                   Golden Visa Opportunities
                 </h2>
-                <p className="text-[#404040] text-sm leading-relaxed">
+                <p className="text-[#404040] text-base leading-relaxed">
                   Selected opportunities are shared upon request.
                 </p>
-                <p className="text-[#888888] text-sm leading-relaxed">
+                <p className="text-[#888888] text-base leading-relaxed">
                   Many qualifying opportunities are shared privately. Contact our advisor to receive curated options.
                 </p>
-                <GoldenVisaCTAButton className="self-start bg-[#3A2E4F] text-white px-6 py-3 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity">
+                <GoldenVisaCTAButton className="self-start bg-[#3A2E4F] text-white px-6 py-3 rounded-xl text-base font-medium hover:opacity-90 transition-opacity">
                   Start a Golden Visa Consultation
                 </GoldenVisaCTAButton>
               </div>
@@ -129,7 +129,7 @@ export default async function GoldenVisaPage({
                     {hasPrev && (
                       <Link
                         href={`/golden-visa-greece${prevParams.toString() ? `?${prevParams}` : ""}`}
-                        className="px-5 py-2 rounded-xl bg-[#3A2E4F] text-[#D9D9D9] text-sm font-medium hover:opacity-90 transition"
+                        className="px-5 py-2 rounded-xl bg-[#3A2E4F] text-[#D9D9D9] text-base font-medium hover:opacity-90 transition"
                       >
                         ← Prev
                       </Link>
@@ -137,7 +137,7 @@ export default async function GoldenVisaPage({
                     {hasNext && (
                       <Link
                         href={`/golden-visa-greece?${nextParams}`}
-                        className="px-5 py-2 rounded-xl bg-[#3A2E4F] text-[#D9D9D9] text-sm font-medium hover:opacity-90 transition"
+                        className="px-5 py-2 rounded-xl bg-[#3A2E4F] text-[#D9D9D9] text-base font-medium hover:opacity-90 transition"
                       >
                         Load more →
                       </Link>

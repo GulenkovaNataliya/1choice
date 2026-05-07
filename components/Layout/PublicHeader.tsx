@@ -60,6 +60,18 @@ function PublicHeaderInner() {
         {/* Right nav */}
         <nav style={{ display: "flex", alignItems: "center", gap: 32 }}>
           <Link
+            href="/"
+            style={{
+              fontSize: 16,
+              fontWeight: pathname === "/" ? 700 : 400,
+              color: pathname === "/" ? "#3A2E4F" : "#404040",
+              textDecoration: "none",
+            }}
+          >
+            Home
+          </Link>
+
+          <Link
             href="/properties"
             style={{
               fontSize: 16,

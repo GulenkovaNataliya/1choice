@@ -116,7 +116,7 @@ function renderBlocks(blocks: Block[]) {
   return blocks.map((block, i) => {
     if (block.type === "p") {
       return (
-        <p key={i} className="text-sm text-[#404040] mb-3 leading-relaxed last:mb-0">
+        <p key={i} className="text-base text-[#404040] mb-3 leading-relaxed last:mb-0">
           {block.text}
         </p>
       );
@@ -124,7 +124,7 @@ function renderBlocks(blocks: Block[]) {
     return (
       <ul key={i} className="list-disc list-inside mb-3 space-y-1 last:mb-0">
         {block.items.map((item, j) => (
-          <li key={j} className="text-sm text-[#404040]">{item}</li>
+          <li key={j} className="text-base text-[#404040] leading-relaxed">{item}</li>
         ))}
       </ul>
     );
@@ -141,7 +141,7 @@ export default function GoldenVisaAccordionClient() {
           <button
             type="button"
             onClick={() => setOpen(open === i ? null : i)}
-            className="w-full flex items-center justify-between px-5 py-4 text-left text-sm font-semibold text-[#1E1E1E] hover:bg-[#F4F4F4] transition"
+            className="w-full flex items-center justify-between px-5 py-4 text-left text-base font-semibold text-[#1E1E1E] hover:bg-[#F4F4F4] transition"
           >
             <span>{item.title}</span>
             <span className="ml-4 text-[#3A2E4F] text-xl leading-none flex-shrink-0 select-none">

@@ -138,12 +138,12 @@ export default async function LocationPage({
       <section className="max-w-7xl mx-auto px-4 md:px-6 pb-16">
         {properties.length === 0 ? (
           <div className="py-16 flex flex-col items-center gap-4 text-center">
-            <p className="text-[#888888] text-sm max-w-xs leading-relaxed">
+            <p className="text-[#888888] text-base max-w-xs leading-relaxed">
               No properties are currently listed in {config.name}. Check back soon or browse all listings.
             </p>
             <Link
               href="/properties"
-              className="px-5 py-2.5 rounded-xl bg-[#3A2E4F] text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+              className="px-5 py-2.5 rounded-xl bg-[#3A2E4F] text-white text-base font-semibold hover:opacity-90 transition-opacity"
             >
               Browse All Properties
             </Link>
@@ -166,10 +166,10 @@ export default async function LocationPage({
       <section className="border-t border-[#E8E8E8] bg-[#F9F9F9]">
         <div className="max-w-5xl mx-auto px-4 md:px-6 py-12 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div>
-            <h2 className="text-lg font-bold text-[#1E1E1E] mb-1">
+            <h2 className="text-2xl font-bold text-[#1E1E1E] mb-1">
               Interested in {config.name}?
             </h2>
-            <p className="text-sm text-[#555555] max-w-md">
+            <p className="text-base text-[#555555] max-w-md">
               Speak with a 1Choice advisor to arrange viewings or get personalised guidance on this area.
             </p>
           </div>

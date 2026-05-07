@@ -87,7 +87,7 @@ export default function InvestmentGuidePage() {
         <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
           Investment &amp; Ownership Guide
         </h1>
-        <p className="text-[#D9D9D9] text-lg whitespace-nowrap">
+        <p className="mx-auto max-w-3xl text-[#D9D9D9] text-lg leading-relaxed">
           Practical guidance for buying, owning, renting and developing property in Greece.
         </p>
       </section>

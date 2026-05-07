@@ -130,10 +130,10 @@ export default function PropertyGalleryClient({
               onClick={() => setActive(i)}
               aria-label={`Photo ${i + 1}`}
               aria-current={active === i ? "true" : undefined}
-              className={`aspect-[4/3] rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+              className={`aspect-[4/3] rounded-lg overflow-hidden border-2 transition-colors duration-200 ${
                 active === i
-                  ? "border-[#888888] scale-[1.03] shadow-sm"
-                  : "border-transparent hover:border-[#BBBBBB] hover:scale-[1.02]"
+                  ? "border-[#888888] shadow-sm"
+                  : "border-transparent hover:border-[#BBBBBB]"
               }`}
               style={{ background: "#E8E8E8" }}
             >
@@ -141,7 +141,7 @@ export default function PropertyGalleryClient({
               <img
                 src={renderImageUrl(url, "thumb") ?? url}
                 alt=""
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
                 loading="lazy"
               />
             </button>

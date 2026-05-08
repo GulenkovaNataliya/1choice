@@ -403,17 +403,27 @@ export default function ChatWidget() {
   }
 
   // ── Visibility (whitelist) ────────────────────────────────────────────────
-  const visible =
+  const widgetAvailable =
     pathname === "/" ||
+    pathname === "/golden-visa-greece" ||
     pathname.startsWith("/properties") ||
     pathname === "/saved" ||
     pathname === "/compare" ||
     pathname === "/investment-ownership-guide" ||
     pathname === "/private";
 
+  const isPropertiesCatalogue = pathname === "/properties";
+  const isPropertyLocation = pathname.startsWith("/properties/location/");
+
+  const showLauncher =
+    pathname === "/" ||
+    isPropertiesCatalogue ||
+    pathname === "/compare" ||
+    pathname === "/private";
+
   // ── Button text variant ───────────────────────────────────────────────────
   const isPropertyDetail =
-    pathname.startsWith("/properties/") && pathname !== "/properties";
+    pathname.startsWith("/properties/") && !isPropertyLocation;
 
   const launcherText = isPropertyDetail
     ? "Ask about this property"
@@ -647,16 +657,16 @@ export default function ChatWidget() {
   // Return null only when neither the launcher nor the modal should render.
   // When isOpen is true (e.g. triggered by GoldenVisaCTAButton on a non-whitelisted
   // route), we must let the modal render even though the launcher is hidden.
-  if (!visible && !isOpen) return null;
+  if (!widgetAvailable && !isOpen) return null;
 
   return (
     <>
-      {!isOpen && visible && (
+      {!isOpen && showLauncher && (
         <div aria-hidden="true" className="h-[calc(9rem+env(safe-area-inset-bottom))] md:hidden" />
       )}
 
       {/* ── Launcher button ── */}
-      {!isOpen && (
+      {!isOpen && showLauncher && (
         <button
           onClick={handleOpen}
           aria-label={launcherText}

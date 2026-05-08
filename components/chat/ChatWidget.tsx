@@ -651,6 +651,10 @@ export default function ChatWidget() {
 
   return (
     <>
+      {!isOpen && visible && (
+        <div aria-hidden="true" className="h-[calc(9rem+env(safe-area-inset-bottom))] md:hidden" />
+      )}
+
       {/* ── Launcher button ── */}
       {!isOpen && (
         <button
@@ -680,7 +684,7 @@ export default function ChatWidget() {
         >
           {/* ── Modal ── */}
           <div
-            className="w-full max-w-95 max-h-[min(600px,90vh)] flex flex-col bg-white shadow-2xl overflow-hidden"
+            className="w-[calc(100vw-24px)] max-w-[380px] max-h-[min(600px,90vh)] flex flex-col bg-white shadow-2xl overflow-hidden"
             style={{ borderRadius: "18px" }}
           >
             {/* Header */}

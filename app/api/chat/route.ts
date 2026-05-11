@@ -519,22 +519,56 @@ export async function POST(request: NextRequest) {
     message,
   });
 
-  if (isHigh && canSendChatAlert(ip)) {
+  console.info("[chat-alert] high-intent check", {
+    isHigh,
+    reason,
+    intent,
+  });
+
+  const canSendAlert = isHigh ? canSendChatAlert(ip) : false;
+
+  if (isHigh && !canSendAlert) {
+    console.info("[chat-alert] skipped: cooldown", {
+      reason,
+      intent,
+    });
+  }
+
+  if (isHigh && canSendAlert) {
     recordChatAlert(ip);
 
-    void sendChatAlertNotification({
-      intent,
+    console.info("[chat-alert] sending", {
       reason,
-      source: "Chat widget",
-      language: sttLang,
-      page_url: pathname,
-      message,
-      property_title: propertyTitle,
-      property_code: propertyCode,
-      property_location: propertyLocation,
-      contact_found: detectContactInMessage(message ?? ""),
-      admin_url: buildLeadsDashboardUrl(),
+      intent,
     });
+
+    try {
+      const ok = await sendChatAlertNotification({
+        intent,
+        reason,
+        source: "Chat widget",
+        language: sttLang,
+        page_url: pathname,
+        message,
+        property_title: propertyTitle,
+        property_code: propertyCode,
+        property_location: propertyLocation,
+        contact_found: detectContactInMessage(message ?? ""),
+        admin_url: buildLeadsDashboardUrl(),
+      });
+
+      if (ok) {
+        console.info("[chat-alert] sent", { ok, reason, intent });
+      } else {
+        console.warn("[chat-alert] failed/skipped", { ok, reason, intent });
+      }
+    } catch (err) {
+      console.error("[chat-alert] error", {
+        reason,
+        intent,
+        message: err instanceof Error ? err.message : String(err),
+      });
+    }
   }
 
   // ── Return response ───────────────────────────────────────────────────────

@@ -63,6 +63,28 @@ function checkRateLimit(ip: string): boolean {
   return bucket.count <= RATE_LIMIT;
 }
 
+function getAdminBaseUrl(): string | null {
+  const raw =
+    process.env.SITE_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    null;
+  const base = raw?.trim().replace(/\/+$/, "") ?? "";
+
+  if (!base) {
+    console.warn("[leads] SITE_URL is not configured; admin link will be omitted");
+    return null;
+  }
+
+  return base;
+}
+
+function buildLeadAdminUrl(leadId: string | null | undefined): string | null {
+  const base = getAdminBaseUrl();
+  if (!base || !leadId) return null;
+  return `${base}/admin/leads?id=${encodeURIComponent(leadId)}`;
+}
+
 // Prune expired entries periodically to prevent memory growth within warm instances
 setInterval(() => {
   const now = Date.now();
@@ -238,11 +260,7 @@ export async function POST(request: NextRequest) {
   // Running before the response ensures Vercel does not kill the function
   // before notifications complete. A 4-second timeout prevents the lead save
   // from hanging if Telegram/email APIs are slow or unreachable.
-  const siteUrl = process.env.SITE_URL ?? null;
-  const adminUrl =
-    siteUrl && inserted?.id
-      ? `${siteUrl}/admin/leads?id=${inserted.id}`
-      : null;
+  const adminUrl = buildLeadAdminUrl(inserted?.id);
 
   const createdAt = new Date().toISOString();
 

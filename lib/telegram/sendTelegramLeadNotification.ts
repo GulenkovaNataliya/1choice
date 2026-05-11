@@ -1,11 +1,11 @@
 /**
- * Server-side helper — Telegram lead notifications.
+ * Server-side helper - Telegram lead notifications.
  * Called after a lead is successfully saved to Supabase.
  * Never throws; failures are logged but do not affect the lead creation response.
  *
  * Required env vars (server-side only):
- *   TELEGRAM_BOT_TOKEN   — bot token from @BotFather
- *   TELEGRAM_CHAT_ID     — numeric chat/channel id to post into
+ *   TELEGRAM_BOT_TOKEN - bot token from @BotFather
+ *   TELEGRAM_CHAT_ID   - numeric chat/channel id to post into
  */
 
 export interface TelegramLeadData {
@@ -28,11 +28,38 @@ export interface TelegramLeadData {
 }
 
 function esc(text: string): string {
-  // Escape special HTML chars for Telegram HTML parse mode
   return text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
+}
+
+const INTENT_LABELS: Record<string, string> = {
+  property_search:     "Property Search",
+  investment_strategy: "Investment Strategy",
+  golden_visa:         "Golden Visa",
+  viewing_request:     "Viewing Request",
+  contact_advisor:     "Contact Advisor",
+  property_viewing:    "Property Viewing",
+  property_inquiry:    "Property Inquiry",
+  general_question:    "General Question",
+};
+
+const SOURCE_LABELS: Record<string, string> = {
+  home:               "Home",
+  properties:         "Properties",
+  property:           "Property",
+  "golden-visa":      "Golden Visa",
+  "investment-guide": "Investment Guide",
+  private:            "Private",
+  saved:              "Saved",
+  compare:            "Compare",
+  chat:               "Chat",
+};
+
+function labelValue(value: string | null | undefined, labels: Record<string, string>): string | null {
+  if (!value) return null;
+  return labels[value] ?? value;
 }
 
 function formatMessage(data: TelegramLeadData): string {
@@ -40,52 +67,54 @@ function formatMessage(data: TelegramLeadData): string {
     ? new Date(data.created_at).toISOString().replace("T", " ").slice(0, 19) + " UTC"
     : new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC";
 
-  const typeEmoji = data.lead_type === "property" ? "🏠" : "📋";
-  const sourceLabel = data.source || "unknown";
+  const leadTypeLabel = data.lead_type === "property" ? "Property" : "General";
+  const sourceLabel = labelValue(data.source, SOURCE_LABELS) ?? "Unknown";
+  const entryIntentLabel = labelValue(data.entry_intent, INTENT_LABELS);
+  const intentLabel = labelValue(data.intent, INTENT_LABELS);
 
   const lines: string[] = [
-    `${typeEmoji} <b>New Lead — ${esc(data.lead_type === "property" ? "Property" : "General")}</b>`,
+    `<b>New Lead - ${esc(leadTypeLabel)}</b>`,
     "",
-    `👤 <b>Name:</b> ${esc(data.name)}`,
-    `📱 <b>WhatsApp:</b> ${esc(data.phone)}`,
+    `<b>Name:</b> ${esc(data.name)}`,
+    `<b>WhatsApp:</b> ${esc(data.phone)}`,
   ];
 
   if (data.email) {
-    lines.push(`📧 <b>Email:</b> ${esc(data.email)}`);
+    lines.push(`<b>Email:</b> ${esc(data.email)}`);
   }
 
-  lines.push(`🌐 <b>Source:</b> ${esc(sourceLabel)}`);
+  lines.push(`<b>Source:</b> ${esc(sourceLabel)}`);
 
   if (data.page_url) {
-    lines.push(`🔗 <b>Page:</b> ${esc(data.page_url)}`);
+    lines.push(`<b>Page:</b> ${esc(data.page_url)}`);
   }
 
   if (data.property_title) {
     const propLabel = data.property_code
       ? `${data.property_title} (${data.property_code})`
       : data.property_title;
-    lines.push(`🏡 <b>Property:</b> ${esc(propLabel)}`);
+    lines.push(`<b>Property:</b> ${esc(propLabel)}`);
   } else if (data.property_id) {
-    lines.push(`🏡 <b>Property ID:</b> ${esc(data.property_id)}`);
+    lines.push(`<b>Property ID:</b> ${esc(data.property_id)}`);
   }
 
   if (data.property_location) {
-    lines.push(`📍 <b>Location:</b> ${esc(data.property_location)}`);
+    lines.push(`<b>Location:</b> ${esc(data.property_location)}`);
   }
 
-  if (data.entry_intent && data.entry_intent !== data.intent) {
-    lines.push(`🚪 <b>Entry Intent:</b> ${esc(data.entry_intent)}`);
+  if (entryIntentLabel && data.entry_intent !== data.intent) {
+    lines.push(`<b>Entry Intent:</b> ${esc(entryIntentLabel)}`);
   }
 
-  if (data.intent) {
-    lines.push(`🎯 <b>Intent:</b> ${esc(data.intent)}`);
+  if (intentLabel) {
+    lines.push(`<b>Intent:</b> ${esc(intentLabel)}`);
   }
 
   if (data.notes) {
-    lines.push(`💬 <b>Notes:</b> ${esc(data.notes)}`);
+    lines.push(`<b>Notes:</b> ${esc(data.notes)}`);
   }
 
-  lines.push(``, `🕐 ${esc(ts)}`);
+  lines.push("", esc(ts));
 
   return lines.join("\n");
 }
@@ -97,7 +126,6 @@ export async function sendTelegramLeadNotification(
   const chatId = process.env.TELEGRAM_CHAT_ID;
 
   if (!token || !chatId) {
-    // Telegram not configured — skip silently
     return false;
   }
 
@@ -118,7 +146,7 @@ export async function sendTelegramLeadNotification(
             ? {
                 reply_markup: {
                   inline_keyboard: [[
-                    { text: "🔧 Open in Admin", url: data.admin_url },
+                    { text: "Open Lead in Admin", url: data.admin_url },
                   ]],
                 },
               }

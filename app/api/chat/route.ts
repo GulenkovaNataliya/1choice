@@ -226,6 +226,27 @@ function getClientIp(req: NextRequest): string {
   );
 }
 
+function getAdminBaseUrl(): string | null {
+  const raw =
+    process.env.SITE_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    null;
+  const base = raw?.trim().replace(/\/+$/, "") ?? "";
+
+  if (!base) {
+    console.warn("[chat-alert] SITE_URL is not configured; admin link will be omitted");
+    return null;
+  }
+
+  return base;
+}
+
+function buildLeadsDashboardUrl(): string | null {
+  const base = getAdminBaseUrl();
+  return base ? `${base}/admin/leads` : null;
+}
+
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
   let bucket = rateLimitMap.get(ip);
@@ -504,16 +525,15 @@ export async function POST(request: NextRequest) {
     void sendChatAlertNotification({
       intent,
       reason,
-      source: sttLang,
+      source: "Chat widget",
+      language: sttLang,
       page_url: pathname,
       message,
       property_title: propertyTitle,
       property_code: propertyCode,
       property_location: propertyLocation,
       contact_found: detectContactInMessage(message ?? ""),
-      admin_url: process.env.NEXT_PUBLIC_APP_URL
-        ? `${process.env.NEXT_PUBLIC_APP_URL}/admin/leads`
-        : null,
+      admin_url: buildLeadsDashboardUrl(),
     });
   }
 

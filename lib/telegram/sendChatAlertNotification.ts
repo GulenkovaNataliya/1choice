@@ -3,7 +3,7 @@
  * Sent when a chat message shows strong purchase/viewing intent,
  * BEFORE the user has submitted a lead form.
  *
- * This is an early-warning signal only - no DB record is created.
+ * This is an early-warning signal only - no submitted lead record is created.
  *
  * Required env vars:
  *   TELEGRAM_BOT_TOKEN
@@ -21,7 +21,8 @@ export interface ChatAlertData {
   property_code?:     string | null;
   property_location?: string | null;
   contact_found:      boolean;        // email/phone detected in message
-  admin_url?:         string | null;  // /admin/leads (no specific lead yet)
+  admin_url?:         string | null;  // /admin/chat-alerts or /admin/chat-alerts?id=ALERT_ID
+  admin_button_label?: string | null;
 }
 
 function esc(text: string): string {
@@ -120,7 +121,7 @@ export async function sendChatAlertNotification(data: ChatAlertData): Promise<bo
             ? {
                 reply_markup: {
                   inline_keyboard: [[
-                    { text: "Open Leads Dashboard", url: data.admin_url },
+                    { text: data.admin_button_label ?? "Open Chat Alerts", url: data.admin_url },
                   ]],
                 },
               }

@@ -11,6 +11,7 @@ import { getAiClient } from "@/lib/chat/aiClient";
 import { detectLang, getFormStrings } from "@/lib/chat/chatI18n";
 import { buildSystemPrompt } from "@/lib/chat/systemPrompt";
 import { sendChatAlertNotification } from "@/lib/telegram/sendChatAlertNotification";
+import { createSupabaseAdminClient } from "@/lib/supabase/adminClient";
 
 /*
  * POST /api/chat
@@ -242,9 +243,20 @@ function getAdminBaseUrl(): string | null {
   return base;
 }
 
-function buildLeadsDashboardUrl(): string | null {
+function buildChatAlertsDashboardUrl(): string | null {
   const base = getAdminBaseUrl();
-  return base ? `${base}/admin/leads` : null;
+  return base ? `${base}/admin/chat-alerts` : null;
+}
+
+function buildChatAlertAdminUrl(alertId: string | null): string | null {
+  const base = getAdminBaseUrl();
+  if (!base || !alertId) return null;
+  return `${base}/admin/chat-alerts?id=${encodeURIComponent(alertId)}`;
+}
+
+function excerptMessage(message: string | null): string | null {
+  if (!message) return null;
+  return message.length > 500 ? `${message.slice(0, 500)}...` : message;
 }
 
 function checkRateLimit(ip: string): boolean {
@@ -542,6 +554,52 @@ export async function POST(request: NextRequest) {
       intent,
     });
 
+    let alertId: string | null = null;
+    const contactFound = detectContactInMessage(message ?? "");
+
+    try {
+      const admin = createSupabaseAdminClient();
+      const { data: insertedAlert, error: insertError } = await admin
+        .from("chat_alerts")
+        .insert({
+          status:            "new",
+          intent,
+          reason,
+          message_excerpt:   excerptMessage(message),
+          page_url:          pathname,
+          property_title:    propertyTitle,
+          property_code:     propertyCode,
+          property_location: propertyLocation,
+          contact_found:     contactFound,
+          source:            "Chat widget",
+          language:          sttLang,
+        })
+        .select("id")
+        .single();
+
+      if (insertError) {
+        console.warn("[chat-alert] persistence failed", {
+          reason,
+          intent,
+          message: insertError.message,
+        });
+      } else {
+        alertId = insertedAlert?.id ?? null;
+        console.info("[chat-alert] persisted", {
+          ok: true,
+          reason,
+          intent,
+          alertId,
+        });
+      }
+    } catch (err) {
+      console.error("[chat-alert] persistence error", {
+        reason,
+        intent,
+        message: err instanceof Error ? err.message : String(err),
+      });
+    }
+
     try {
       const ok = await sendChatAlertNotification({
         intent,
@@ -553,8 +611,9 @@ export async function POST(request: NextRequest) {
         property_title: propertyTitle,
         property_code: propertyCode,
         property_location: propertyLocation,
-        contact_found: detectContactInMessage(message ?? ""),
-        admin_url: buildLeadsDashboardUrl(),
+        contact_found: contactFound,
+        admin_url: buildChatAlertAdminUrl(alertId) ?? buildChatAlertsDashboardUrl(),
+        admin_button_label: alertId ? "Open Chat Alert in Admin" : "Open Chat Alerts",
       });
 
       if (ok) {

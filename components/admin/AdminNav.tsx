@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { label: "Dashboard",  href: "/admin/dashboard" },
   { label: "Properties", href: "/admin/properties" },
   { label: "Leads", href: "/admin/leads" },
+  { label: "Chat Alerts", href: "/admin/chat-alerts" },
   { label: "Areas", href: "/admin/areas" },
   { label: "Settings", href: "/admin/settings" },
 ];

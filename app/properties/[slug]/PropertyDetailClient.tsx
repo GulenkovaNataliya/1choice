@@ -1017,23 +1017,6 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
 
       </div>
 
-      {/* Mobile-only sticky CTA bar — hidden on md and above */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-[#E8E8E8] px-4 py-3">
-        <button
-          type="button"
-          onClick={() => {
-            window.dispatchEvent(
-              new CustomEvent("1choice:open-chat", {
-                detail: { intent: "viewing_request", label: "Request Viewing" },
-              })
-            );
-          }}
-          className="w-full py-3 rounded-xl bg-[#3A2E4F] text-white font-semibold text-base hover:opacity-90 transition-opacity"
-        >
-          Request Viewing
-        </button>
-      </div>
-
     </main>
   );
 }

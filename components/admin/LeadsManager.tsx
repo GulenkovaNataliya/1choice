@@ -135,6 +135,8 @@ function StatusBadge({ status }: { status: string }) {
 // Tries to parse as structured conversation; falls back to <pre> for old data.
 
 function ChatLogDisplay({ raw }: { raw: string }) {
+  let parsedMessages: Array<{ role: string; text: string }> | null = null;
+
   try {
     const msgs = JSON.parse(raw) as Array<{ role: string; text: string }>;
     if (
@@ -142,30 +144,35 @@ function ChatLogDisplay({ raw }: { raw: string }) {
       msgs.length > 0 &&
       msgs.every((m) => typeof m.role === "string" && typeof m.text === "string")
     ) {
-      return (
-        <div className="bg-[#F4F4F4] rounded-lg px-4 py-3 flex flex-col gap-2">
-          {msgs.map((m, i) => (
-            <div
-              key={i}
-              className={`flex text-xs ${m.role === "user" ? "justify-end" : "justify-start"}`}
-            >
-              <span
-                className={`px-2.5 py-1.5 rounded-xl leading-relaxed max-w-[85%] ${
-                  m.role === "user"
-                    ? "bg-[#1E1E1E] text-white"
-                    : "bg-white text-[#1E1E1E] border border-[#E0E0E0]"
-                }`}
-              >
-                {m.text}
-              </span>
-            </div>
-          ))}
-        </div>
-      );
+      parsedMessages = msgs;
     }
   } catch {
     // fall through to raw display
   }
+
+  if (parsedMessages) {
+    return (
+      <div className="bg-[#F4F4F4] rounded-lg px-4 py-3 flex flex-col gap-2">
+        {parsedMessages.map((m, i) => (
+          <div
+            key={i}
+            className={`flex text-xs ${m.role === "user" ? "justify-end" : "justify-start"}`}
+          >
+            <span
+              className={`px-2.5 py-1.5 rounded-xl leading-relaxed max-w-[85%] ${
+                m.role === "user"
+                  ? "bg-[#1E1E1E] text-white"
+                  : "bg-white text-[#1E1E1E] border border-[#E0E0E0]"
+              }`}
+            >
+              {m.text}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <pre className="text-xs text-[#1E1E1E] whitespace-pre-wrap bg-[#F4F4F4] rounded-lg px-4 py-3 overflow-x-auto leading-relaxed">
       {raw}
@@ -179,15 +186,19 @@ function LeadDetailModal({
   lead,
   onClose,
   onUpdated,
+  onDeleted,
 }: {
   lead: Lead;
   onClose: () => void;
   onUpdated: () => void;
+  onDeleted: (leadId: string) => void;
 }) {
   const [noteText, setNoteText] = useState(lead.internal_note ?? "");
   const [savingNote, setSavingNote] = useState(false);
   const [noteError, setNoteError] = useState<string | null>(null);
   const [noteSaved, setNoteSaved] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deletingLead, setDeletingLead] = useState(false);
 
   // Use direct column; fall back to summary parse for legacy rows that predate Step 221
   const intentValue = lead.intent ?? parseIntentFromSummary(lead.summary);
@@ -209,9 +220,32 @@ function LeadDetailModal({
     }
   }
 
-  // Property cell: title with links when available
-  function PropertyCell() {
-    if (!lead.property_title) return <span className="text-[#AAAAAA]">General</span>;
+  async function deleteLead() {
+    const confirmation = window.prompt(
+      "Type DELETE to permanently delete this lead.\n\nUse only for test or junk leads. Real leads should usually be closed, not deleted."
+    );
+    if (confirmation !== "DELETE") return;
+
+    setDeletingLead(true);
+    setDeleteError(null);
+    const { error } = await getSupabase()
+      .from("leads")
+      .delete()
+      .eq("id", lead.id);
+    setDeletingLead(false);
+
+    if (error) {
+      setDeleteError(error.message);
+      return;
+    }
+
+    onDeleted(lead.id);
+  }
+
+  const propertyCell = (() => {
+    if (!lead.property_title) {
+      return <span className="text-[#AAAAAA]">General</span>;
+    }
     const label = `${lead.property_title}${lead.property_code ? ` (${lead.property_code})` : ""}`;
     return (
       <span className="flex flex-col gap-0.5">
@@ -238,7 +272,7 @@ function LeadDetailModal({
         </span>
       </span>
     );
-  }
+  })();
 
   const rows: [string, React.ReactNode][] = [
     // ── Contact ──────────────────────────────────────────────────────────────
@@ -256,7 +290,7 @@ function LeadDetailModal({
       </span>
     )],
     // ── Property ──────────────────────────────────────────────────────────────
-    ["Property", <PropertyCell key="prop" />],
+    ["Property", propertyCell],
     ...(lead.property_location
       ? [["Location", lead.property_location] as [string, React.ReactNode]]
       : []),
@@ -357,6 +391,25 @@ function LeadDetailModal({
               <p className="text-xs text-red-600 mt-1">{noteError}</p>
             )}
           </div>
+
+          {/* Cleanup */}
+          <div className="border border-red-100 bg-red-50 rounded-lg px-4 py-3">
+            <p className="text-xs text-red-700 uppercase tracking-widest mb-1.5">Cleanup</p>
+            <p className="text-xs text-red-700 leading-relaxed mb-3">
+              Use only for test or junk leads. Real leads should usually be closed, not deleted.
+            </p>
+            {deleteError && (
+              <p className="text-xs text-red-700 mb-2">{deleteError}</p>
+            )}
+            <button
+              type="button"
+              onClick={deleteLead}
+              disabled={deletingLead}
+              className="px-3 py-2 text-xs font-semibold rounded-lg border border-red-200 text-red-700 bg-white hover:bg-red-100 transition disabled:opacity-50 disabled:cursor-default"
+            >
+              {deletingLead ? "Deleting..." : "Delete lead"}
+            </button>
+          </div>
         </div>
 
         {/* Footer */}
@@ -406,6 +459,7 @@ export default function LeadsManager({
     if (!selectedId) return;
     const lead = initialRows.find((l) => l.id === selectedId);
     if (lead) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDetailLead(lead);
     }
   }, [selectedId, initialRows]);
@@ -424,6 +478,14 @@ export default function LeadsManager({
     setSavingStatusId(leadId);
     await getSupabase().from("leads").update({ status }).eq("id", leadId);
     setSavingStatusId(null);
+    refresh();
+  }
+
+  function handleLeadDeleted(leadId: string) {
+    setDetailLead(null);
+    if (selectedId === leadId) {
+      router.replace("/admin/leads");
+    }
     refresh();
   }
 
@@ -470,6 +532,7 @@ export default function LeadsManager({
           lead={detailLead}
           onClose={() => setDetailLead(null)}
           onUpdated={refresh}
+          onDeleted={handleLeadDeleted}
         />
       )}
 

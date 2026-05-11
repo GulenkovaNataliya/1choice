@@ -713,7 +713,7 @@ export default function ChatWidget() {
               <button
                 onClick={handleClose}
                 aria-label="Close chat"
-                className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
                   <line x1="1" y1="1" x2="11" y2="11" />

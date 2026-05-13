@@ -16,7 +16,7 @@ export default function AdminNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex items-center gap-6">
+    <nav className="order-3 flex w-full flex-wrap items-center gap-x-4 gap-y-2 md:order-2 md:w-auto md:gap-6">
       {NAV_ITEMS.map(({ label, href }) => {
         const active = pathname.startsWith(href);
         return (

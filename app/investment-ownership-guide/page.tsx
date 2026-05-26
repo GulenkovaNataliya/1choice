@@ -1,4 +1,5 @@
 import AccordionClient from "./AccordionClient";
+import AvatarGuideBlock from "@/components/AI/AvatarGuideBlock";
 import InvestmentGuideCTAButton from "@/components/chat/InvestmentGuideCTAButton";
 
 const COLUMNS = [
@@ -103,6 +104,17 @@ export default function InvestmentGuidePage() {
           ))}
         </div>
       </section>
+
+      <AvatarGuideBlock
+        variant="investment_guide"
+        videoSrc="/video/ai-guide/investment-guide.mp4"
+        posterSrc="/video/ai-guide/avatar-poster.webp"
+        title="Explore investment with more clarity"
+        body="1Choice AI Guide helps visitors understand the next step before speaking with 1Choice Property Advisor."
+        ctaLabel="Talk to 1Choice Property Advisor"
+        intent="investment_strategy"
+        className="bg-white"
+      />
 
       {/* CTA */}
       <section className="bg-white px-6 py-16 text-center">

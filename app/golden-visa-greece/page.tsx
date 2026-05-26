@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import AvatarGuideBlock from "@/components/AI/AvatarGuideBlock";
 import PropertyCard from "@/components/Property/PropertyCard";
 import GoldenVisaAccordionClient from "./GoldenVisaAccordionClient";
 import GoldenVisaCTAButton from "@/components/chat/GoldenVisaCTAButton";
@@ -33,7 +34,7 @@ export default async function GoldenVisaPage({
   const to = from + PAGE_SIZE - 1;
 
   const supabase = await createSupabaseServerClient();
-  let query = supabase
+  const query = supabase
     .from("properties")
     .select(
       "id,property_code,title,slug,price_eur,location,bedrooms,bathrooms,size_sqm,cover_image_url,gallery_image_urls,is_golden_visa,featured,private_collection,created_at",
@@ -89,6 +90,17 @@ export default async function GoldenVisaPage({
           </GoldenVisaCTAButton>
         </div>
       </section>
+
+      <AvatarGuideBlock
+        variant="golden_visa"
+        videoSrc="/video/ai-guide/golden-visa.mp4"
+        posterSrc="/video/ai-guide/avatar-poster.webp"
+        title="Start your Golden Visa journey with guidance"
+        body="1Choice AI Guide introduces the Golden Visa path and connects visitors to the right next step."
+        ctaLabel="Start Golden Visa Consultation"
+        intent="golden_visa"
+        className="bg-white"
+      />
 
       {/* 2-column section */}
       <section className="max-w-7xl mx-auto px-6 py-16">

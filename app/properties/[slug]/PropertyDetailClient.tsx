@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useState } from "react";
 import Link from "next/link";
 import { MapPin, Tag, Home, LayoutGrid } from "lucide-react";
+import AvatarGuideBlock from "@/components/AI/AvatarGuideBlock";
 import PropertyGalleryClient from "@/components/Property/PropertyGalleryClient";
 import PropertyCard from "@/components/Property/PropertyCard";
 import PropertyCTAButtons from "@/components/Property/PropertyCTAButtons";
@@ -958,6 +959,17 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
 
               {/* CTAs */}
               <PropertyCTAButtons />
+
+              <AvatarGuideBlock
+                variant="property_detail"
+                videoSrc="/video/ai-guide/property-detail.mp4"
+                posterSrc="/video/ai-guide/avatar-poster.webp"
+                title="Need help with this property?"
+                body="Ask about this listing or request the next step with 1Choice Property Advisor."
+                ctaLabel="Ask about this property"
+                intent="property_inquiry"
+                className="border-t border-[#D9D9D9] pt-5"
+              />
 
               {/* Share */}
               <PropertyShareBlock

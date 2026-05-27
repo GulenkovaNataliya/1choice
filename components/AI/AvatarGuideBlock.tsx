@@ -194,7 +194,26 @@ export default function AvatarGuideBlock({
             compact ? "w-full text-sm" : "text-base",
           ].join(" ")}
         >
-          {ctaLabel}
+          <span className="flex items-center justify-center gap-2.5">
+            <svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-4 h-4 text-[#C1121F]"
+              aria-hidden="true"
+            >
+              <circle cx="7.5" cy="15.5" r="5.5" />
+              <path d="M21 2l-9.6 9.6" />
+              <path d="M15.5 7.5L17 6l2 2-1.5 1.5" />
+              <path d="M11.5 9.5L13 8" />
+            </svg>
+            <span>{ctaLabel}</span>
+          </span>
         </button>
       </div>
     </section>

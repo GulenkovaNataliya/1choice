@@ -85,9 +85,7 @@ export default async function GoldenVisaPage({
           <p className="text-[#D9D9D9] text-lg mb-8">
             Residency by investment — own property in Greece and gain access to the Schengen Area.
           </p>
-          <GoldenVisaCTAButton className="bg-white text-[#3A2E4F] px-8 py-4 rounded-xl font-semibold hover:bg-[#F0EDF7] transition-colors">
-            Start a Golden Visa Consultation
-          </GoldenVisaCTAButton>
+          {/* Hero CTA removed to avoid duplicate top CTA; AI Guide CTA remains below */}
         </div>
       </section>
 

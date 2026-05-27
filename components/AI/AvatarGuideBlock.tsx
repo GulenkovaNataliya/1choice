@@ -38,43 +38,65 @@ export default function AvatarGuideBlock({
 }: Props) {
   const rootRef = useRef<HTMLElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const hasStartedRef = useRef(false);
+  const hasEndedRef = useRef(false);
   const [canLoadVideo, setCanLoadVideo] = useState(false);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
+  // Ensure video is paused when component unmounts (navigation or removal)
   useEffect(() => {
-    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const updateMotion = () => setReduceMotion(motionQuery.matches);
-
-    updateMotion();
-    motionQuery.addEventListener("change", updateMotion);
-    return () => motionQuery.removeEventListener("change", updateMotion);
+    const vid = videoRef.current;
+    return () => {
+      try {
+        vid?.pause();
+      } catch {
+        // ignore
+      }
+      setIsPlaying(false);
+    };
   }, []);
 
   useEffect(() => {
-    if (reduceMotion) return;
-    const root = rootRef.current;
-    if (!root) return;
+    if (!canLoadVideo || !isPlaying) return;
+    const video = videoRef.current;
+    if (!video) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setCanLoadVideo(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "240px" }
-    );
+    if (!hasStartedRef.current || hasEndedRef.current) {
+      try {
+        video.currentTime = 0;
+      } catch {
+        // Some browsers wait for metadata before seeking; playback still starts from the beginning on first load.
+      }
+    }
 
-    observer.observe(root);
-    return () => observer.disconnect();
-  }, [reduceMotion]);
+    hasEndedRef.current = false;
+    video.muted = false;
+    video.volume = 1;
+    video
+      .play()
+      .then(() => {
+        hasStartedRef.current = true;
+      })
+      .catch(() => {
+        setIsPlaying(false);
+      });
+  }, [canLoadVideo, isPlaying]);
 
-  useEffect(() => {
-    if (!canLoadVideo || reduceMotion) return;
-    videoRef.current?.play().catch(() => {
-      // Autoplay can be blocked by browser policy; the poster remains visible.
-    });
-  }, [canLoadVideo, reduceMotion]);
+  function toggleGuideVideo() {
+    if (isPlaying) {
+      videoRef.current?.pause();
+      setIsPlaying(false);
+      return;
+    }
+
+    setCanLoadVideo(true);
+    setIsPlaying(true);
+  }
+
+  function handleVideoEnded() {
+    hasEndedRef.current = true;
+    setIsPlaying(false);
+  }
 
   function openPropertyAdvisor() {
     window.dispatchEvent(
@@ -105,17 +127,15 @@ export default function AvatarGuideBlock({
             : "max-h-[480px] max-w-[300px] rounded-[24px] md:max-w-[340px]",
         ].join(" ")}
       >
-        {canLoadVideo && !reduceMotion ? (
+        {canLoadVideo ? (
           <video
             ref={videoRef}
             className="h-full w-full object-cover"
-            autoPlay
-            muted
-            loop
             playsInline
             preload="none"
             poster={posterSrc}
             aria-label="1Choice AI Guide video"
+            onEnded={handleVideoEnded}
           >
             <source src={videoSrc} type="video/mp4" />
           </video>
@@ -128,6 +148,15 @@ export default function AvatarGuideBlock({
             className="object-cover"
           />
         )}
+        <div className="absolute inset-x-4 bottom-4 flex justify-center">
+          <button
+            type="button"
+            onClick={toggleGuideVideo}
+            className="rounded-xl bg-[#3A2E4F] px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-opacity hover:opacity-90"
+          >
+            {isPlaying ? "Pause" : "Play 1Choice AI Guide"}
+          </button>
+        </div>
       </div>
 
       <div

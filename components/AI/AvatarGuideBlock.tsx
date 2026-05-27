@@ -114,7 +114,7 @@ export default function AvatarGuideBlock({
       ref={rootRef}
       className={[
         compact
-          ? "flex flex-col gap-4"
+          ? "mx-auto flex w-full max-w-[260px] flex-col items-center gap-4 text-center"
           : "mx-auto flex max-w-6xl flex-col items-center gap-8 px-6 py-14 md:flex-row md:justify-center md:gap-12 md:py-16",
         className,
       ].join(" ")}
@@ -124,7 +124,7 @@ export default function AvatarGuideBlock({
         className={[
           "relative aspect-[9/16] w-full overflow-hidden border border-[#D9D9D9] bg-[#1E1E1E] shadow-[0_18px_45px_rgba(30,30,30,0.14)]",
           compact
-            ? "mx-auto max-h-[420px] max-w-[236px] rounded-[22px]"
+            ? "mx-auto max-h-[360px] max-w-[220px] rounded-[22px]"
             : "max-h-[480px] max-w-[300px] rounded-[24px] md:max-w-[340px]",
         ].join(" ")}
       >
@@ -145,7 +145,7 @@ export default function AvatarGuideBlock({
             src={posterSrc}
             alt="1Choice AI Guide"
             fill
-            sizes={compact ? "236px" : "(min-width: 768px) 340px, 300px"}
+            sizes={compact ? "220px" : "(min-width: 768px) 340px, 300px"}
             className="object-cover"
           />
         )}
@@ -164,7 +164,7 @@ export default function AvatarGuideBlock({
         className={[
           "flex flex-col",
           compact
-            ? "gap-3 text-left"
+            ? "gap-3 text-center"
             : "max-w-xl items-center gap-4 text-center md:items-start md:text-left",
         ].join(" ")}
       >

@@ -965,7 +965,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                 videoSrc="/video/ai-guide/property-detail.mp4"
                 posterSrc="/video/ai-guide/avatar-poster.webp"
                 title="Need help with this property?"
-                body="Ask about this listing or request the next step with 1Choice Property Advisor."
+                body="Ask our Property Advisor about this listing or request the next step."
                 ctaLabel="Ask about this property"
                 intent="property_inquiry"
                 className="border-t border-[#D9D9D9] pt-5"

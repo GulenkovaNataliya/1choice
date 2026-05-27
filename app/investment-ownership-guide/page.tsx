@@ -85,12 +85,14 @@ export default function InvestmentGuidePage() {
     <main className="min-h-screen bg-[#F4F4F4]">
       {/* Hero */}
       <section className="bg-[#3A2E4F] px-6 py-14 md:py-20 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-          Investment &amp; Ownership Guide
-        </h1>
-        <p className="mx-auto max-w-3xl text-[#D9D9D9] text-lg leading-relaxed">
-          Practical guidance for buying, owning, renting and developing property in Greece.
-        </p>
+        <div className="max-w-3xl mx-auto">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            Investment &amp; Ownership Guide
+          </h1>
+          <p className="text-[#D9D9D9] text-lg leading-relaxed">
+            Practical guidance for buying, owning, renting and developing property in Greece.
+          </p>
+        </div>
       </section>
 
       {/* 3-column accordion */}

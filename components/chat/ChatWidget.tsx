@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useChatProperty } from "./ChatPropertyContext";
 import { detectLang, getFormStrings } from "@/lib/chat/chatI18n";
 import { trackEvent } from "@/lib/analytics";
+import KeyIcon from "@/components/icons/KeyIcon";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -673,12 +674,7 @@ export default function ChatWidget() {
           className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-5 h-14 bg-[#1E1E1E] text-[#F4F4F4] shadow-lg hover:bg-[#3A2E4F] transition-colors"
           style={{ minWidth: "200px", maxWidth: "240px", borderRadius: "20px" }}
         >
-          <img
-            src="/logo/logo-chat.png"
-            alt=""
-            aria-hidden="true"
-            className="shrink-0 h-4.5 w-auto"
-          />
+              <KeyIcon className="shrink-0 h-4.5 w-auto" />
           <span className="text-sm font-semibold leading-tight whitespace-nowrap">
             {launcherText}
           </span>
@@ -700,12 +696,7 @@ export default function ChatWidget() {
             {/* Header */}
             <div className="bg-[#1E1E1E] text-white px-5 py-4 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
-                <img
-                  src="/logo/logo-chat.png"
-                  alt=""
-                  aria-hidden="true"
-                  className="shrink-0 h-4.5 w-auto"
-                />
+                <KeyIcon className="shrink-0 h-4.5 w-auto" />
                 <span className="text-sm font-semibold tracking-tight">
                   1Choice Advisory Assistant
                 </span>

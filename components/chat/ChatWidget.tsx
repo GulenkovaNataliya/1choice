@@ -130,6 +130,7 @@ type PageContext =
   | "property_detail"
   | "investment_guide"
   | "private"
+  | "golden_visa"
   | "default";
 
 const WELCOME_MESSAGES: Record<PageContext, string> = {
@@ -144,6 +145,8 @@ const WELCOME_MESSAGES: Record<PageContext, string> = {
     "This guide covers the key considerations for property investment and ownership in Greece. If you have specific questions, I am here to help — or I can connect you with an advisor.",
   private:
     "You are viewing our private collection. I can assist with specific enquiries or connect you with an advisor. How can I help?",
+  golden_visa:
+    "This page is focused on the Greek Golden Visa programme. I can help you understand eligibility and next steps, or connect you directly with a 1Choice Property Advisor.",
   default:
     "I am here to assist with property search, investment guidance, or the Greek Golden Visa programme. How can I help?",
 };
@@ -420,6 +423,7 @@ export default function ChatWidget() {
     if (pathname === "/properties")                 return "properties";
     if (isPropertyDetail)                           return "property_detail";
     if (pathname === "/investment-ownership-guide") return "investment_guide";
+    if (pathname === "/golden-visa-greece")         return "golden_visa";
     if (pathname === "/private")                    return "private";
     return "default";
   }

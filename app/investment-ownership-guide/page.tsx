@@ -1,6 +1,5 @@
 import AccordionClient from "./AccordionClient";
 import AvatarGuideBlock from "@/components/AI/AvatarGuideBlock";
-import InvestmentGuideCTAButton from "@/components/chat/InvestmentGuideCTAButton";
 
 const COLUMNS = [
   {
@@ -84,7 +83,7 @@ export default function InvestmentGuidePage() {
   return (
     <main className="min-h-screen bg-[#F4F4F4]">
       {/* Hero */}
-      <section className="bg-[#3A2E4F] px-6 py-14 md:py-20 text-center">
+      <section className="bg-[#3A2E4F] px-6 text-center flex items-center justify-center min-h-[220px] md:min-h-[240px]">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
             Investment &amp; Ownership Guide
@@ -117,18 +116,6 @@ export default function InvestmentGuidePage() {
         intent="investment_strategy"
         className="bg-white"
       />
-
-      {/* CTA */}
-      <section className="bg-white px-6 py-16 text-center">
-        <h2 className="text-2xl font-bold text-[#1E1E1E] mb-6">
-          Need help choosing the right investment strategy?
-        </h2>
-        <InvestmentGuideCTAButton
-          className="bg-[#3A2E4F] text-[#D9D9D9] px-8 py-4 rounded-xl text-base font-medium"
-        >
-          Start Advisory Consultation
-        </InvestmentGuideCTAButton>
-      </section>
     </main>
   );
 }

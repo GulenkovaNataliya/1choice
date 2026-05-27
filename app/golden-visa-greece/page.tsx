@@ -77,7 +77,7 @@ export default async function GoldenVisaPage({
   return (
     <main className="min-h-screen bg-[#F4F4F4]">
       {/* Hero */}
-      <section className="bg-[#3A2E4F] px-6 py-24 text-center">
+      <section className="bg-[#3A2E4F] px-6 py-14 md:py-20 text-center">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
             Golden Visa Greece

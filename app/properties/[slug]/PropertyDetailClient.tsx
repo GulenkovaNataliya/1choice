@@ -939,7 +939,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
 
           {/* ── RIGHT ~35% sticky ── */}
           <div className="w-full md:w-[35%]">
-            <div className="md:sticky md:top-8 self-start bg-white border border-[#E8E8E8] rounded-2xl p-6 flex flex-col gap-5">
+            <div className="md:sticky md:top-8 self-start bg-white border border-[#E8E8E8] rounded-2xl p-6 flex flex-col gap-4">
               <p className="hidden md:block text-2xl font-bold text-[#1E1E1E]">
                 {price_eur ? formatPrice(price_eur) : "Price on request"}
               </p>
@@ -957,9 +957,7 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                 }
               </div>
 
-              {/* CTAs */}
-              <PropertyCTAButtons />
-
+              {/* AI Guide */}
               <AvatarGuideBlock
                 variant="property_detail"
                 videoSrc="/video/ai-guide/property-detail.mp4"
@@ -970,6 +968,9 @@ export default function PropertyDetailClient({ property, coverUrl, locationPrope
                 intent="property_inquiry"
                 className="border-t border-[#D9D9D9] pt-5"
               />
+
+              {/* CTAs */}
+              <PropertyCTAButtons />
 
               {/* Share */}
               <PropertyShareBlock

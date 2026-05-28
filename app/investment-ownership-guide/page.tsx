@@ -83,7 +83,7 @@ export default function InvestmentGuidePage() {
   return (
     <main className="min-h-screen bg-[#F4F4F4]">
       {/* Hero */}
-      <section className="bg-[#3A2E4F] px-6 text-center flex items-center justify-center min-h-[220px] md:min-h-[240px]">
+      <section className="bg-[#3A2E4F] px-6 text-center flex items-center justify-center min-h-[160px] md:min-h-[190px]">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
             Investment &amp; Ownership Guide

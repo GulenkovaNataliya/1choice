@@ -330,9 +330,9 @@ function PropertyRow({
             >
               Edit
             </Link>
-            {property.status === "published" && property.publish_deals ? (
+            {property.status === "published" ? (
               <ActionButton onClick={onExport} disabled={busy} className="text-blue-600 hover:text-blue-800">
-                Deals Export
+                Marketing Package
               </ActionButton>
             ) : (
               <span
@@ -340,10 +340,10 @@ function PropertyRow({
                 title={
                   property.status !== "published"
                     ? "Status must be published"
-                    : "Deals publishing not enabled"
+                    : "Unavailable"
                 }
               >
-                Deals Export
+                Marketing Package
               </span>
             )}
             <ActionButton onClick={duplicate} disabled={busy} className="text-[#555555] hover:text-[#1E1E1E]">

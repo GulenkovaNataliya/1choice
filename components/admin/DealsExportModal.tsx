@@ -164,7 +164,7 @@ export default function DealsExportModal({ propertyId, onClose }: Props) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `deals_photos_${data.property_code ?? propertyId.slice(0, 8)}.zip`;
+      a.download = `marketing_package_${data.property_code ?? propertyId.slice(0, 8)}.zip`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -237,7 +237,7 @@ export default function DealsExportModal({ propertyId, onClose }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#E8E8E8]">
           <h2 className="text-sm font-semibold text-[#1E1E1E] uppercase tracking-widest">
-            Deals Export
+            Marketing Package
           </h2>
           <button
             onClick={onClose}
@@ -265,20 +265,26 @@ export default function DealsExportModal({ propertyId, onClose }: Props) {
                     ["Slug",        data.slug || data.property_code || "—"],
                     ["Price (€)",   data.price_eur != null ? data.price_eur.toLocaleString("en-EU") : "—"],
                     ["Location",    data.location_text ?? "—"],
-                    ["Cover URL",   data.cover_image_url
-                      ? <span className="font-mono text-xs break-all">{data.cover_image_url}</span>
-                      : "—"],
+                    ["Cover URL",   data.cover_image_url ?? "—"],
                     ["Gallery",     `${galleryCount} image${galleryCount !== 1 ? "s" : ""}`],
                     ["Featured",    data.featured     ? "Yes" : "No"],
                     ["Golden Visa", data.is_golden_visa ? "Yes" : "No"],
                     ["Private",     data.private_collection ? "Yes" : "No"],
                     ["1Choice",     data.publish_1choice ? "Yes" : "No"],
                     ["Deals",       data.publish_deals   ? "Yes" : "No"],
-                    ["Status",      <span className="capitalize">{data.status ?? "—"}</span>],
+                    ["Status",      data.status ?? "—"],
                   ].map(([label, value]) => (
                     <tr key={String(label)}>
                       <td className="py-2 pr-4 text-[#888888] whitespace-nowrap w-28">{label}</td>
-                      <td className="py-2 text-[#1E1E1E] font-medium">{value}</td>
+                      <td className="py-2 text-[#1E1E1E] font-medium">
+                        {label === "Cover URL" && value !== "—" ? (
+                          <span className="font-mono text-xs break-all">{String(value)}</span>
+                        ) : label === "Status" ? (
+                          <span className="capitalize">{String(value)}</span>
+                        ) : (
+                          value
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -331,7 +337,7 @@ export default function DealsExportModal({ propertyId, onClose }: Props) {
 
               {/* Disclaimer */}
               <p className="text-xs text-[#AAAAAA] border-t border-[#F0F0F0] pt-3">
-                This is an export preview for 1ChoiceDeals. No data is sent automatically.
+                This is an export preview. No data is sent automatically.
               </p>
 
               {downloadError && (
@@ -356,7 +362,7 @@ export default function DealsExportModal({ propertyId, onClose }: Props) {
             disabled={!data || loading || downloading}
             className="px-3 py-2 bg-[#F4F4F4] text-[#1E1E1E] text-sm font-semibold rounded-lg hover:bg-[#E8E8E8] transition disabled:opacity-40 disabled:cursor-default"
           >
-            {downloading ? "Zipping…" : "Download Photos"}
+            {downloading ? "Zipping…" : "Download Marketing Package"}
           </button>
           {dealsStatus !== "published" && (
             <button
@@ -377,7 +383,7 @@ export default function DealsExportModal({ propertyId, onClose }: Props) {
             disabled={!data || loading}
             className="px-3 py-2 bg-[#F4F4F4] text-[#1E1E1E] text-sm font-semibold rounded-lg hover:bg-[#E8E8E8] transition disabled:opacity-40 disabled:cursor-default"
           >
-            {copied === "html" ? "Copied!" : "Copy HTML"}
+            {copied === "html" ? "Copied!" : "Copy Marketing Card"}
           </button>
           <button
             onClick={handleCopySlug}

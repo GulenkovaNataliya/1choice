@@ -60,7 +60,9 @@ export async function GET(
   const admin = createSupabaseAdminClient();
   const { data: property, error } = await admin
     .from("properties")
-    .select("property_code, cover_image_url, gallery_image_urls")
+    .select(
+      "id,property_code,title,slug,description,price_eur,location_text,cover_image_url,gallery_image_urls,featured,is_golden_visa,private_collection,status,publish_1choice,publish_deals,deals_status"
+    )
     .eq("id", id)
     .single();
 
@@ -106,6 +108,70 @@ export async function GET(
     return NextResponse.json({ error: "Failed to download any images" }, { status: 502 });
   }
 
+  // Add marketing package files: property.json, marketing-card.html, seo.txt, description.txt
+  function buildExportJson(): object {
+    return {
+      id: property.id,
+      property_code: property.property_code ?? null,
+      title: property.title,
+      slug: property.slug || property.property_code || "",
+      description: property.description ?? null,
+      price_eur: property.price_eur ?? null,
+      location_text: property.location_text ?? null,
+      cover_image_url: property.cover_image_url ?? null,
+      gallery_image_urls: Array.isArray(property.gallery_image_urls) ? property.gallery_image_urls : [],
+      flags: {
+        featured: !!property.featured,
+        is_golden_visa: !!property.is_golden_visa,
+        private_collection: !!property.private_collection,
+      },
+      publishing: {
+        status: property.status ?? "draft",
+        publish_1choice: !!property.publish_1choice,
+        publish_deals: !!property.publish_deals,
+      },
+    };
+  }
+
+  function buildSeoTitle(): string {
+    const price = property.price_eur != null ? ` — €${new Intl.NumberFormat("en-EU").format(property.price_eur)}` : "";
+    const location = property.location_text ? ` in ${property.location_text}` : "";
+    return `${property.title}${location}${price} | 1ChoiceDeals`;
+  }
+
+  function buildMetaDescription(): string {
+    const price = property.price_eur != null ? `€${new Intl.NumberFormat("en-EU").format(property.price_eur)} — ` : "";
+    const location = property.location_text ? ` Located in ${property.location_text}.` : "";
+    const desc = property.description && String(property.description).trim()
+      ? String(property.description).trim().slice(0, 120) + (String(property.description).trim().length > 120 ? "…" : "")
+      : `Featured property on 1ChoiceDeals.`;
+    return `${price}${desc}${location}`;
+  }
+
+  function buildHtmlSnippet(): string {
+    const price = property.price_eur != null ? `€${new Intl.NumberFormat("en-EU").format(property.price_eur)}` : null;
+    const slug = property.slug || property.property_code || "";
+    const ctaUrl = slug ? `https://1choice.gr/properties/${slug}` : "https://1choice.gr";
+    const short = property.description ? String(property.description).trim().slice(0, 160) : null;
+    const loc = property.location_text ?? null;
+    const imgBlock = property.cover_image_url ? `\n  <img src="${property.cover_image_url}" alt="${property.title}" style="width:100%;height:200px;object-fit:cover;display:block;" />` : "";
+    const priceBlock = price ? `\n  <p style="margin:0 0 6px;font-size:22px;font-weight:700;color:#1E1E1E;">${price}</p>` : "";
+    const locBlock = loc ? `\n  <p style="margin:0 0 10px;font-size:13px;color:#888888;">${loc}</p>` : "";
+    const descBlock = short ? `\n  <p style="margin:0 0 16px;font-size:14px;color:#555555;line-height:1.5;">${short}${String(property.description).trim().length > 160 ? "…" : ""}</p>` : "";
+    return `<div style="font-family:sans-serif;max-width:360px;border:1px solid #E8E8E8;border-radius:12px;overflow:hidden;background:#ffffff;">${imgBlock}\n  <div style="padding:16px;">${priceBlock}\n  <h3 style="margin:0 0 4px;font-size:16px;font-weight:600;color:#1E1E1E;">${property.title}</h3>${locBlock}${descBlock}\n  <a href="${ctaUrl}" style="display:inline-block;padding:10px 20px;background:#1E1E1E;color:#ffffff;font-size:13px;font-weight:600;text-decoration:none;border-radius:8px;">View Property</a>\n  </div>\n</div>`;
+  }
+
+  // Add metadata files to the root folder inside the ZIP
+  const pkgFolder = zip.folder(property.property_code ?? "marketing_package")!;
+  try {
+    pkgFolder.file("property.json", JSON.stringify(buildExportJson(), null, 2));
+    pkgFolder.file("marketing-card.html", buildHtmlSnippet());
+    pkgFolder.file("seo.txt", `${buildSeoTitle()}\n\n${buildMetaDescription()}`);
+    pkgFolder.file("description.txt", String(property.description ?? ""));
+  } catch {
+    // ignore errors writing small text files — ZIP still valid
+  }
+
   const zipBuffer = await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
 
   const code = property.property_code ?? id.slice(0, 8);
@@ -114,7 +180,7 @@ export async function GET(
     status: 200,
     headers: {
       "Content-Type": "application/zip",
-      "Content-Disposition": `attachment; filename="deals_photos_${code}.zip"`,
+      "Content-Disposition": `attachment; filename="marketing_package_${code}.zip"`,
       "Content-Length": String(zipBuffer.byteLength),
     },
   });
